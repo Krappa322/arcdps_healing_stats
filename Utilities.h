@@ -3,7 +3,7 @@
 size_t constexpr constexpr_strlen(const char* pString)
 {
 	size_t result = 0;
-	for (const char* pChar = pString; *pChar != '\0'; pChar++)
+	for (const char* curChar = pString; *curChar != '\0'; curChar++)
 	{
 		result++;
 	}
