@@ -3,21 +3,73 @@
 #include "Log.h"
 
 #include <assert.h>
+#include <Windows.h>
 
-PersonalStats::PersonalStats()
-	: myEnteredCombatTime(0)
-	, myTotalHealing(0)
+PersonalStats PersonalStats::GlobalState;
+
+HealedAgent::HealedAgent(const char* pAgentName, uint16_t pSubGroup, bool pIsMinion)
+	: Name(pAgentName)
+	, Subgroup(pSubGroup)
+	, IsMinion(pIsMinion)
 {
 }
 
-void PersonalStats::EnteredCombat(uint64_t pTime)
+AgentStats::AgentStats(uint64_t pAmountHealed, uint32_t pTicks)
+	: TotalHealing(pAmountHealed)
+	, Ticks(pTicks)
 {
-	std::unique_lock<std::mutex> lock(myLock);
+}
+
+HealingSkill::HealingSkill(const char* pName)
+	: Name(pName)
+{
+}
+
+
+PersonalStats::PersonalStats()
+	: myEnteredCombatTime(0)
+{
+}
+
+void PersonalStats::AddAgent(uintptr_t pAgentId, const char* pAgentName, uint16_t pAgentSubGroup, bool pIsMinion)
+{
+	//LOG("Inserting new agent %llu %s %hu %s", pAgentId, pAgentName, pAgentSubGroup, BOOL_STR(pIsMinion));
+
+	std::lock_guard<std::mutex> lock(myLock);
+
+	auto emplaceResult = myStats.Agents.emplace(std::piecewise_construct,
+		std::forward_as_tuple(pAgentId),
+		std::forward_as_tuple(pAgentName, pAgentSubGroup, pIsMinion));
+
+	if (emplaceResult.second == false)
+	{
+		if (strcmp(emplaceResult.first->second.Name.c_str(), pAgentName) != 0)
+		{
+			LOG("Already exists - replacing existing entry %s %hu %s", emplaceResult.first->second.Name.c_str(), emplaceResult.first->second.Subgroup, BOOL_STR(emplaceResult.first->second.IsMinion));
+		}
+
+		emplaceResult.first->second.Name = pAgentName;
+		emplaceResult.first->second.Subgroup = pAgentSubGroup;
+		emplaceResult.first->second.IsMinion = pIsMinion;
+	}
+}
+
+void PersonalStats::EnteredCombat(uint64_t pTime, uint16_t pSubGroup)
+{
+	std::lock_guard<std::mutex> lock(myLock);
 
 	if (myEnteredCombatTime == 0)
 	{
 		myEnteredCombatTime = pTime;
-		LOG("Entered combat, time is %llu", pTime);
+
+		// Clearing agents here is problematic because the healed agent could've entered combat before us. Not clearing it at
+		// all is also problematic because eventually the map will grow very big. Not clearing it for now and will see if
+		// that becomes a real issue.
+
+		myStats.SkillsHealing.clear();
+		myStats.SubGroup = pSubGroup;
+
+		LOG("Entered combat, time is %llu, subgroup is %hu", pTime, pSubGroup);
 	}
 	else
 	{
@@ -27,7 +79,7 @@ void PersonalStats::EnteredCombat(uint64_t pTime)
 
 void PersonalStats::ExitedCombat(uint64_t pTime)
 {
-	std::unique_lock<std::mutex> lock(myLock);
+	std::lock_guard<std::mutex> lock(myLock);
 
 	if (myEnteredCombatTime == 0)
 	{
@@ -41,27 +93,7 @@ void PersonalStats::ExitedCombat(uint64_t pTime)
 		return;
 	}
 
-	float secondsInCombat = static_cast<float>(pTime - myEnteredCombatTime) / 1000;
-	LOG("Exited combat, combat started at %llu, time is %llu - spent %.2f seconds in combat", myEnteredCombatTime, pTime, secondsInCombat);
-
-	for (const auto& agent : myAgentsHealing)
-	{
-		LOG("Agent %s:%llu - Healed for %llu over %u ticks (%.2f/s, %.2f per tick)",
-			agent.second.Name, agent.first,
-			agent.second.TotalHealing, agent.second.Ticks,
-			agent.second.TotalHealing / secondsInCombat, static_cast<float>(agent.second.TotalHealing) / agent.second.Ticks);
-	}
-	LOG("");
-	for (const auto& skill : mySkillsHealing)
-	{
-		LOG("Skill %s:%u - Healed for %llu over %u ticks (%.2f/s, %.2f per tick)",
-			skill.second.Name, skill.first,
-			skill.second.TotalHealing, skill.second.Ticks,
-			skill.second.TotalHealing / secondsInCombat, static_cast<float>(skill.second.TotalHealing) / skill.second.Ticks);
-	}
-	myAgentsHealing.clear();
-	mySkillsHealing.clear();
-
+	myStats.TimeInCombat = pTime - myEnteredCombatTime;
 	myEnteredCombatTime = 0;
 }
 
@@ -75,50 +107,49 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 	}
 
 	{
-		std::unique_lock<std::mutex> lock(myLock);
+		std::lock_guard<std::mutex> lock(myLock);
 
 		if (myEnteredCombatTime == 0)
 		{
-			LOG("Tried to register healing event but not in combat - size %i from %s:%u to %s:%llu", healedAmount, pSkillname, pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+			//LOG("Tried to register healing event but not in combat - size %i from %s:%u to %s:%llu", healedAmount, pSkillname, pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
 			return;
 		}
 
-		// Attribute the heal to agent
-		auto agent = myAgentsHealing.find(pDestinationAgent->id);
-		if (agent == myAgentsHealing.end())
-		{
-			LOG("Registering new agent %s:%llu", pDestinationAgent->name, pDestinationAgent->id);
+		// Attribute the heal to skill (we don't care if insertion happened or not, behavior is the same)
+		auto [skill, insertedSkill] = myStats.SkillsHealing.emplace(std::piecewise_construct,
+			std::forward_as_tuple(pEvent->skillid),
+			std::forward_as_tuple(pSkillname));
 
-			HealedAgent newAgent;
-			snprintf(newAgent.Name, sizeof(newAgent.Name), "%s", pDestinationAgent->name);
-			newAgent.TotalHealing = healedAmount;
-			newAgent.Ticks = 1;
-			myAgentsHealing.emplace(std::make_pair(pDestinationAgent->id, std::move(newAgent)));
-		}
-		else
+		auto [agent, insertedAgent] = skill->second.AgentsHealing.emplace(std::piecewise_construct,
+			std::forward_as_tuple(pDestinationAgent->id),
+			std::forward_as_tuple(healedAmount, 1));
+		if (insertedAgent == false) // Didn't insert new entry (otherwise it gets initialized with healedAmount)
 		{
 			agent->second.TotalHealing += healedAmount;
 			agent->second.Ticks += 1;
 		}
-
-		// Attribute the heal to skill
-		auto skill = mySkillsHealing.find(pEvent->skillid);
-		if (skill == mySkillsHealing.end())
-		{
-			LOG("Registering new skill %s:%u", pSkillname, pEvent->skillid);
-
-			HealingSkill newSkill;
-			newSkill.Name = pSkillname; // The skill name should be valid forever
-			newSkill.TotalHealing = healedAmount;
-			newSkill.Ticks = 1;
-			mySkillsHealing.emplace(std::make_pair(pEvent->skillid, std::move(newSkill)));
-		}
-		else
-		{
-			skill->second.TotalHealing += healedAmount;
-			skill->second.Ticks += 1;
-		}
 	}
 
-	LOG("Registered heal event size %i from %s:%u to %s:%llu", healedAmount, pSkillname, pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+	//LOG("Registered heal event size %i from %s:%u(%hu) to %s:%llu(%hu)", healedAmount, pSkillname, pEvent->skillid, pSourceAgent->team, pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->team);
+}
+
+HealingStats PersonalStats::GetGlobalState()
+{
+	std::lock_guard<std::mutex> lock(PersonalStats::GlobalState.myLock);
+
+	HealingStats result;
+	if (PersonalStats::GlobalState.myEnteredCombatTime == 0)
+	{
+		result.TimeInCombat = PersonalStats::GlobalState.myStats.TimeInCombat;
+	}
+	else
+	{
+		result.TimeInCombat = timeGetTime() - PersonalStats::GlobalState.myEnteredCombatTime;
+	}
+
+	result.Agents = PersonalStats::GlobalState.myStats.Agents;
+	result.SkillsHealing = PersonalStats::GlobalState.myStats.SkillsHealing;
+	result.SubGroup = PersonalStats::GlobalState.myStats.SubGroup;
+
+	return result;
 }

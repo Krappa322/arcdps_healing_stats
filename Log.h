@@ -4,3 +4,5 @@
 #define LOG(pFormatString, ...) LogImplementation_(__func__, pFormatString, __VA_ARGS__); if (false) { printf(pFormatString, __VA_ARGS__); }
 
 void LogImplementation_(const char* pFunctionName, const char* pFormatString, ...);
+
+#define BOOL_STR(pBool) pBool == true ? "true" : "false"

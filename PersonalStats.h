@@ -1,22 +1,43 @@
 #pragma once
 #include "ArcDPS.h"
 
+#include <stdint.h>
+
 #include <map>
 #include <mutex>
-#include <stdint.h>
+#include <string>
 
 struct HealedAgent
 {
-	char Name[128]; // Agent Name (UTF8)
-	uint64_t TotalHealing;
-	uint32_t Ticks; // Number of times the agent was healed
+	std::string Name; // Agent Name (UTF8)
+	uint16_t Subgroup;
+	bool IsMinion;
+
+	HealedAgent(const char* pAgentName, uint16_t pSubGroup, bool pIsMinion);
+};
+
+struct AgentStats
+{
+	uint64_t TotalHealing = 0;
+	uint32_t Ticks = 0; // Number of times the agent was healed
+
+	AgentStats(uint64_t pAmountHealed, uint32_t pTicks);
 };
 
 struct HealingSkill
 {
-	char* Name; // Skill Name
-	uint64_t TotalHealing;
-	uint32_t Ticks; // Number of healing events the skill was involved in (could be multiple when you cleave with healing)
+	const char* Name; // Skill Name
+	std::map<uintptr_t, AgentStats> AgentsHealing; // <Agent Id, Stats>
+
+	explicit HealingSkill(const char* pName);
+};
+
+struct HealingStats
+{
+	uint64_t TimeInCombat = 0;
+	std::map<uint32_t, HealingSkill> SkillsHealing; // <Skill Id, Stats>
+	std::map<uintptr_t, HealedAgent> Agents; // <Agent Id, Agent>
+	uint16_t SubGroup = 0;
 };
 
 class PersonalStats
@@ -24,15 +45,20 @@ class PersonalStats
 public:
 	PersonalStats();
 
-	void EnteredCombat(uint64_t pTime);
+	void AddAgent(uintptr_t pAgentId, const char* pAgentName, uint16_t pAgentSubGroup, bool pIsMinion);
+
+	void EnteredCombat(uint64_t pTime, uint16_t pSubGroup);
 	void ExitedCombat(uint64_t pTime);
 	void HealingEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname);
+
+
+	static PersonalStats GlobalState;
+
+	static HealingStats GetGlobalState();
 
 private:
 	std::mutex myLock;
 
 	uint64_t myEnteredCombatTime;
-	uint64_t myTotalHealing;
-	std::map<uintptr_t, HealedAgent> myAgentsHealing; // <Agent Id, Stats>
-	std::map<uint32_t, HealingSkill> mySkillsHealing; // <Skill Id, Stats>
+	HealingStats myStats;
 };
