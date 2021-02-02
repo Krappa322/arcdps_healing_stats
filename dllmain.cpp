@@ -126,6 +126,23 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 {
 	if (pEvent == nullptr)
 	{
+		if (pSourceAgent->elite != 0)
+		{
+			// Not agent adding event, uninteresting
+			return 0;
+		}
+
+		if (pSourceAgent->prof != 0)
+		{
+			// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
+			PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
+		}
+		else
+		{
+			// We could remove agents here but that would make tracking tricky (for example, minions could die during combat or
+			// someone could leave the instance).
+		}
+
 		return 0;
 	}
 
