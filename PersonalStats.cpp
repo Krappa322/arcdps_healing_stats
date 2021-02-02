@@ -1,6 +1,7 @@
 #include "PersonalStats.h"
 
 #include "Log.h"
+#include "Utilities.h"
 
 #include <assert.h>
 #include <Windows.h>
@@ -33,7 +34,9 @@ PersonalStats::PersonalStats()
 
 void PersonalStats::AddAgent(uintptr_t pAgentId, const char* pAgentName, uint16_t pAgentSubGroup, bool pIsMinion)
 {
-	//LOG("Inserting new agent %llu %s %hu %s", pAgentId, pAgentName, pAgentSubGroup, BOOL_STR(pIsMinion));
+	assert(pAgentName != nullptr);
+
+	LOG("Inserting new agent %llu %s(%llu) %hu %s", pAgentId, pAgentName, utf8_strlen(pAgentName), pAgentSubGroup, BOOL_STR(pIsMinion));
 
 	std::lock_guard<std::mutex> lock(myLock);
 

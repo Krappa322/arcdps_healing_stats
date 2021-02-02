@@ -1,6 +1,7 @@
 #include "AggregatedStats.h"
 
 #include "Log.h"
+#include "Utilities.h"
 
 #include <assert.h>
 #include <Windows.h>
@@ -68,7 +69,7 @@ const AggregatedStatsVector& AggregatedStats::GetAgents()
 
 		float perSecond = agent.TotalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
 
-		uint32_t nameLength = static_cast<uint32_t>(agentName.size());
+		uint32_t nameLength = utf8_strlen(agentName.c_str());
 		if (nameLength > myLongestAgentName)
 		{
 			myLongestAgentName = nameLength;
@@ -84,6 +85,11 @@ const AggregatedStatsVector& AggregatedStats::GetAgents()
 
 uint32_t AggregatedStats::GetLongestAgentName()
 {
+	if (myFilteredAgents == nullptr)
+	{
+		GetAgents();
+	}
+
 	return myLongestAgentName;
 }
 
@@ -117,7 +123,7 @@ const AggregatedStatsVector& AggregatedStats::GetSkills()
 		std::string skillName(skill.Name);
 		float perSecond = totalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
 
-		uint32_t nameLength = static_cast<uint32_t>(skillName.size());
+		uint32_t nameLength = utf8_strlen(skillName.c_str());
 		if (nameLength > myLongestSkillName)
 		{
 			myLongestSkillName = nameLength;
@@ -133,6 +139,11 @@ const AggregatedStatsVector& AggregatedStats::GetSkills()
 
 uint32_t AggregatedStats::GetLongestSkillName()
 {
+	if (mySkills == nullptr)
+	{
+		GetSkills();
+	}
+
 	return myLongestSkillName;
 }
 

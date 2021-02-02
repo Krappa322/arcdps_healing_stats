@@ -8,6 +8,7 @@
 #include "imgui/imgui.h"
 
 #include <array>
+#include <Windows.h>
 
 static bool SHOW_HEAL_WINDOW = false;
 
@@ -106,7 +107,12 @@ void Display_GUI()
 		{
 			for (const auto& agent : currentAggregatedStats->GetAgents())
 			{
-				ImGui::Text("%*s %.2f/s", currentAggregatedStats->GetLongestAgentName(), agent.Name.c_str(), agent.PerSecond);
+				uint32_t longestName = currentAggregatedStats->GetLongestAgentName();
+
+				uint32_t nameLength = utf8_strlen(agent.Name.c_str());
+				assert(nameLength <= longestName);
+
+				ImGui::Text("%*s%s %.2f/s", longestName - nameLength, "", agent.Name.c_str(), agent.PerSecond);
 			}
 			ImGui::Spacing();
 		}
@@ -115,7 +121,12 @@ void Display_GUI()
 		{
 			for (const auto& skill : currentAggregatedStats->GetSkills())
 			{
-				ImGui::Text("%*s %.2f/s", currentAggregatedStats->GetLongestSkillName(), skill.Name.c_str(), skill.PerSecond);
+				uint32_t longestName = currentAggregatedStats->GetLongestSkillName();
+
+				uint32_t nameLength = utf8_strlen(skill.Name.c_str());
+				assert(nameLength <= longestName);
+
+				ImGui::Text("%*s%s %.2f/s", longestName - nameLength, "", skill.Name.c_str(), skill.PerSecond);
 			}
 			ImGui::Spacing();
 		}
