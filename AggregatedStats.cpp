@@ -272,7 +272,7 @@ bool AggregatedStats::FilterInternal(std::map<uintptr_t, HealedAgent>::const_ite
 		break;
 
 	case GroupFilter::Squad:
-		if (pAgent->second.Subgroup == 0) // Subgroup 0 => not in squad
+		if (pAgent->second.Subgroup == 0 && mySourceData.SubGroup != 0) // Subgroup 0 => not in squad
 		{
 			return true;
 		}
