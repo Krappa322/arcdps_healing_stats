@@ -86,7 +86,7 @@ arcdps_exports* mod_init() {
 	arc_exports.sig = 0xFFFA;
 	arc_exports.size = sizeof(arcdps_exports);
 	arc_exports.out_name = "personal_stats";
-	arc_exports.out_build = "0.1";
+	arc_exports.out_build = "0.2";
 	arc_exports.combat = mod_combat;
 	arc_exports.imgui = mod_imgui;
 	arc_exports.options_end = mod_options_end;
