@@ -81,7 +81,7 @@ void Display_GUI()
 
 	if (SHOW_HEAL_WINDOW == true)
 	{
-		ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiSetCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Once);
 		ImGui::Begin("Heal Table", &SHOW_HEAL_WINDOW);
 
 		const char* const sortOrderItems[] = {"Alphabetical Ascending", "Alphabetical Descending", "Heal Per Second Ascending", "Heal Per Second Descending"};

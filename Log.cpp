@@ -19,7 +19,7 @@ void LogImplementation_(const char* pFunctionName, const char* pFormatString, ..
 	assert(writtenChars >= 0);
 
 	char buffer[4096];
-	writtenChars = snprintf(buffer, sizeof(buffer) - 1, "%s.%lli|%s|", timeBuffer, milliseconds, pFunctionName);
+	writtenChars = snprintf(buffer, sizeof(buffer) - 1, "%s.%03lli|%s|", timeBuffer, milliseconds, pFunctionName);
 	assert(writtenChars >= 0);
 	assert(writtenChars < sizeof(buffer) - 1);
 

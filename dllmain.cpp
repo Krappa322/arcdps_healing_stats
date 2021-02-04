@@ -7,6 +7,8 @@
 #include "Log.h"
 #include "PersonalStats.h"
 
+#include "imgui/imgui.h"
+
 #include <atomic>
 
 #include <d3d9helper.h>
@@ -20,7 +22,7 @@ arcdps_exports arc_exports;
 char* arcvers;
 void dll_init(HANDLE hModule);
 void dll_exit();
-extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9 * id3dd9);
+extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9 * id3dd9, void* junk, void* mallocfn, void* freefn);
 extern "C" __declspec(dllexport) void* get_release_addr();
 arcdps_exports* mod_init();
 uintptr_t mod_release();
@@ -51,10 +53,32 @@ void dll_exit() {
 	return;
 }
 
+typedef void* (*malloc_signature)(size_t size);
+typedef void (*free_signature)(void* ptr);
+
+static malloc_signature arcdps_malloc = nullptr;
+static free_signature arcdps_free = nullptr;
+
+void* malloc_wrapper(size_t size, void* user_data)
+{
+	return arcdps_malloc(size);
+}
+
+void free_wrapper(void* ptr, void* user_data)
+{
+	arcdps_free(ptr);
+}
+
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
-extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9 * id3dd9) {
+extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9 * id3dd9, void* junk, void* mallocfn, void* freefn) {
 	arcvers = arcversionstr;
 	SetContext(imguicontext);
+
+	arcdps_malloc = (malloc_signature)mallocfn;
+	arcdps_free = (free_signature)freefn;
+
+	ImGui::SetAllocatorFunctions(malloc_wrapper, free_wrapper);
+
 	return mod_init;
 }
 
@@ -84,6 +108,7 @@ arcdps_exports* mod_init() {
 
 	memset(&arc_exports, 0, sizeof(arcdps_exports));
 	arc_exports.sig = 0x9c9b3c99;
+	arc_exports.imguivers = IMGUI_VERSION_NUM;
 	arc_exports.size = sizeof(arcdps_exports);
 	arc_exports.out_name = "healing_stats";
 	arc_exports.out_build = "0.2";
