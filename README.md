@@ -1,4 +1,4 @@
-## ArcDPS Personal Stats
+## ArcDPS Healing Stats
 Show healing statistics based on your local stats (i.e. your own healing output).
 
 This includes outgoing healing per agent and per skill, as well as filtering to only include your own subgroup/squad or to exclude minions
@@ -19,7 +19,7 @@ The **Exclude unmapped agents** option will, when checked, filter out agents who
 # Installation
 Requires [ArcDPS](https://www.deltaconnected.com/arcdps/).
 
-Drag and drop arcdps_personal_stats.dll into the bin64\ directory (same directory as where arcdps d3d9.dll is)
+Drag and drop arcdps_healing_stats.dll into the bin64\ directory (same directory as where arcdps d3d9.dll is)
 
 # Technical information
 This addon uses the local stats provided by ArcDPS to count healing done. This information is only available for the local player, i.e. the server does not notify about healing done by other players to other players. As such it is not possible to extend the addon to include everyone's healing without every player in the instance having the addon installed.
