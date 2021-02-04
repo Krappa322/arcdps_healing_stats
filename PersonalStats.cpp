@@ -98,6 +98,8 @@ void PersonalStats::ExitedCombat(uint64_t pTime)
 
 	myStats.TimeInCombat = pTime - myEnteredCombatTime;
 	myEnteredCombatTime = 0;
+
+	LOG("Spent %llu ms in combat", myStats.TimeInCombat);
 }
 
 void PersonalStats::HealingEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname)
