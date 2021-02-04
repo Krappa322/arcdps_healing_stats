@@ -83,7 +83,7 @@ arcdps_exports* mod_init() {
 #endif // DEBUG
 
 	memset(&arc_exports, 0, sizeof(arcdps_exports));
-	arc_exports.sig = 0xFFFA;
+	arc_exports.sig = 0x9c9b3c99;
 	arc_exports.size = sizeof(arcdps_exports);
 	arc_exports.out_name = "healing_stats";
 	arc_exports.out_build = "0.2";
