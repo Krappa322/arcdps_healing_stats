@@ -16,25 +16,31 @@
 #include <stdio.h>
 #include <Windows.h>
 
+typedef void* (*MallocSignature)(size_t);
+typedef void (*FreeSignature)(void*);
+
 /* proto/globals */
-uint32_t cbtcount = 0;
-arcdps_exports arc_exports;
-char* arcvers;
-void dll_init(HANDLE hModule);
+void dll_init(HANDLE pModule);
 void dll_exit();
-extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9 * id3dd9, void* junk, void* mallocfn, void* freefn);
+extern "C" __declspec(dllexport) void* get_init_addr(char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HANDLE pUnused2, MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree);
 extern "C" __declspec(dllexport) void* get_release_addr();
 arcdps_exports* mod_init();
 uintptr_t mod_release();
-uintptr_t mod_imgui(uint32_t not_charsel_or_loading);
+uintptr_t mod_imgui(uint32_t pNotCharselOrLoading);
 uintptr_t mod_options_end();
-uintptr_t mod_combat(cbtevent* ev, ag* src, ag* dst, char* skillname, uint64_t id, uint64_t revision);
-uintptr_t mod_combat_local(cbtevent* ev, ag* src, ag* dst, char* skillname, uint64_t id, uint64_t revision);
+uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname, uint64_t pId, uint64_t pRevision);
+uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname, uint64_t pId, uint64_t pRevision);
+
+static MallocSignature ARCDPS_MALLOC = nullptr;
+static FreeSignature ARCDPS_FREE = nullptr;
+static arcdps_exports ARC_EXPORTS;
+static char* ARCDPS_VERSION;
 
 /* dll main -- winapi */
-BOOL APIENTRY DllMain(HANDLE hModule, DWORD ulReasonForCall, LPVOID lpReserved) {
-	switch (ulReasonForCall) {
-	case DLL_PROCESS_ATTACH: dll_init(hModule); break;
+BOOL APIENTRY DllMain(HANDLE pModule, DWORD pReasonForCall, LPVOID pReserved)
+{
+	switch (pReasonForCall) {
+	case DLL_PROCESS_ATTACH: dll_init(pModule); break;
 	case DLL_PROCESS_DETACH: dll_exit(); break;
 
 	case DLL_THREAD_ATTACH:  break;
@@ -44,52 +50,50 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ulReasonForCall, LPVOID lpReserved) 
 }
 
 /* dll attach -- from winapi */
-void dll_init(HANDLE hModule) {
+void dll_init(HANDLE pModule)
+{
 	return;
 }
 
 /* dll detach -- from winapi */
-void dll_exit() {
+void dll_exit()
+{
 	return;
 }
 
-typedef void* (*malloc_signature)(size_t size);
-typedef void (*free_signature)(void* ptr);
-
-static malloc_signature arcdps_malloc = nullptr;
-static free_signature arcdps_free = nullptr;
-
-void* malloc_wrapper(size_t size, void* user_data)
+static void* MallocWrapper(size_t pSize, void* pUserData)
 {
-	return arcdps_malloc(size);
+	return ARCDPS_MALLOC(pSize);
 }
 
-void free_wrapper(void* ptr, void* user_data)
+static void FreeWrapper(void* pPointer, void* pUserData)
 {
-	arcdps_free(ptr);
+	ARCDPS_FREE(pPointer);
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
-extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9 * id3dd9, void* junk, void* mallocfn, void* freefn) {
-	arcvers = arcversionstr;
-	SetContext(imguicontext);
+extern "C" __declspec(dllexport) void* get_init_addr(char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HANDLE pUnused2, MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
+{
+	ARCDPS_VERSION = pArcdpsVersionString;
+	SetContext(pImguiContext);
 
-	arcdps_malloc = (malloc_signature)mallocfn;
-	arcdps_free = (free_signature)freefn;
-
-	ImGui::SetAllocatorFunctions(malloc_wrapper, free_wrapper);
+	ARCDPS_MALLOC = pArcdpsMalloc;
+	ARCDPS_FREE = pArcdpsFree;
+	ImGui::SetAllocatorFunctions(MallocWrapper, FreeWrapper);
 
 	return mod_init;
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client exit */
-extern "C" __declspec(dllexport) void* get_release_addr() {
-	arcvers = 0;
+extern "C" __declspec(dllexport) void* get_release_addr()
+{
+	ARCDPS_VERSION = nullptr;
 	return mod_release;
 }
 
 /* initialize mod -- return table that arcdps will use for callbacks */
-arcdps_exports* mod_init() {
+arcdps_exports* mod_init()
+{
 #ifdef DEBUG
 	AllocConsole();
 	SetConsoleOutputCP(CP_UTF8);
@@ -98,7 +102,7 @@ arcdps_exports* mod_init() {
 	char buff[4096];
 	char* p = &buff[0];
 	p += _snprintf(p, 400, "==== mod_init ====\n");
-	p += _snprintf(p, 400, "arcdps: %s\n", arcvers);
+	p += _snprintf(p, 400, "arcdps: %s\n", ARCDPS_VERSION);
 
 	/* print */
 	DWORD written = 0;
@@ -106,21 +110,22 @@ arcdps_exports* mod_init() {
 	WriteConsoleA(hnd, &buff[0], (DWORD)(p - &buff[0]), &written, 0);
 #endif // DEBUG
 
-	memset(&arc_exports, 0, sizeof(arcdps_exports));
-	arc_exports.sig = 0x9c9b3c99;
-	arc_exports.imguivers = IMGUI_VERSION_NUM;
-	arc_exports.size = sizeof(arcdps_exports);
-	arc_exports.out_name = "healing_stats";
-	arc_exports.out_build = "0.2";
-	arc_exports.combat = mod_combat;
-	arc_exports.imgui = mod_imgui;
-	arc_exports.options_end = mod_options_end;
-	arc_exports.combat_local = mod_combat_local;
-	return &arc_exports;
+	memset(&ARC_EXPORTS, 0, sizeof(arcdps_exports));
+	ARC_EXPORTS.sig = 0x9c9b3c99;
+	ARC_EXPORTS.imguivers = IMGUI_VERSION_NUM;
+	ARC_EXPORTS.size = sizeof(arcdps_exports);
+	ARC_EXPORTS.out_name = "healing_stats";
+	ARC_EXPORTS.out_build = "0.2";
+	ARC_EXPORTS.combat = mod_combat;
+	ARC_EXPORTS.imgui = mod_imgui;
+	ARC_EXPORTS.options_end = mod_options_end;
+	ARC_EXPORTS.combat_local = mod_combat_local;
+	return &ARC_EXPORTS;
 }
 
 /* release mod -- return ignored */
-uintptr_t mod_release() {
+uintptr_t mod_release()
+{
 #ifdef DEBUG
 	FreeConsole();
 #endif
@@ -199,7 +204,7 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 	return 0;
 }
 
-static std::atomic<uint16_t> SELF_INSTANCE_ID = (uint16_t)66634;
+static std::atomic<uint16_t> SELF_INSTANCE_ID = (uint16_t)65534;
 /* combat callback -- may be called asynchronously. return ignored */
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname, uint64_t pId, uint64_t pRevision)
