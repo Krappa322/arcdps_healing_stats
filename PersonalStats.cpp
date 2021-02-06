@@ -46,14 +46,16 @@ void PersonalStats::AddAgent(uintptr_t pAgentId, const char* pAgentName, uint16_
 
 	if (emplaceResult.second == false)
 	{
-		if (strcmp(emplaceResult.first->second.Name.c_str(), pAgentName) != 0)
+		if ((strcmp(emplaceResult.first->second.Name.c_str(), pAgentName) != 0)
+		  || (emplaceResult.first->second.Subgroup != pAgentSubGroup)
+		  || (emplaceResult.first->second.IsMinion != pIsMinion))
 		{
 			LOG("Already exists - replacing existing entry %s %hu %s", emplaceResult.first->second.Name.c_str(), emplaceResult.first->second.Subgroup, BOOL_STR(emplaceResult.first->second.IsMinion));
-		}
 
-		emplaceResult.first->second.Name = pAgentName;
-		emplaceResult.first->second.Subgroup = pAgentSubGroup;
-		emplaceResult.first->second.IsMinion = pIsMinion;
+			emplaceResult.first->second.Name = pAgentName;
+			emplaceResult.first->second.Subgroup = pAgentSubGroup;
+			emplaceResult.first->second.IsMinion = pIsMinion;
+		}
 	}
 }
 
@@ -120,6 +122,17 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 			return;
 		}
 
+		// Some agents don't get agent register or agent entered combat events. For these we have to insert them
+		// inline. We assume they are outside the squad and non-minions (agents in squad and minions whose master is in
+		// squad will have combat entered events that let us determine their subgroup and minion status).
+		auto [_unused, insertedAgentTable] = myStats.Agents.emplace(std::piecewise_construct,
+			std::forward_as_tuple(pDestinationAgent->id),
+			std::forward_as_tuple(pDestinationAgent->name, static_cast<uint16_t>(0), false));
+		if (insertedAgentTable == true)
+		{
+			LOG("Implicitly added agent %llu %s(%llu)", pDestinationAgent->id, pDestinationAgent->name, utf8_strlen(pDestinationAgent->name));
+		}
+
 		// Attribute the heal to skill (we don't care if insertion happened or not, behavior is the same)
 		auto [skill, insertedSkill] = myStats.SkillsHealing.emplace(std::piecewise_construct,
 			std::forward_as_tuple(pEvent->skillid),
@@ -135,7 +148,7 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		}
 	}
 
-	//LOG("Registered heal event size %i from %s:%u(%hu) to %s:%llu(%hu)", healedAmount, pSkillname, pEvent->skillid, pSourceAgent->team, pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->team);
+	LOG("Registered heal event size %i from %s:%u(%hu) to %s:%llu(%hu)", healedAmount, pSkillname, pEvent->skillid, pSourceAgent->team, pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->team);
 }
 
 HealingStats PersonalStats::GetGlobalState()
