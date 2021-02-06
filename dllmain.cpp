@@ -29,6 +29,9 @@ uintptr_t mod_options_end();
 uintptr_t mod_combat(cbtevent* ev, ag* src, ag* dst, char* skillname, uint64_t id, uint64_t revision);
 uintptr_t mod_combat_local(cbtevent* ev, ag* src, ag* dst, char* skillname, uint64_t id, uint64_t revision);
 
+std::mutex HEAL_TABLE_OPTIONS_MUTEX;
+static HealTableOptions HEAL_TABLE_OPTIONS;
+
 /* dll main -- winapi */
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD ulReasonForCall, LPVOID lpReserved) {
 	switch (ulReasonForCall) {
@@ -82,6 +85,11 @@ arcdps_exports* mod_init() {
 	WriteConsoleA(hnd, &buff[0], (DWORD)(p - &buff[0]), &written, 0);
 #endif // DEBUG
 
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		ReadIni(HEAL_TABLE_OPTIONS);
+	}
+
 	memset(&arc_exports, 0, sizeof(arcdps_exports));
 	arc_exports.sig = 0x9c9b3c99;
 	arc_exports.size = sizeof(arcdps_exports);
@@ -100,23 +108,36 @@ uintptr_t mod_release() {
 	FreeConsole();
 #endif
 
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		WriteIni(HEAL_TABLE_OPTIONS);
+	}
+
 	return 0;
 }
 
-uintptr_t mod_imgui(uint32_t pNotCharselOrLoading)
+uintptr_t mod_imgui(uint32_t pNotCharSelOrLoading)
 {
-	if (pNotCharselOrLoading == false)
+	if (pNotCharSelOrLoading == false)
 	{
 		return false;
 	}
 
-	Display_GUI();
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		Display_GUI(HEAL_TABLE_OPTIONS);
+	}
+
 	return 0;
 }
 
 uintptr_t mod_options_end()
 {
-	Display_ArcDpsOptions();
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		Display_ArcDpsOptions(HEAL_TABLE_OPTIONS);
+	}
+
 	return 0;
 }
 
