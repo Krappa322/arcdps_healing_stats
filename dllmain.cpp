@@ -11,6 +11,7 @@
 
 #include <atomic>
 
+#include <assert.h>
 #include <d3d9helper.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -171,6 +172,7 @@ uintptr_t mod_options_end()
 	return 0;
 }
 
+static std::atomic<uint16_t> SELF_INSTANCE_ID = (uint16_t)0;
 /* combat callback -- may be called asynchronously. return ignored */
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname, uint64_t pId, uint64_t pRevision)
@@ -185,13 +187,33 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 
 		if (pSourceAgent->prof != 0)
 		{
+			LOG("Register agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
+				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
+				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
+
 			// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
 			PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
+
+			if (pDestinationAgent->self != 0)
+			{
+				assert(pDestinationAgent->id <= UINT16_MAX);
+
+				LOG("Storing self instance id %llu", pDestinationAgent->id);
+				SELF_INSTANCE_ID.store(static_cast<uint16_t>(pDestinationAgent->id), std::memory_order_relaxed);
+			}
 		}
 		else
 		{
-			// We could remove agents here but that would make tracking tricky (for example, minions could die during combat or
-			// someone could leave the instance).
+			LOG("Deregister agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
+				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
+				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
+
+			if (pDestinationAgent->id == SELF_INSTANCE_ID.load(std::memory_order_relaxed))
+			{
+				LOG("Exiting combat since self agent was deregistered");
+				PersonalStats::GlobalState.ExitedCombat(timeGetTime());
+				return 0;
+			}
 		}
 
 		return 0;
@@ -225,7 +247,6 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 	return 0;
 }
 
-static std::atomic<uint16_t> SELF_INSTANCE_ID = (uint16_t)65534;
 /* combat callback -- may be called asynchronously. return ignored */
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname, uint64_t pId, uint64_t pRevision)
@@ -236,24 +257,16 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 		return 0;
 	}
 
-	if (pSourceAgent->self == 1)
-	{
-		// Source is self - note down our instid
-		SELF_INSTANCE_ID.store(pEvent->src_instid, std::memory_order_relaxed);
-	}
-	else if (pEvent->src_master_instid != SELF_INSTANCE_ID.load(std::memory_order_relaxed))
-	{
-		// Source is someone else - not interesting
-		return 0;
-	}
-	else
-	{
-		//LOG("Source is our minion");
-	}
-
 	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
 	{
 		// Not a HP modifying event - not interesting
+		return 0;
+	}
+
+	if (pSourceAgent->self == 0 &&
+		pEvent->src_master_instid != SELF_INSTANCE_ID.load(std::memory_order_relaxed))
+	{
+		// Source is someone else - not interesting
 		return 0;
 	}
 
