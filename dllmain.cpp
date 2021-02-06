@@ -36,6 +36,9 @@ static FreeSignature ARCDPS_FREE = nullptr;
 static arcdps_exports ARC_EXPORTS;
 static char* ARCDPS_VERSION;
 
+std::mutex HEAL_TABLE_OPTIONS_MUTEX;
+static HealTableOptions HEAL_TABLE_OPTIONS;
+
 /* dll main -- winapi */
 BOOL APIENTRY DllMain(HANDLE pModule, DWORD pReasonForCall, LPVOID pReserved)
 {
@@ -110,6 +113,11 @@ arcdps_exports* mod_init()
 	WriteConsoleA(hnd, &buff[0], (DWORD)(p - &buff[0]), &written, 0);
 #endif // DEBUG
 
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		ReadIni(HEAL_TABLE_OPTIONS);
+	}
+
 	memset(&ARC_EXPORTS, 0, sizeof(arcdps_exports));
 	ARC_EXPORTS.sig = 0x9c9b3c99;
 	ARC_EXPORTS.imguivers = IMGUI_VERSION_NUM;
@@ -130,23 +138,36 @@ uintptr_t mod_release()
 	FreeConsole();
 #endif
 
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		WriteIni(HEAL_TABLE_OPTIONS);
+	}
+
 	return 0;
 }
 
-uintptr_t mod_imgui(uint32_t pNotCharselOrLoading)
+uintptr_t mod_imgui(uint32_t pNotCharSelOrLoading)
 {
-	if (pNotCharselOrLoading == false)
+	if (pNotCharSelOrLoading == false)
 	{
 		return false;
 	}
 
-	Display_GUI();
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		Display_GUI(HEAL_TABLE_OPTIONS);
+	}
+
 	return 0;
 }
 
 uintptr_t mod_options_end()
 {
-	Display_ArcDpsOptions();
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		Display_ArcDpsOptions(HEAL_TABLE_OPTIONS);
+	}
+
 	return 0;
 }
 
