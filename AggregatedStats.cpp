@@ -1,6 +1,7 @@
 #include "AggregatedStats.h"
 
 #include "Log.h"
+#include "Skills.h"
 #include "Utilities.h"
 
 #include <assert.h>
@@ -104,6 +105,9 @@ const AggregatedStatsVector& AggregatedStats::GetSkills()
 	myLongestSkillName = 0;
 	mySkills = std::make_unique<AggregatedStatsVector>();
 
+	uint64_t totalIndirectHealing = 0;
+	uint64_t totalIndirectTicks = 0;
+
 	for (const auto& [skillId, skill] : mySourceData.SkillsHealing)
 	{
 		uint64_t totalHealing = 0;
@@ -120,9 +124,33 @@ const AggregatedStatsVector& AggregatedStats::GetSkills()
 			ticks += agent.Ticks;
 		}
 
-		std::string skillName(skill.Name);
-		float perSecond = totalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
+		if (IsSkillIndirectHealing(skillId, skill.Name) == true)
+		{
+			totalIndirectHealing += totalHealing;
+			totalIndirectTicks += ticks;
 
+			LOG("Translating skill %hu %s to indirect healing", skillId, skill.Name);
+		}
+		else
+		{
+			float perSecond = totalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
+
+			std::string skillName(skill.Name);
+			uint32_t nameLength = utf8_strlen(skillName.c_str());
+			if (nameLength > myLongestSkillName)
+			{
+				myLongestSkillName = nameLength;
+			}
+
+			mySkills->emplace_back(std::move(skillName), std::move(perSecond));
+		}
+	}
+
+	if (totalIndirectHealing != 0 || totalIndirectTicks != 0)
+	{
+		float perSecond = totalIndirectHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
+
+		std::string skillName("Healing by Damage Dealt");
 		uint32_t nameLength = utf8_strlen(skillName.c_str());
 		if (nameLength > myLongestSkillName)
 		{

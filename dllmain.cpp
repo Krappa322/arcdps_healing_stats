@@ -6,6 +6,7 @@
 #include "GUI.h"
 #include "Log.h"
 #include "PersonalStats.h"
+#include "Skills.h"
 
 #include <atomic>
 
@@ -212,6 +213,24 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 			PersonalStats::GlobalState.ExitedCombat(pEvent->time);
 			return 0;
 		}
+	}
+
+	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
+	{
+		return 0;
+	}
+
+	if (pEvent->buff != 0 && pEvent->buff_dmg == 0)
+	{
+		// Buff application - not interesting
+		return 0;
+	}
+
+	// Event actually did something
+	if (pEvent->buff_dmg > 0 || pEvent->value > 0)
+	{
+		RegisterDamagingSkill(pEvent->skillid, pSkillname);
+		return 0;
 	}
 
 	return 0;

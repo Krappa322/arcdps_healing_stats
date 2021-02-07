@@ -171,6 +171,7 @@
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="PersonalStats.cpp" />
+    <ClCompile Include="Skills.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AggregatedStats.h" />
@@ -185,6 +186,7 @@
     <ClInclude Include="Options.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="PersonalStats.h" />
+    <ClInclude Include="Skills.h" />
     <ClInclude Include="Utilities.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
