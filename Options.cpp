@@ -46,6 +46,12 @@ void WriteIni(const HealTableOptions& pOptions)
 		LOG("SetValue exclude_unmapped_agents failed with %i", error);
 	}
 
+	error = healtable_ini.SetValue("settings", "debug_mode", BOOL_TO_INTSTRING(pOptions.DebugMode));
+	if (error < 0)
+	{
+		LOG("SetValue debug_mode failed with %i", error);
+	}
+
 	error = healtable_ini.SaveFile("addons\\arcdps\\arcdps_healing_stats.ini");
 	if (error < 0)
 	{
@@ -73,6 +79,9 @@ void ReadIni(HealTableOptions& pOptions)
 	stringValue = healtable_ini.GetValue("settings", "exclude_unmapped_agents", "1");
 	pOptions.ExcludeUnmappedAgents = (atoi(stringValue) != 0);
 
-	LOG("Read options from ini file: show_heal_window=%s sort_order_choice=%i group_filter_choice=%i exclude_unmapped_agents=%s",
-		BOOL_STR(pOptions.ShowHealWindow), pOptions.SortOrderChoice, pOptions.GroupFilterChoice, BOOL_STR(pOptions.ExcludeUnmappedAgents));
+	stringValue = healtable_ini.GetValue("settings", "debug_mode", "0");
+	pOptions.DebugMode = (atoi(stringValue) != 0);
+
+	LOG("Read options from ini file: show_heal_window=%s sort_order_choice=%i group_filter_choice=%i exclude_unmapped_agents=%s debug_mode=%s",
+		BOOL_STR(pOptions.ShowHealWindow), pOptions.SortOrderChoice, pOptions.GroupFilterChoice, BOOL_STR(pOptions.ExcludeUnmappedAgents), BOOL_STR(pOptions.DebugMode));
 }

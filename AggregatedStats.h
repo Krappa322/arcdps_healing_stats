@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Options.h"
 #include "PersonalStats.h"
 
 #include <stdint.h>
@@ -41,7 +42,7 @@ using TotalHealingStats = std::array<float, static_cast<size_t>(GroupFilter::Max
 class AggregatedStats
 {
 public:
-	AggregatedStats(HealingStats&& pSourceData, SortOrder pSortOrder, GroupFilter pGroupFilter, bool pExcludeUnknownAgents);
+	AggregatedStats(HealingStats&& pSourceData, const HealTableOptions& pOptions);
 
 	const AggregatedStatsVector& GetAgents();
 	uint32_t GetLongestAgentName();
@@ -62,9 +63,7 @@ private:
 
 	HealingStats mySourceData;
 
-	SortOrder mySortOrder;
-	GroupFilter myGroupFilter;
-	bool myExcludeUnknownAgents;
+	HealTableOptions myOptions;
 
 	std::unique_ptr<std::map<uintptr_t, AgentStats>> myAllAgents;
 
