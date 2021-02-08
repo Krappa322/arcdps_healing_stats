@@ -124,7 +124,7 @@ const AggregatedStatsVector& AggregatedStats::GetSkills()
 			ticks += agent.Ticks;
 		}
 
-		if (IsSkillIndirectHealing(skillId, skill.Name) == true)
+		if (SkillTable::GlobalState.IsSkillIndirectHealing(skillId, skill.Name) == true)
 		{
 			totalIndirectHealing += totalHealing;
 			totalIndirectTicks += ticks;

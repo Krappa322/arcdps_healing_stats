@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 
+#include <atomic>
+#include <map>
+
 /*
  * The reason these functions exist is to distinguish between direct healing and indirect healing. Some skills and
  * traits that do "percentage of damage dealt" based healing, for example Blood Reckoning and Invigorating Precision,
@@ -20,5 +23,24 @@
  * IsSkillIndirectHealing is called to check if a skill only does damage normally (and its presence is thus caused by
  *   indirect healing)
 */
-void RegisterDamagingSkill(uint32_t pSkillId, const char* pSkillName);
-bool IsSkillIndirectHealing(uint32_t pSkillId, const char* pSkillName);
+class SkillTable
+{
+public:
+    SkillTable();
+
+	void RegisterDamagingSkill(uint32_t pSkillId, const char* pSkillName);
+	bool IsSkillIndirectHealing(uint32_t pSkillId, const char* pSkillName);
+
+    // Returns the name for a given skill. The vast majority of skills will use the default skill name provided by
+    // ArcDPS; a select few skills we override the name for, either because it's not mapped, it's incorrect, or because
+    // the name is shared with another skill id (for example, Signet of Ether has two components to it - active and
+    // passive).
+    const char* GetSkillName(uint32_t pSkillId, const char* pDefaultSkillName);
+
+    static SkillTable GlobalState;
+
+private:
+	std::atomic<uint64_t> myDamagingSkills[(UINT16_MAX + 1) / 8];
+	uint64_t myHybridSkills[(UINT16_MAX + 1) / 8];
+	std::map<uint32_t, const char*> mySkillNameOverrides;
+};
