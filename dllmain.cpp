@@ -301,6 +301,6 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 		return 0;
 	}
 
-	PersonalStats::GlobalState.HealingEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname);
+	PersonalStats::GlobalState.HealingEvent(pEvent, pDestinationAgent->id, pDestinationAgent->name, pSkillname);
 	return 0;
 }

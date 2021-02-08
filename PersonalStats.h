@@ -49,7 +49,7 @@ public:
 
 	void EnteredCombat(uint64_t pTime, uint16_t pSubGroup);
 	void ExitedCombat(uint64_t pTime);
-	void HealingEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname);
+	void HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, char* pSkillname); // pDestinationAgentName can be nullptr
 
 
 	static PersonalStats GlobalState;
