@@ -40,14 +40,19 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiSetCond_FirstUseEver);
 		ImGui::Begin("Heal Table", &pHealingOptions.ShowHealWindow);
 
-		const char* const sortOrderItems[] = {"Alphabetical Ascending", "Alphabetical Descending", "Heal Per Second Ascending", "Heal Per Second Descending"};
-		static_assert((sizeof(sortOrderItems) / sizeof(sortOrderItems[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
+		if (ImGui::BeginPopupContextItem("Options") == true || ImGui::BeginPopupContextWindow("Options") == true)
+		{
+			const char* const sortOrderItems[] = { "Alphabetical Ascending", "Alphabetical Descending", "Heal Per Second Ascending", "Heal Per Second Descending" };
+			static_assert((sizeof(sortOrderItems) / sizeof(sortOrderItems[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
 
-		ImGui::Combo("Sort Order", &pHealingOptions.SortOrderChoice, sortOrderItems, static_cast<int>(SortOrder::Max));
+			ImGui::Combo("Sort Order", &pHealingOptions.SortOrderChoice, sortOrderItems, static_cast<int>(SortOrder::Max));
 
-		ImGui::Combo("Group Filter", &pHealingOptions.GroupFilterChoice, GROUP_FILTER_STRING, static_cast<int>(GroupFilter::Max));
+			ImGui::Combo("Group Filter", &pHealingOptions.GroupFilterChoice, GROUP_FILTER_STRING, static_cast<int>(GroupFilter::Max));
 
-		ImGui::Checkbox("Exclude unmapped agents", &pHealingOptions.ExcludeUnmappedAgents);
+			ImGui::Checkbox("Exclude unmapped agents", &pHealingOptions.ExcludeUnmappedAgents);
+
+			ImGui::EndPopup();
+		}
 
 		if (ImGui::CollapsingHeader("Totals") == true)
 		{
