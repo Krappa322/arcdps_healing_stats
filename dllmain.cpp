@@ -30,8 +30,8 @@ arcdps_exports* mod_init();
 uintptr_t mod_release();
 uintptr_t mod_imgui(uint32_t pNotCharselOrLoading);
 uintptr_t mod_options_end();
-uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname, uint64_t pId, uint64_t pRevision);
-uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname, uint64_t pId, uint64_t pRevision);
+uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
+uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 
 static MallocSignature ARCDPS_MALLOC = nullptr;
 static FreeSignature ARCDPS_FREE = nullptr;
@@ -176,7 +176,7 @@ uintptr_t mod_options_end()
 static std::atomic<uint16_t> SELF_INSTANCE_ID = (uint16_t)0;
 /* combat callback -- may be called asynchronously. return ignored */
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
-uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname, uint64_t pId, uint64_t pRevision)
+uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
 	if (pEvent == nullptr)
 	{
@@ -259,7 +259,7 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 	// Event actually did something
 	if (pEvent->buff_dmg > 0 || pEvent->value > 0)
 	{
-		RegisterDamagingSkill(pEvent->skillid, pSkillname);
+		SkillTable::GlobalState.RegisterDamagingSkill(pEvent->skillid, pSkillname);
 		return 0;
 	}
 
@@ -268,7 +268,7 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 
 /* combat callback -- may be called asynchronously. return ignored */
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
-uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname, uint64_t pId, uint64_t pRevision)
+uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
 	if (pEvent == nullptr)
 	{
@@ -301,6 +301,6 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 		return 0;
 	}
 
-	PersonalStats::GlobalState.HealingEvent(pEvent, pDestinationAgent->id, pDestinationAgent->name, pSkillname);
+	PersonalStats::GlobalState.HealingEvent(pEvent, pDestinationAgent->id, pDestinationAgent->name, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname));
 	return 0;
 }

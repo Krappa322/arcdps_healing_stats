@@ -104,7 +104,7 @@ void PersonalStats::ExitedCombat(uint64_t pTime)
 	LOG("Spent %llu ms in combat", myStats.TimeInCombat);
 }
 
-void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, char* pSkillname)
+void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, const char* pSkillname)
 {
 	uint32_t healedAmount = pEvent->value;
 	if (healedAmount == 0)
