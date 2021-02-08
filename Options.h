@@ -6,6 +6,7 @@ struct HealTableOptions
 	int SortOrderChoice;
 	int GroupFilterChoice;
 	bool ExcludeUnmappedAgents;
+	bool DebugMode;
 };
 
 void WriteIni(const HealTableOptions& pOptions);

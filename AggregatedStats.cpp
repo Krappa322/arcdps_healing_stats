@@ -16,19 +16,17 @@ AggregatedStatsEntry::AggregatedStatsEntry(std::string&& pName, float pPerSecond
 {
 }
 
-AggregatedStats::AggregatedStats(HealingStats&& pSourceData, SortOrder pSortOrder, GroupFilter pGroupFilter, bool pExcludeUnknownAgents)
+AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealTableOptions& pOptions)
 	: mySourceData(std::move(pSourceData))
-	, mySortOrder(pSortOrder)
-	, myGroupFilter(pGroupFilter)
-	, myExcludeUnknownAgents(pExcludeUnknownAgents)
+	, myOptions(pOptions)
 	, myAllAgents(nullptr)
 	, myFilteredAgents(nullptr)
 	, myLongestAgentName(0)
 	, mySkills(nullptr)
 	, myLongestSkillName(0)
 {
-	assert(mySortOrder < SortOrder::Max);
-	assert(myGroupFilter < GroupFilter::Max);
+	assert(static_cast<SortOrder>(myOptions.SortOrderChoice) < SortOrder::Max);
+	assert(static_cast<GroupFilter>(myOptions.GroupFilterChoice) < GroupFilter::Max);
 
 	if (mySourceData.TimeInCombat == 0)
 	{
@@ -58,23 +56,40 @@ const AggregatedStatsVector& AggregatedStats::GetAgents()
 			continue; // Exclude agent
 		}
 
-		if (mapAgent != mySourceData.Agents.end())
+		if (myOptions.DebugMode == false)
 		{
-			agentName = mapAgent->second.Name;
+			if (mapAgent != mySourceData.Agents.end())
+			{
+				agentName = mapAgent->second.Name;
+			}
+			else
+			{
+				LOG("Couldn't find a name for agent %llu", agentId);
+				agentName = std::to_string(agentId);
+			}
 		}
 		else
 		{
-			LOG("Couldn't find a name for agent %llu", agentId);
-			agentName = std::to_string(agentId);
-		}
+			char buffer[1024];
+			if (mapAgent != mySourceData.Agents.end())
+			{
+				snprintf(buffer, sizeof(buffer), "%llu ; %u ; %u ; %s", agentId, mapAgent->second.Subgroup, mapAgent->second.IsMinion, mapAgent->second.Name.c_str());
+			}
+			else
+			{
+				snprintf(buffer, sizeof(buffer), "%llu ; (UNMAPPED)", agentId);
+			}
 
-		float perSecond = agent.TotalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
+			agentName = buffer;
+		}
 
 		uint32_t nameLength = utf8_strlen(agentName.c_str());
 		if (nameLength > myLongestAgentName)
 		{
 			myLongestAgentName = nameLength;
 		}
+
+		float perSecond = agent.TotalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
 
 		myFilteredAgents->emplace_back(std::move(agentName), std::move(perSecond));
 	}
@@ -124,26 +139,42 @@ const AggregatedStatsVector& AggregatedStats::GetSkills()
 			ticks += agent.Ticks;
 		}
 
+		bool isIndirectHealing = false;
 		if (SkillTable::GlobalState.IsSkillIndirectHealing(skillId, skill.Name) == true)
 		{
 			totalIndirectHealing += totalHealing;
 			totalIndirectTicks += ticks;
 
 			LOG("Translating skill %hu %s to indirect healing", skillId, skill.Name);
+			isIndirectHealing = true;
+
+			if (myOptions.DebugMode == false)
+			{
+				continue;
+			}
+		}
+
+		float perSecond = totalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
+
+		std::string skillName;
+		if (myOptions.DebugMode == false)
+		{
+			skillName = skill.Name;
 		}
 		else
 		{
-			float perSecond = totalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
-
-			std::string skillName(skill.Name);
-			uint32_t nameLength = utf8_strlen(skillName.c_str());
-			if (nameLength > myLongestSkillName)
-			{
-				myLongestSkillName = nameLength;
-			}
-
-			mySkills->emplace_back(std::move(skillName), std::move(perSecond));
+			char buffer[1024];
+			snprintf(buffer, sizeof(buffer), "%s%u ; %s", isIndirectHealing ? "(INDIRECT) ; " : "", skillId, skill.Name);
+			skillName = buffer;
 		}
+
+		uint32_t nameLength = utf8_strlen(skillName.c_str());
+		if (nameLength > myLongestSkillName)
+		{
+			myLongestSkillName = nameLength;
+		}
+
+		mySkills->emplace_back(std::move(skillName), std::move(perSecond));
 	}
 
 	if (totalIndirectHealing != 0 || totalIndirectTicks != 0)
@@ -237,7 +268,7 @@ const std::map<uintptr_t, AgentStats>& AggregatedStats::GetAllAgents()
 
 void AggregatedStats::Sort(AggregatedStatsVector& pVector)
 {
-	switch (mySortOrder)
+	switch (static_cast<SortOrder>(myOptions.SortOrderChoice))
 	{
 	case SortOrder::AscendingAlphabetical:
 		std::sort(pVector.begin(), pVector.end(),
@@ -279,19 +310,19 @@ void AggregatedStats::Sort(AggregatedStatsVector& pVector)
 bool AggregatedStats::Filter(uintptr_t pAgentId) const
 {
 	std::map<uintptr_t, HealedAgent>::const_iterator agent = mySourceData.Agents.find(pAgentId);
-	return FilterInternal(agent, myGroupFilter);
+	return FilterInternal(agent, static_cast<GroupFilter>(myOptions.GroupFilterChoice));
 }
 
 bool AggregatedStats::Filter(std::map<uintptr_t, HealedAgent>::const_iterator& pAgent) const
 {
-	return FilterInternal(pAgent, myGroupFilter);
+	return FilterInternal(pAgent, static_cast<GroupFilter>(myOptions.GroupFilterChoice));
 }
 
 bool AggregatedStats::FilterInternal(std::map<uintptr_t, HealedAgent>::const_iterator& pAgent, GroupFilter pFilter) const
 {
 	if (pAgent == mySourceData.Agents.end())
 	{
-		if (myExcludeUnknownAgents == true)
+		if (myOptions.ExcludeUnmappedAgents == true)
 		{
 			return true;
 		}

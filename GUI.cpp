@@ -31,7 +31,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		//LOG("Fetching new aggregated stats");
 
 		HealingStats stats = PersonalStats::GetGlobalState();
-		currentAggregatedStats = std::make_unique<AggregatedStats>(std::move(stats), static_cast<SortOrder>(pHealingOptions.SortOrderChoice), static_cast<GroupFilter>(pHealingOptions.GroupFilterChoice), pHealingOptions.ExcludeUnmappedAgents);
+		currentAggregatedStats = std::make_unique<AggregatedStats>(std::move(stats), pHealingOptions);
 		lastAggregatedTime = curTime;
 	}
 
@@ -50,6 +50,8 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			ImGui::Combo("Group Filter", &pHealingOptions.GroupFilterChoice, GROUP_FILTER_STRING, static_cast<int>(GroupFilter::Max));
 
 			ImGui::Checkbox("Exclude unmapped agents", &pHealingOptions.ExcludeUnmappedAgents);
+
+			ImGui::Checkbox("Debug Mode", &pHealingOptions.DebugMode);
 
 			ImGui::EndPopup();
 		}
