@@ -104,7 +104,7 @@ void PersonalStats::ExitedCombat(uint64_t pTime)
 	LOG("Spent %llu ms in combat", myStats.TimeInCombat);
 }
 
-void PersonalStats::HealingEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, char* pSkillname)
+void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, char* pSkillname)
 {
 	uint32_t healedAmount = pEvent->value;
 	if (healedAmount == 0)
@@ -125,12 +125,15 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		// Some agents don't get agent register or agent entered combat events. For these we have to insert them
 		// inline. We assume they are outside the squad and non-minions (agents in squad and minions whose master is in
 		// squad will have combat entered events that let us determine their subgroup and minion status).
-		auto [_unused, insertedAgentTable] = myStats.Agents.emplace(std::piecewise_construct,
-			std::forward_as_tuple(pDestinationAgent->id),
-			std::forward_as_tuple(pDestinationAgent->name, static_cast<uint16_t>(0), false));
-		if (insertedAgentTable == true)
+		if (pDestinationAgentName != nullptr)
 		{
-			LOG("Implicitly added agent %llu %s(%llu)", pDestinationAgent->id, pDestinationAgent->name, utf8_strlen(pDestinationAgent->name));
+			auto [_unused, insertedAgentTable] = myStats.Agents.emplace(std::piecewise_construct,
+				std::forward_as_tuple(pDestinationAgentId),
+				std::forward_as_tuple(pDestinationAgentName, static_cast<uint16_t>(0), false));
+			if (insertedAgentTable == true)
+			{
+				LOG("Implicitly added agent %llu %s(%llu)", pDestinationAgentId, pDestinationAgentName, utf8_strlen(pDestinationAgentName));
+			}
 		}
 
 		// Attribute the heal to skill (we don't care if insertion happened or not, behavior is the same)
@@ -139,7 +142,7 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 			std::forward_as_tuple(pSkillname));
 
 		auto [agent, insertedAgent] = skill->second.AgentsHealing.emplace(std::piecewise_construct,
-			std::forward_as_tuple(pDestinationAgent->id),
+			std::forward_as_tuple(pDestinationAgentId),
 			std::forward_as_tuple(healedAmount, 1));
 		if (insertedAgent == false) // Didn't insert new entry (otherwise it gets initialized with healedAmount)
 		{
@@ -148,7 +151,7 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		}
 	}
 
-	LOG("Registered heal event size %i from %s:%u(%hu) to %s:%llu(%hu)", healedAmount, pSkillname, pEvent->skillid, pSourceAgent->team, pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->team);
+	LOG("Registered heal event size %i from %s:%u to %s:%llu", healedAmount, pSkillname, pEvent->skillid, pDestinationAgentName, pDestinationAgentId);
 }
 
 HealingStats PersonalStats::GetGlobalState()
