@@ -45,33 +45,63 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			const char* const sortOrderItems[] = { "Alphabetical Ascending", "Alphabetical Descending", "Heal Per Second Ascending", "Heal Per Second Descending" };
 			static_assert((sizeof(sortOrderItems) / sizeof(sortOrderItems[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
 
+			ImGui::Checkbox("Show Totals", &pHealingOptions.ShowTotals);
+
+			ImGui::Checkbox("Show Agents", &pHealingOptions.ShowAgents);
+
+			ImGui::Checkbox("Show Skills", &pHealingOptions.ShowSkills);
+
+			ImGui::Spacing();
+
 			ImGui::Combo("Sort Order", &pHealingOptions.SortOrderChoice, sortOrderItems, static_cast<int>(SortOrder::Max));
 
 			ImGui::Combo("Group Filter", &pHealingOptions.GroupFilterChoice, GROUP_FILTER_STRING, static_cast<int>(GroupFilter::Max));
 
 			ImGui::Checkbox("Exclude unmapped agents", &pHealingOptions.ExcludeUnmappedAgents);
 
+			ImGui::Spacing();
+
 			ImGui::Checkbox("Debug Mode", &pHealingOptions.DebugMode);
 
 			ImGui::EndPopup();
 		}
 
-		if (ImGui::CollapsingHeader("Totals") == true)
+		uint32_t longestName = 0;
+		if (pHealingOptions.ShowTotals == true && MAX_GROUP_FILTER_NAME > longestName)
 		{
+			longestName = MAX_GROUP_FILTER_NAME;
+		}
+		if (pHealingOptions.ShowAgents == true && currentAggregatedStats->GetLongestAgentName() > longestName)
+		{
+			longestName = currentAggregatedStats->GetLongestAgentName();
+		}
+		if (pHealingOptions.ShowSkills == true && currentAggregatedStats->GetLongestSkillName() > longestName)
+		{
+			longestName = currentAggregatedStats->GetLongestSkillName();
+		}
+
+		if (pHealingOptions.ShowTotals == true)
+		{
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f - ImGui::GetStyle().ItemSpacing.x);
+			ImGui::TextColored(ImColor(0, 209, 165), "Totals");
+
 			TotalHealingStats stats = currentAggregatedStats->GetTotalHealing();
 			for (size_t i = 0; i < stats.size(); i++)
 			{
-				ImGui::Text("%*s %.2f/s", MAX_GROUP_FILTER_NAME, GROUP_FILTER_STRING[i], stats[i]);
+				uint32_t nameLength = utf8_strlen(GROUP_FILTER_STRING[i]);
+				assert(nameLength <= longestName);
+
+				ImGui::Text("%*s%s %.2f/s", longestName - nameLength, "", GROUP_FILTER_STRING[i], stats[i]);
 			}
 			ImGui::Spacing();
 		}
 
-		if (ImGui::CollapsingHeader("Agents") == true)
+		if (pHealingOptions.ShowAgents == true)
 		{
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f - ImGui::GetStyle().ItemSpacing.x);
+			ImGui::TextColored(ImColor(0, 209, 165), "Agents");
 			for (const auto& agent : currentAggregatedStats->GetAgents())
 			{
-				uint32_t longestName = currentAggregatedStats->GetLongestAgentName();
-
 				uint32_t nameLength = utf8_strlen(agent.Name.c_str());
 				assert(nameLength <= longestName);
 
@@ -80,12 +110,12 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			ImGui::Spacing();
 		}
 
-		if (ImGui::CollapsingHeader("Skills") == true)
+		if (pHealingOptions.ShowSkills == true)
 		{
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f - ImGui::GetStyle().ItemSpacing.x);
+			ImGui::TextColored(ImColor(0, 209, 165), "Skills");
 			for (const auto& skill : currentAggregatedStats->GetSkills())
 			{
-				uint32_t longestName = currentAggregatedStats->GetLongestSkillName();
-
 				uint32_t nameLength = utf8_strlen(skill.Name.c_str());
 				assert(nameLength <= longestName);
 
