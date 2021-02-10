@@ -25,6 +25,8 @@ void SetContext(void* pImGuiContext)
 
 void Display_GUI(HealTableOptions& pHealingOptions)
 {
+	char buffer[1024];
+
 	time_t curTime = ::time(0);
 	if (lastAggregatedTime < curTime)
 	{
@@ -38,7 +40,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 	if (pHealingOptions.ShowHealWindow == true)
 	{
 		ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiSetCond_FirstUseEver);
-		ImGui::Begin("Heal Table", &pHealingOptions.ShowHealWindow);
+		ImGui::Begin("Heal Table", &pHealingOptions.ShowHealWindow, ImGuiWindowFlags_NoScrollbar);
 
 		if (ImGui::BeginPopupContextItem("Options") == true || ImGui::BeginPopupContextWindow("Options") == true)
 		{
@@ -66,20 +68,6 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			ImGui::EndPopup();
 		}
 
-		uint32_t longestName = 0;
-		if (pHealingOptions.ShowTotals == true && MAX_GROUP_FILTER_NAME > longestName)
-		{
-			longestName = MAX_GROUP_FILTER_NAME;
-		}
-		if (pHealingOptions.ShowAgents == true && currentAggregatedStats->GetLongestAgentName() > longestName)
-		{
-			longestName = currentAggregatedStats->GetLongestAgentName();
-		}
-		if (pHealingOptions.ShowSkills == true && currentAggregatedStats->GetLongestSkillName() > longestName)
-		{
-			longestName = currentAggregatedStats->GetLongestSkillName();
-		}
-
 		if (pHealingOptions.ShowTotals == true)
 		{
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f - ImGui::GetStyle().ItemSpacing.x);
@@ -88,10 +76,11 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			TotalHealingStats stats = currentAggregatedStats->GetTotalHealing();
 			for (size_t i = 0; i < stats.size(); i++)
 			{
-				uint32_t nameLength = utf8_strlen(GROUP_FILTER_STRING[i]);
-				assert(nameLength <= longestName);
+				ImGui::Text("%s", GROUP_FILTER_STRING[i]);
 
-				ImGui::Text("%*s%s %.2f/s", longestName - nameLength, "", GROUP_FILTER_STRING[i], stats[i]);
+				snprintf(buffer, sizeof(buffer), "%.2f/s", stats[i]);
+				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() - ImGui::CalcTextSize(buffer).x - ImGui::GetStyle().ItemSpacing.x * 2);
+				ImGui::Text("%s", buffer);
 			}
 			ImGui::Spacing();
 		}
@@ -100,12 +89,14 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		{
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f - ImGui::GetStyle().ItemSpacing.x);
 			ImGui::TextColored(ImColor(0, 209, 165), "Agents");
+
 			for (const auto& agent : currentAggregatedStats->GetAgents())
 			{
-				uint32_t nameLength = utf8_strlen(agent.Name.c_str());
-				assert(nameLength <= longestName);
+				ImGui::Text("%s", agent.Name.c_str());
 
-				ImGui::Text("%*s%s %.2f/s", longestName - nameLength, "", agent.Name.c_str(), agent.PerSecond);
+				snprintf(buffer, sizeof(buffer), "%.2f/s", agent.PerSecond);
+				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() - ImGui::CalcTextSize(buffer).x - ImGui::GetStyle().ItemSpacing.x * 2);
+				ImGui::Text("%s", buffer);
 			}
 			ImGui::Spacing();
 		}
@@ -114,12 +105,14 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		{
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f - ImGui::GetStyle().ItemSpacing.x);
 			ImGui::TextColored(ImColor(0, 209, 165), "Skills");
+
 			for (const auto& skill : currentAggregatedStats->GetSkills())
 			{
-				uint32_t nameLength = utf8_strlen(skill.Name.c_str());
-				assert(nameLength <= longestName);
+				ImGui::Text("%s", skill.Name.c_str());
 
-				ImGui::Text("%*s%s %.2f/s", longestName - nameLength, "", skill.Name.c_str(), skill.PerSecond);
+				snprintf(buffer, sizeof(buffer), "%.2f/s", skill.PerSecond);
+				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() - ImGui::CalcTextSize(buffer).x - ImGui::GetStyle().ItemSpacing.x * 2);
+				ImGui::Text("%s", buffer);
 			}
 			ImGui::Spacing();
 		}
