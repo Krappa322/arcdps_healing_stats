@@ -26,6 +26,24 @@ void WriteIni(const HealTableOptions& pOptions)
 		LOG("SetValue show_heal_window failed with %i", error);
 	}
 
+	error = healtable_ini.SetValue("settings", "show_totals", BOOL_TO_INTSTRING(pOptions.ShowTotals));
+	if (error < 0)
+	{
+		LOG("SetValue show_totals failed with %i", error);
+	}
+
+	error = healtable_ini.SetValue("settings", "show_agents", BOOL_TO_INTSTRING(pOptions.ShowAgents));
+	if (error < 0)
+	{
+		LOG("SetValue show_agents failed with %i", error);
+	}
+
+	error = healtable_ini.SetValue("settings", "show_skills", BOOL_TO_INTSTRING(pOptions.ShowSkills));
+	if (error < 0)
+	{
+		LOG("SetValue show_skills failed with %i", error);
+	}
+
 	snprintf(buffer, sizeof(buffer), "%i", pOptions.SortOrderChoice);
 	error = healtable_ini.SetValue("settings", "sort_order_choice", buffer);
 	if (error < 0)
@@ -69,6 +87,15 @@ void ReadIni(HealTableOptions& pOptions)
 
 	const char* stringValue = healtable_ini.GetValue("settings", "show_heal_window", "0");
 	pOptions.ShowHealWindow = (atoi(stringValue) != 0);
+
+	stringValue = healtable_ini.GetValue("settings", "show_totals", "1");
+	pOptions.ShowTotals = (atoi(stringValue) != 0);
+
+	stringValue = healtable_ini.GetValue("settings", "show_agents", "1");
+	pOptions.ShowAgents = (atoi(stringValue) != 0);
+
+	stringValue = healtable_ini.GetValue("settings", "show_skills", "1");
+	pOptions.ShowSkills = (atoi(stringValue) != 0);
 
 	stringValue = healtable_ini.GetValue("settings", "sort_order_choice", "3");
 	pOptions.SortOrderChoice = atoi(stringValue);
