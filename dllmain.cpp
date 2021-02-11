@@ -136,14 +136,14 @@ arcdps_exports* mod_init()
 /* release mod -- return ignored */
 uintptr_t mod_release()
 {
-#ifdef DEBUG
-	FreeConsole();
-#endif
-
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 		WriteIni(HEAL_TABLE_OPTIONS);
 	}
+
+#ifdef DEBUG
+	FreeConsole();
+#endif
 
 	return 0;
 }
