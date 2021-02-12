@@ -6,16 +6,6 @@ This includes outgoing healing per agent and per skill, as well as filtering to 
 # Usage
 Toggle "Heal Table" in ArcDPS options
 
-The **Sort Order** option changes how agents and skills are sorted under the *Agents* and *Skills* headers. Currently the two supported options are by name alphabetically and by amount of healing. Both sort options can be done ascending or descending.
-
-The **Group Filter** option filters which agents should be displayed. This also filters skills accordingly to only show healing applied to the filtered agents. The possible options are:
-- <ins>Group</ins>: Agents in the same subgroup as yourself
-- <ins>Squad</ins>: Agents in your squad
-- <ins>All (Excluding minions)</ins>: All healing, not counting minions (minions in this case means all player spawned agents, such as pets, spirits, clones etc.)
-- <ins>All (Including minions)</ins>: All healing
-
-The **Exclude unmapped agents** option will, when checked, filter out agents whose name is unknown. When not checked, you might see agent names which are just numbers (indicating that the agent is not mapped). Since their subgroup is unknown, these agents will be attributed to all group filters. This option will therefore also affect all the totals shown under the *Totals* header.
-
 # Installation
 Requires [ArcDPS](https://www.deltaconnected.com/arcdps/).
 
