@@ -58,6 +58,13 @@ void WriteIni(const HealTableOptions& pOptions)
 		LOG("SetValue group_filter_choice failed with %i", error);
 	}
 
+	snprintf(buffer, sizeof(buffer), "%i", pOptions.HealTableHotkey);
+	error = healtable_ini.SetValue("settings", "heal_table_hotkey", buffer);
+	if (error < 0)
+	{
+		LOG("SetValue heal_table_hotkey failed with %i", error);
+	}
+
 	error = healtable_ini.SetValue("settings", "exclude_unmapped_agents", BOOL_TO_INTSTRING(pOptions.ExcludeUnmappedAgents));
 	if (error < 0)
 	{
@@ -103,12 +110,15 @@ void ReadIni(HealTableOptions& pOptions)
 	stringValue = healtable_ini.GetValue("settings", "group_filter_choice", "1");
 	pOptions.GroupFilterChoice = atoi(stringValue);
 
+	stringValue = healtable_ini.GetValue("settings", "heal_table_hotkey", "0");
+	pOptions.HealTableHotkey = atoi(stringValue);
+
 	stringValue = healtable_ini.GetValue("settings", "exclude_unmapped_agents", "1");
 	pOptions.ExcludeUnmappedAgents = (atoi(stringValue) != 0);
 
 	stringValue = healtable_ini.GetValue("settings", "debug_mode", "0");
 	pOptions.DebugMode = (atoi(stringValue) != 0);
 
-	LOG("Read options from ini file: show_heal_window=%s sort_order_choice=%i group_filter_choice=%i exclude_unmapped_agents=%s debug_mode=%s",
-		BOOL_STR(pOptions.ShowHealWindow), pOptions.SortOrderChoice, pOptions.GroupFilterChoice, BOOL_STR(pOptions.ExcludeUnmappedAgents), BOOL_STR(pOptions.DebugMode));
+	LOG("Read options from ini file: show_heal_window=%s show_totals=%s show_agents=%s show_skills=%s sort_order_choice=%i group_filter_choice=%i heal_table_hotkey=%i exclude_unmapped_agents=%s debug_mode=%s",
+		BOOL_STR(pOptions.ShowHealWindow), BOOL_STR(pOptions.ShowTotals), BOOL_STR(pOptions.ShowAgents), BOOL_STR(pOptions.ShowSkills), pOptions.SortOrderChoice, pOptions.GroupFilterChoice, pOptions.HealTableHotkey, BOOL_STR(pOptions.ExcludeUnmappedAgents), BOOL_STR(pOptions.DebugMode));
 }

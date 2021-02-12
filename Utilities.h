@@ -40,3 +40,32 @@ static inline size_t utf8_strlen(const char* pString)
 	// charCount includes null character so remove 1
 	return charCount - 1;
 }
+
+static inline std::string VirtualKeyToString(int pVirtualKey)
+{
+	char buffer[1024];
+
+	uint32_t scanCode = MapVirtualKeyA(pVirtualKey, MAPVK_VK_TO_VSC);
+
+	switch (pVirtualKey)
+	{
+	case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN:
+	case VK_RCONTROL: case VK_RMENU:
+	case VK_LWIN: case VK_RWIN: case VK_APPS:
+	case VK_PRIOR: case VK_NEXT:
+	case VK_END: case VK_HOME:
+	case VK_INSERT: case VK_DELETE:
+	case VK_DIVIDE:
+	case VK_NUMLOCK:
+		scanCode |= KF_EXTENDED;
+	default:
+		int result = GetKeyNameTextA(scanCode << 16, buffer, sizeof(buffer));
+		if (result == 0)
+		{
+			//LOG("Translating key %i failed - error %u", pVirtualKey, GetLastError());
+			return std::string{};
+		}
+	}
+
+	return std::string{buffer};
+}
