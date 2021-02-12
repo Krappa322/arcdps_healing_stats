@@ -53,15 +53,20 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 			ImGui::Checkbox("Show Skills", &pHealingOptions.ShowSkills);
 
-			ImGui::Spacing();
-
 			ImGui::Combo("Sort Order", &pHealingOptions.SortOrderChoice, sortOrderItems, static_cast<int>(SortOrder::Max));
 
 			ImGui::Combo("Group Filter", &pHealingOptions.GroupFilterChoice, GROUP_FILTER_STRING, static_cast<int>(GroupFilter::Max));
 
-			ImGui::Checkbox("Exclude unmapped agents", &pHealingOptions.ExcludeUnmappedAgents);
+			float oldPosY = ImGui::GetCursorPosY();
+			ImGui::SetCursorPosY(oldPosY + ImGui::GetStyle().FramePadding.y);
+			ImGui::Text("Hotkey");
+			ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
+			ImGui::SetCursorPosY(oldPosY);
+			ImGui::InputInt("", &pHealingOptions.HealTableHotkey, 0);
+			ImGui::SameLine();
+			ImGui::Text("(%s)", VirtualKeyToString(pHealingOptions.HealTableHotkey).c_str());
 
-			ImGui::Spacing();
+			ImGui::Checkbox("Exclude unmapped agents", &pHealingOptions.ExcludeUnmappedAgents);
 
 			ImGui::Checkbox("Debug Mode", &pHealingOptions.DebugMode);
 
@@ -124,4 +129,25 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 {
 	ImGui::Checkbox("Heal Table", &pHealingOptions.ShowHealWindow);
+}
+
+void ImGui_ProcessKeyEvent(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL)
+{
+	ImGuiIO& io = ImGui::GetIO();
+
+	switch (pMessage)
+	{
+	case WM_KEYUP:
+	case WM_SYSKEYUP: // WM_SYSKEYUP is called when a key is pressed with the ALT held down
+		io.KeysDown[static_cast<int>(pAdditionalW)] = false;
+		break;
+
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN: // WM_SYSKEYDOWN is called when a key is pressed with the ALT held down
+		io.KeysDown[static_cast<int>(pAdditionalW)] = true;
+		break;
+
+	default:
+		break;
+	}
 }

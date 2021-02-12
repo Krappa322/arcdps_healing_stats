@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 struct HealTableOptions
 {
 	bool ShowHealWindow;
@@ -10,6 +12,9 @@ struct HealTableOptions
 
 	int SortOrderChoice;
 	int GroupFilterChoice;
+
+	int HealTableHotkey;
+
 	bool ExcludeUnmappedAgents;
 	bool DebugMode;
 };

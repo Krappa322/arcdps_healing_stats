@@ -7,6 +7,9 @@
 #include "Log.h"
 #include "PersonalStats.h"
 #include "Skills.h"
+#include "Utilities.h"
+
+#include "imgui/imgui.h"
 
 #include "imgui/imgui.h"
 
@@ -32,11 +35,16 @@ uintptr_t mod_imgui(uint32_t pNotCharselOrLoading);
 uintptr_t mod_options_end();
 uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
+uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL);
 
 static MallocSignature ARCDPS_MALLOC = nullptr;
 static FreeSignature ARCDPS_FREE = nullptr;
 static arcdps_exports ARC_EXPORTS;
 static char* ARCDPS_VERSION;
+
+typedef uint64_t(*ArcExportFunction)();
+HMODULE ARC_DLL = LoadLibraryA("d3d9.dll");
+ArcExportFunction ARC_E7 = reinterpret_cast<ArcExportFunction>(GetProcAddress(ARC_DLL, "e7"));
 
 std::mutex HEAL_TABLE_OPTIONS_MUTEX;
 static HealTableOptions HEAL_TABLE_OPTIONS;
@@ -130,6 +138,7 @@ arcdps_exports* mod_init()
 	ARC_EXPORTS.imgui = mod_imgui;
 	ARC_EXPORTS.options_end = mod_options_end;
 	ARC_EXPORTS.combat_local = mod_combat_local;
+	ARC_EXPORTS.wnd_nofilter = mod_wnd;
 	return &ARC_EXPORTS;
 }
 
@@ -303,4 +312,51 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 
 	PersonalStats::GlobalState.HealingEvent(pEvent, pDestinationAgent->id, pDestinationAgent->name, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname));
 	return 0;
+}
+
+#pragma pack(push, 1)
+struct ArcModifiers
+{
+	uint16_t _1;
+	uint16_t _2;
+	uint16_t Multi;
+};
+#pragma pack(pop)
+
+/* window callback -- return is assigned to umsg (return zero to not be processed by arcdps or game) */
+uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL)
+{
+	ImGui_ProcessKeyEvent(pWindowHandle, pMessage, pAdditionalW, pAdditionalL);
+
+	const ImGuiIO& io = ImGui::GetIO();
+
+	if (pMessage == WM_KEYDOWN || pMessage == WM_SYSKEYDOWN)
+	{
+		int virtualKey = static_cast<int>(pAdditionalW);
+
+		uint64_t e7_rawResult = ARC_E7();
+		ArcModifiers modifiers;
+		memcpy(&modifiers, &e7_rawResult, sizeof(modifiers));
+
+		if ((modifiers._1 == 0 || io.KeysDown[modifiers._1] == true) &&
+			(modifiers._2 == 0 || io.KeysDown[modifiers._2] == true))
+		{
+			std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+
+			if (HEAL_TABLE_OPTIONS.HealTableHotkey > 0 &&
+				HEAL_TABLE_OPTIONS.HealTableHotkey < sizeof(io.KeysDown) &&
+				virtualKey == HEAL_TABLE_OPTIONS.HealTableHotkey)
+			{
+				assert(io.KeysDown[HEAL_TABLE_OPTIONS.HealTableHotkey] == true);
+
+				HEAL_TABLE_OPTIONS.ShowHealWindow = !HEAL_TABLE_OPTIONS.ShowHealWindow;
+
+				LOG("Key %i '%s' toggled window - new heal window state is %s", HEAL_TABLE_OPTIONS.HealTableHotkey, VirtualKeyToString(HEAL_TABLE_OPTIONS.HealTableHotkey).c_str(), error, BOOL_STR(HEAL_TABLE_OPTIONS.ShowHealWindow));
+
+				return 0; // Don't process message by arcdps or game
+			}
+		}
+	}
+
+	return pMessage;
 }
