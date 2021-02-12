@@ -14,9 +14,18 @@
 static std::unique_ptr<AggregatedStats> currentAggregatedStats;
 static time_t lastAggregatedTime = 0;
 
-constexpr const char* GROUP_FILTER_STRING[] = {"Group", "Squad", "All (Excluding Minions)", "All (Including Minions)"};
+constexpr const char* GROUP_FILTER_STRING[] = {"Group", "Squad", "All (Excluding Summons)", "All (Including Summons)"};
 static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
 constexpr static uint32_t MAX_GROUP_FILTER_NAME = LongestStringInArray<GROUP_FILTER_STRING, static_cast<size_t>(GroupFilter::Max) - 1>::value;
+
+template <typename... Args>
+static void ImGui_AddTooltipToLastItem(const char* pFormatString, Args... args)
+{
+	if (ImGui::IsItemHovered() == true)
+	{
+		ImGui::SetTooltip(pFormatString, args...);
+	}
+}
 
 void SetContext(void* pImGuiContext)
 {
@@ -48,27 +57,55 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			static_assert((sizeof(sortOrderItems) / sizeof(sortOrderItems[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
 
 			ImGui::Checkbox("Show Totals", &pHealingOptions.ShowTotals);
+			ImGui_AddTooltipToLastItem("Toggles if the 'Totals' section should be displayed.");
 
-			ImGui::Checkbox("Show Agents", &pHealingOptions.ShowAgents);
+			ImGui::Checkbox("Show Targets", &pHealingOptions.ShowAgents);
+			ImGui_AddTooltipToLastItem("Toggles if the 'Targets' section should be displayed.");
 
 			ImGui::Checkbox("Show Skills", &pHealingOptions.ShowSkills);
+			ImGui_AddTooltipToLastItem("Toggles if the 'Skills' section should be displayed.");
 
 			ImGui::Combo("Sort Order", &pHealingOptions.SortOrderChoice, sortOrderItems, static_cast<int>(SortOrder::Max));
+			ImGui_AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
 
-			ImGui::Combo("Group Filter", &pHealingOptions.GroupFilterChoice, GROUP_FILTER_STRING, static_cast<int>(GroupFilter::Max));
+			ImGui::Combo("Target Filter", &pHealingOptions.GroupFilterChoice, GROUP_FILTER_STRING, static_cast<int>(GroupFilter::Max));
+			ImGui_AddTooltipToLastItem(
+				"Filters out targets based on their subgroup and if they are part of the squad.\n\n"
+				"- '%s': Targets in the same subgroup as yourself\n"
+				"- '%s': Targets in your squad\n"
+				"- '%s': All healing, not counting summons (summons in this\n"
+				"        case means all player spawned targets such as pets, spirits, clones, etc.)\n"
+				"- '%s': All healing"
+				, GROUP_FILTER_STRING[0], GROUP_FILTER_STRING[1], GROUP_FILTER_STRING[2], GROUP_FILTER_STRING[3]);
+
+			const char* hotkeyTooltip = "Numerical value (virtual key code) for the key\n"
+										"used to open and close the healing table";
 
 			float oldPosY = ImGui::GetCursorPosY();
 			ImGui::SetCursorPosY(oldPosY + ImGui::GetStyle().FramePadding.y);
 			ImGui::Text("Hotkey");
+			ImGui_AddTooltipToLastItem(hotkeyTooltip);
+
 			ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
 			ImGui::SetCursorPosY(oldPosY);
 			ImGui::InputInt("", &pHealingOptions.HealTableHotkey, 0);
+			ImGui_AddTooltipToLastItem(hotkeyTooltip);
+
 			ImGui::SameLine();
 			ImGui::Text("(%s)", VirtualKeyToString(pHealingOptions.HealTableHotkey).c_str());
+			ImGui_AddTooltipToLastItem(hotkeyTooltip);
 
-			ImGui::Checkbox("Exclude unmapped agents", &pHealingOptions.ExcludeUnmappedAgents);
+			ImGui::Checkbox("Exclude unmapped targets", &pHealingOptions.ExcludeUnmappedAgents);
+			ImGui_AddTooltipToLastItem(
+				"Filters out targets which could not be mapped to a name. The filtering\n"
+				"applies to the 'Totals' section as well as 'Targets' and 'Skills'.\n"
+				"If not filtered, these targets will appear with a number instead of a name\n"
+				"in the 'Targets' section");
 
 			ImGui::Checkbox("Debug Mode", &pHealingOptions.DebugMode);
+			ImGui_AddTooltipToLastItem(
+				"Includes debug data in target and skill names.\n"
+				"Turn this on before taking screenshots of potential calculation issues.");
 
 			ImGui::EndPopup();
 		}
@@ -93,7 +130,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		if (pHealingOptions.ShowAgents == true)
 		{
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f - ImGui::GetStyle().ItemSpacing.x);
-			ImGui::TextColored(ImColor(0, 209, 165), "Agents");
+			ImGui::TextColored(ImColor(0, 209, 165), "Targets");
 
 			for (const auto& agent : currentAggregatedStats->GetAgents())
 			{
