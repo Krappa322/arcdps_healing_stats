@@ -9,6 +9,10 @@
 #define LOG(pFormatString, ...)
 #endif
 
+#define LOG_ARC(pFormatString, ...) LogImplementationArc_(__func__, pFormatString, __VA_ARGS__); if (false) { printf(pFormatString, __VA_ARGS__); }
+
+
 void LogImplementation_(const char* pFunctionName, const char* pFormatString, ...);
+void LogImplementationArc_(const char* pFunctionName, const char* pFormatString, ...);
 
 #define BOOL_STR(pBool) pBool == true ? "true" : "false"
