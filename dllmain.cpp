@@ -311,7 +311,8 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 		return 0;
 	}
 
-	PersonalStats::GlobalState.HealingEvent(pEvent, pDestinationAgent->id, pDestinationAgent->name, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname));
+	bool isMinion = (pEvent->dst_master_instid != 0);
+	PersonalStats::GlobalState.HealingEvent(pEvent, pDestinationAgent->id, pDestinationAgent->name, isMinion, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname));
 	return 0;
 }
 
