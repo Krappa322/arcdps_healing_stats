@@ -48,8 +48,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 	if (pHealingOptions.ShowHealWindow == true)
 	{
-		ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Once);
-		ImGui::Begin("Heal Table", &pHealingOptions.ShowHealWindow, ImGuiWindowFlags_NoScrollbar);
+		ImGui::Begin("Heal Table", &pHealingOptions.ShowHealWindow, ImVec2(400, 600));
 
 		if (ImGui::BeginPopupContextItem("Options") == true || ImGui::BeginPopupContextWindow("Options") == true)
 		{
@@ -112,7 +111,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (pHealingOptions.ShowTotals == true)
 		{
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f - ImGui::GetStyle().ItemSpacing.x);
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f);
 			ImGui::TextColored(ImColor(0, 209, 165), "Totals");
 
 			TotalHealingStats stats = currentAggregatedStats->GetTotalHealing();
@@ -121,7 +120,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				ImGui::Text("%s", GROUP_FILTER_STRING[i]);
 
 				snprintf(buffer, sizeof(buffer), "%.2f/s", stats[i]);
-				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() - ImGui::CalcTextSize(buffer).x - ImGui::GetStyle().ItemSpacing.x * 2);
+				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x);
 				ImGui::Text("%s", buffer);
 			}
 			ImGui::Spacing();
@@ -129,7 +128,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (pHealingOptions.ShowAgents == true)
 		{
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f - ImGui::GetStyle().ItemSpacing.x);
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f);
 			ImGui::TextColored(ImColor(0, 209, 165), "Targets");
 
 			for (const auto& agent : currentAggregatedStats->GetAgents())
@@ -137,7 +136,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				ImGui::Text("%s", agent.Name.c_str());
 
 				snprintf(buffer, sizeof(buffer), "%.2f/s", agent.PerSecond);
-				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() - ImGui::CalcTextSize(buffer).x - ImGui::GetStyle().ItemSpacing.x * 2);
+				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x);
 				ImGui::Text("%s", buffer);
 			}
 			ImGui::Spacing();
@@ -145,7 +144,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (pHealingOptions.ShowSkills == true)
 		{
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f - ImGui::GetStyle().ItemSpacing.x);
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f);
 			ImGui::TextColored(ImColor(0, 209, 165), "Skills");
 
 			for (const auto& skill : currentAggregatedStats->GetSkills())
@@ -153,7 +152,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				ImGui::Text("%s", skill.Name.c_str());
 
 				snprintf(buffer, sizeof(buffer), "%.2f/s", skill.PerSecond);
-				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetWindowWidth() - ImGui::CalcTextSize(buffer).x - ImGui::GetStyle().ItemSpacing.x * 2);
+				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x);
 				ImGui::Text("%s", buffer);
 			}
 			ImGui::Spacing();
