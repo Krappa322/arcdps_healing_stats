@@ -36,9 +36,10 @@ uintptr_t mod_combat(cbtevent* ev, ag* src, ag* dst, const char* skillname, uint
 uintptr_t mod_combat_local(cbtevent* ev, ag* src, ag* dst, const char* skillname, uint64_t id, uint64_t revision);
 uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL);
 
-typedef uint64_t(*ArcExportFunction)();
-HMODULE ARC_DLL = LoadLibraryA("d3d9.dll");
-ArcExportFunction ARC_E7 = reinterpret_cast<ArcExportFunction>(GetProcAddress(ARC_DLL, "e7"));
+typedef uint64_t(*E7Signature)();
+static HMODULE ARC_DLL = LoadLibraryA("d3d9.dll");
+static E7Signature ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(ARC_DLL, "e7"));
+
 
 std::mutex HEAL_TABLE_OPTIONS_MUTEX;
 static HealTableOptions HEAL_TABLE_OPTIONS;
