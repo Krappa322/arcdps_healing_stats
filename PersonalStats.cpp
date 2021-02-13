@@ -104,7 +104,7 @@ void PersonalStats::ExitedCombat(uint64_t pTime)
 	LOG("Spent %llu ms in combat", myStats.TimeInCombat);
 }
 
-void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, const char* pSkillname)
+void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, bool pDestinationAgentIsMinion, const char* pSkillname)
 {
 	uint32_t healedAmount = pEvent->value;
 	if (healedAmount == 0)
@@ -123,16 +123,16 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId
 		}
 
 		// Some agents don't get agent register or agent entered combat events. For these we have to insert them
-		// inline. We assume they are outside the squad and non-minions (agents in squad and minions whose master is in
-		// squad will have combat entered events that let us determine their subgroup and minion status).
+		// inline. We assume they are outside the squad (agents in squad will have combat entered events that let us
+		// determine their subgroup).
 		if (pDestinationAgentName != nullptr)
 		{
 			auto [_unused, insertedAgentTable] = myStats.Agents.emplace(std::piecewise_construct,
 				std::forward_as_tuple(pDestinationAgentId),
-				std::forward_as_tuple(pDestinationAgentName, static_cast<uint16_t>(0), false));
+				std::forward_as_tuple(pDestinationAgentName, static_cast<uint16_t>(0), pDestinationAgentIsMinion));
 			if (insertedAgentTable == true)
 			{
-				LOG("Implicitly added agent %llu %s(%llu)", pDestinationAgentId, pDestinationAgentName, utf8_strlen(pDestinationAgentName));
+				LOG("Implicitly added agent %llu %s(%llu) %s", pDestinationAgentId, pDestinationAgentName, utf8_strlen(pDestinationAgentName), BOOL_STR(pDestinationAgentIsMinion));
 			}
 		}
 
