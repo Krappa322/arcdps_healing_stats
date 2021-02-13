@@ -100,3 +100,9 @@ typedef struct ag {
 	uint32_t self; /* 1 if self, 0 if not */
 	uint16_t team; /* sep21+ */
 } ag;
+
+typedef uint64_t(*E7Signature)();
+static inline E7Signature ARC_E7 = nullptr;
+
+typedef void (*E3Signature)(const char* pString);
+static inline E3Signature ARC_E3 = nullptr;

@@ -27,7 +27,7 @@ typedef void (*FreeSignature)(void*);
 /* proto/globals */
 void dll_init(HANDLE pModule);
 void dll_exit();
-extern "C" __declspec(dllexport) void* get_init_addr(char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HANDLE pUnused2, MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree);
+extern "C" __declspec(dllexport) void* get_init_addr(char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HMODULE pArcModule, MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree);
 extern "C" __declspec(dllexport) void* get_release_addr();
 arcdps_exports* mod_init();
 uintptr_t mod_release();
@@ -41,10 +41,6 @@ static MallocSignature ARCDPS_MALLOC = nullptr;
 static FreeSignature ARCDPS_FREE = nullptr;
 static arcdps_exports ARC_EXPORTS;
 static char* ARCDPS_VERSION;
-
-typedef uint64_t(*E7Signature)();
-static HMODULE ARC_DLL = LoadLibraryA("d3d9.dll");
-static E7Signature ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(ARC_DLL, "e7"));
 
 std::mutex HEAL_TABLE_OPTIONS_MUTEX;
 static HealTableOptions HEAL_TABLE_OPTIONS;
@@ -85,8 +81,13 @@ static void FreeWrapper(void* pPointer, void* pUserData)
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
-extern "C" __declspec(dllexport) void* get_init_addr(char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HANDLE pUnused2, MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
+extern "C" __declspec(dllexport) void* get_init_addr(char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
+	ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(pArcModule, "e7"));
+	assert(ARC_E7 != nullptr);
+	ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
+	assert(ARC_E3 != nullptr);
+
 	ARCDPS_VERSION = pArcdpsVersionString;
 	SetContext(pImguiContext);
 
