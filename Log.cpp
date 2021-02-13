@@ -1,5 +1,7 @@
 #include "Log.h"
 
+#include "ArcDPS.h"
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -8,10 +10,6 @@
 
 #include <chrono>
 #include <ctime>
-
-typedef void (*E3Signature)(const char* pString);
-static HMODULE ARC_DLL = LoadLibraryA("d3d9.dll");
-static E3Signature ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(ARC_DLL, "e3"));
 
 void LogImplementation_(const char* pFunctionName, const char* pFormatString, ...)
 {
@@ -45,6 +43,11 @@ void LogImplementation_(const char* pFunctionName, const char* pFormatString, ..
 
 void LogImplementationArc_(const char* pFunctionName, const char* pFormatString, ...)
 {
+	if (ARC_E3 == nullptr)
+	{
+		return;
+	}
+
 	char timeBuffer[128];
 	int64_t milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 	int64_t seconds = milliseconds / 1000;

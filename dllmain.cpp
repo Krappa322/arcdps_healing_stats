@@ -26,7 +26,7 @@ char* arcvers;
 
 void dll_init(HANDLE hModule);
 void dll_exit();
-extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9 * id3dd9);
+extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9 * id3dd9, HMODULE pArcModule);
 extern "C" __declspec(dllexport) void* get_release_addr();
 arcdps_exports* mod_init();
 uintptr_t mod_release();
@@ -35,11 +35,6 @@ uintptr_t mod_options_end();
 uintptr_t mod_combat(cbtevent* ev, ag* src, ag* dst, const char* skillname, uint64_t id, uint64_t revision);
 uintptr_t mod_combat_local(cbtevent* ev, ag* src, ag* dst, const char* skillname, uint64_t id, uint64_t revision);
 uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL);
-
-typedef uint64_t(*E7Signature)();
-static HMODULE ARC_DLL = LoadLibraryA("d3d9.dll");
-static E7Signature ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(ARC_DLL, "e7"));
-
 
 std::mutex HEAL_TABLE_OPTIONS_MUTEX;
 static HealTableOptions HEAL_TABLE_OPTIONS;
@@ -67,9 +62,16 @@ void dll_exit() {
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
-extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9 * id3dd9) {
+extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9 * id3dd9, HMODULE pArcModule)
+{
+	ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(pArcModule, "e7"));
+	assert(ARC_E7 != nullptr);
+	ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
+	assert(ARC_E3 != nullptr);
+
 	arcvers = arcversionstr;
 	SetContext(imguicontext);
+
 	return mod_init;
 }
 
