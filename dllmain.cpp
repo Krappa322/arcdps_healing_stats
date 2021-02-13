@@ -351,7 +351,7 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 
 				HEAL_TABLE_OPTIONS.ShowHealWindow = !HEAL_TABLE_OPTIONS.ShowHealWindow;
 
-				LOG("Key %i '%s' toggled window - new heal window state is %s", HEAL_TABLE_OPTIONS.HealTableHotkey, VirtualKeyToString(HEAL_TABLE_OPTIONS.HealTableHotkey).c_str(), error, BOOL_STR(HEAL_TABLE_OPTIONS.ShowHealWindow));
+				LOG("Key %i '%s' toggled window - new heal window state is %s", HEAL_TABLE_OPTIONS.HealTableHotkey, VirtualKeyToString(HEAL_TABLE_OPTIONS.HealTableHotkey).c_str(), BOOL_STR(HEAL_TABLE_OPTIONS.ShowHealWindow));
 
 				return 0; // Don't process message by arcdps or game
 			}
