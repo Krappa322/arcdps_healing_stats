@@ -183,7 +183,7 @@ uintptr_t mod_options_end()
 	return 0;
 }
 
-static std::atomic<uint16_t> SELF_INSTANCE_ID = (uint16_t)0;
+static std::atomic<uint32_t> SELF_INSTANCE_ID = UINT32_MAX;
 /* combat callback -- may be called asynchronously. return ignored */
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
