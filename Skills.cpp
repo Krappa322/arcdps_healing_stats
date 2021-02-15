@@ -22,7 +22,9 @@ SkillTable::SkillTable()
 	ENTRY(9957);  // Nourishment (Omnomberry Pie AND Slice of Candied Dragon Roll)
 	ENTRY(10190); // Cry of Frustration (Restorative Illusions)
 	ENTRY(10191); // Mind Wrack (Restorative Illusions)
+	ENTRY(10560); // Life Leech
 	ENTRY(10563); // Life Siphon
+	ENTRY(10619); // Deadly Feast
 	ENTRY(12424); // Blood Frenzy
 	ENTRY(15259); // Nourishment (Omnomberry Ghost)
 	ENTRY(21656); // Arcane Brilliance
