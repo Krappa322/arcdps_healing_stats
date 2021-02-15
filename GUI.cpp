@@ -111,7 +111,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (pHealingOptions.ShowTotals == true)
 		{
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f);
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * 0.5f - ImGui::CalcTextSize("Totals").x * 0.5f);
 			ImGui::TextColored(ImColor(0, 209, 165), "Totals");
 
 			TotalHealingStats stats = currentAggregatedStats->GetTotalHealing();
@@ -128,7 +128,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (pHealingOptions.ShowAgents == true)
 		{
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * 0.5f - ImGui::CalcTextSize("Skills").x * 0.5f);
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * 0.5f - ImGui::CalcTextSize("Targets").x * 0.5f);
 			ImGui::TextColored(ImColor(0, 209, 165), "Targets");
 
 			for (const auto& agent : currentAggregatedStats->GetAgents())
