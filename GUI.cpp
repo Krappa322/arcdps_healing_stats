@@ -10,13 +10,22 @@
 #include <array>
 #include <Windows.h>
 
+constexpr const char* GROUP_FILTER_STRING[] = { "Group", "Squad", "All (Excluding Summons)", "All (Including Summons)" };
+static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
+constexpr static uint32_t MAX_GROUP_FILTER_NAME = LongestStringInArray<GROUP_FILTER_STRING, static_cast<size_t>(GroupFilter::Max) - 1>::value;
+
+struct SkillWindowState
+{
+	std::string CachedName;
+	float CachedPerSecond = 0;
+	bool IsOpen = false;
+};
+
+static std::map<uint32_t, SkillWindowState> OPEN_SKILL_WINDOWS;
+
 //static std::unique_ptr<AggregatedStats> exampleAggregatedStats;
 static std::unique_ptr<AggregatedStats> currentAggregatedStats;
 static time_t lastAggregatedTime = 0;
-
-constexpr const char* GROUP_FILTER_STRING[] = {"Group", "Squad", "All (Excluding Summons)", "All (Including Summons)"};
-static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
-constexpr static uint32_t MAX_GROUP_FILTER_NAME = LongestStringInArray<GROUP_FILTER_STRING, static_cast<size_t>(GroupFilter::Max) - 1>::value;
 
 template <typename... Args>
 static void ImGui_AddTooltipToLastItem(const char* pFormatString, Args... args)
@@ -25,6 +34,49 @@ static void ImGui_AddTooltipToLastItem(const char* pFormatString, Args... args)
 	{
 		ImGui::SetTooltip(pFormatString, args...);
 	}
+}
+
+static void Display_SkillWindow(uint32_t pSkillId, const std::string& pSkillName, float pHealPerSecond, bool* pIsOpen)
+{
+	if (*pIsOpen == false)
+	{
+		return;
+	}
+
+	// Since we can't set bg alpha through BeginChild call, we set it through the style
+	ImVec4 oldChildBg = ImGui::GetStyle().Colors[ImGuiCol_ChildWindowBg];
+	ImGui::GetStyle().Colors[ImGuiCol_ChildWindowBg] = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
+
+	char buffer[1024];
+	// Using "###" means the id of the window is calculated only from the part after the hashes (which
+	// in turn means that the name of the window can change if necessary)
+	snprintf(buffer, sizeof(buffer), "%s###HEALSKILL%u", pSkillName.c_str(), pSkillId);
+	ImGui::Begin(buffer, pIsOpen, ImVec2(600, 360), ImGuiWindowFlags_NoCollapse);
+
+	ImVec2 max = ImGui::GetWindowContentRegionMax();
+	ImVec2 min = ImGui::GetWindowContentRegionMin();
+	snprintf(buffer, sizeof(buffer), "##HEALSKILL.TOTALS.%u", pSkillId);
+	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.3, 0));
+	ImGui::TextColored(ImColor(0, 209, 165), "Hello World");
+	ImGui::EndChild();
+
+	ImGui::SameLine();
+
+	snprintf(buffer, sizeof(buffer), "##HEALSKILL.AGENTS.%u", pSkillId);
+	ImGui::BeginChild(buffer, ImVec2(0, 0));
+	for (const auto& agent : currentAggregatedStats->GetSkillDetails(pSkillId))
+	{
+		ImGui::Text("%s", agent.Name.c_str());
+
+		snprintf(buffer, sizeof(buffer), "%.2f/s", agent.PerSecond);
+		ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x);
+		ImGui::Text("%s", buffer);
+	}
+	ImGui::EndChild();
+
+	ImGui::End();
+
+	ImGui::GetStyle().Colors[ImGuiCol_ChildWindowBg] = oldChildBg;
 }
 
 void SetContext(void* pImGuiContext)
@@ -149,16 +201,42 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 			for (const auto& skill : currentAggregatedStats->GetSkills())
 			{
+				/*const ImVec2 p = ImGui::GetCursorScreenPos();
+				drawList->AddRect(
+					ImVec2(p.x, p.y),
+					ImVec2(p.x + ImGui::GetContentRegionAvail().x, p.y + ImGui::GetTextLineHeight()),
+					IM_COL32(0, 255, 0, 128));*/
+
+				ImGui::BeginGroup();
 				ImGui::Text("%s", skill.Name.c_str());
 
 				snprintf(buffer, sizeof(buffer), "%.2f/s", skill.PerSecond);
-				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x);
+				ImGui::SameLine();
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x); // Setting x in SameLine would add group offset which makes the calculation incorrect
 				ImGui::Text("%s", buffer);
+
+				ImGui::EndGroup();
+
+				auto [state, _inserted] = OPEN_SKILL_WINDOWS.emplace(std::piecewise_construct, std::forward_as_tuple(skill.Id), std::forward_as_tuple());
+				state->second.CachedName = skill.Name;
+				state->second.CachedPerSecond = skill.PerSecond;
+
+				if (ImGui::IsItemClicked() == true && skill.Id != IndirectHealingSkillId)
+				{
+					state->second.IsOpen = !state->second.IsOpen;
+
+					LOG("Toggled details window for skill %u %s", skill.Id, skill.Name.c_str());
+				}
 			}
 			ImGui::Spacing();
 		}
 
 		ImGui::End();
+
+		for (auto& [skillId, windowState] : OPEN_SKILL_WINDOWS)
+		{
+			Display_SkillWindow(skillId, windowState.CachedName, windowState.CachedPerSecond, &windowState.IsOpen);
+		}
 	}
 }
 

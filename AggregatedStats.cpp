@@ -10,9 +10,17 @@
 #include <algorithm>
 #include <map>
 
-AggregatedStatsEntry::AggregatedStatsEntry(std::string&& pName, float pPerSecond)
-	: Name(pName)
-	, PerSecond(pPerSecond)
+AggregatedStatsSkill::AggregatedStatsSkill(uint32_t pSkillId, std::string&& pName, float pPerSecond)
+	: Id{pSkillId}
+	, Name{pName}
+	, PerSecond{pPerSecond}
+{
+}
+
+AggregatedStatsAgent::AggregatedStatsAgent(uintptr_t pAgentId, std::string&& pName, float pPerSecond)
+	: Id{pAgentId}
+	, Name{pName}
+	, PerSecond{pPerSecond}
 {
 }
 
@@ -34,7 +42,7 @@ AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealTableOpti
 	}
 }
 
-const AggregatedStatsVector& AggregatedStats::GetAgents()
+const AggregatedVectorAgents& AggregatedStats::GetAgents()
 {
 	if (myFilteredAgents != nullptr)
 	{
@@ -43,7 +51,7 @@ const AggregatedStatsVector& AggregatedStats::GetAgents()
 
 	//LOG("Generating new agents vector");
 	myLongestAgentName = 0;
-	myFilteredAgents = std::make_unique<AggregatedStatsVector>();
+	myFilteredAgents = std::make_unique<AggregatedVectorAgents>();
 
 	// Caching the result in a display friendly way
 	for (const auto& [agentId, agent] : GetAllAgents())
@@ -91,7 +99,7 @@ const AggregatedStatsVector& AggregatedStats::GetAgents()
 
 		float perSecond = agent.TotalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
 
-		myFilteredAgents->emplace_back(std::move(agentName), std::move(perSecond));
+		myFilteredAgents->emplace_back(agentId, std::move(agentName), perSecond);
 	}
 
 	Sort(*myFilteredAgents);
@@ -109,7 +117,7 @@ uint32_t AggregatedStats::GetLongestAgentName()
 	return myLongestAgentName;
 }
 
-const AggregatedStatsVector& AggregatedStats::GetSkills()
+const AggregatedVectorSkills& AggregatedStats::GetSkills()
 {
 	if (mySkills != nullptr)
 	{
@@ -118,7 +126,7 @@ const AggregatedStatsVector& AggregatedStats::GetSkills()
 
 	//LOG("Generating new skills vector");
 	myLongestSkillName = 0;
-	mySkills = std::make_unique<AggregatedStatsVector>();
+	mySkills = std::make_unique<AggregatedVectorSkills>();
 
 	uint64_t totalIndirectHealing = 0;
 	uint64_t totalIndirectTicks = 0;
@@ -174,7 +182,7 @@ const AggregatedStatsVector& AggregatedStats::GetSkills()
 			myLongestSkillName = nameLength;
 		}
 
-		mySkills->emplace_back(std::move(skillName), std::move(perSecond));
+		mySkills->emplace_back(skillId, std::move(skillName), perSecond);
 	}
 
 	if (totalIndirectHealing != 0 || totalIndirectTicks != 0)
@@ -188,7 +196,7 @@ const AggregatedStatsVector& AggregatedStats::GetSkills()
 			myLongestSkillName = nameLength;
 		}
 
-		mySkills->emplace_back(std::move(skillName), std::move(perSecond));
+		mySkills->emplace_back(IndirectHealingSkillId, std::move(skillName), perSecond);
 	}
 
 	Sort(*mySkills);
@@ -204,6 +212,70 @@ uint32_t AggregatedStats::GetLongestSkillName()
 	}
 
 	return myLongestSkillName;
+}
+
+const AggregatedVectorAgents& AggregatedStats::GetSkillDetails(uint32_t pSkillId)
+{
+	const auto [entry, inserted] = mySkillsDetailed.emplace(std::piecewise_construct,
+		std::forward_as_tuple(pSkillId),
+		std::forward_as_tuple());
+	if (inserted == false)
+	{
+		return entry->second; // Return cached value
+	}
+
+	const auto sourceData = mySourceData.SkillsHealing.find(pSkillId);
+	if (sourceData == mySourceData.SkillsHealing.end())
+	{
+		// This should never happen
+		LOG("Couldn't find source data for skill %u", pSkillId);
+
+		return entry->second; // Just return the empty vector
+	}
+
+	for (const auto& [agentId, agent] : sourceData->second.AgentsHealing)
+	{
+		std::string agentName;
+
+		auto mapAgent = std::as_const(mySourceData.Agents).find(agentId);
+		if (Filter(mapAgent) == true)
+		{
+			continue; // Exclude agent
+		}
+
+		if (myOptions.DebugMode == false)
+		{
+			if (mapAgent != mySourceData.Agents.end())
+			{
+				agentName = mapAgent->second.Name;
+			}
+			else
+			{
+				LOG("Couldn't find a name for agent %llu", agentId);
+				agentName = std::to_string(agentId);
+			}
+		}
+		else
+		{
+			char buffer[1024];
+			if (mapAgent != mySourceData.Agents.end())
+			{
+				snprintf(buffer, sizeof(buffer), "%llu ; %u ; %u ; %s", agentId, mapAgent->second.Subgroup, mapAgent->second.IsMinion, mapAgent->second.Name.c_str());
+			}
+			else
+			{
+				snprintf(buffer, sizeof(buffer), "%llu ; (UNMAPPED)", agentId);
+			}
+
+			agentName = buffer;
+		}
+
+		float perSecond = agent.TotalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
+
+		entry->second.emplace_back(agentId, std::move(agentName), std::move(perSecond));
+	}
+
+	return entry->second;
 }
 
 TotalHealingStats AggregatedStats::GetTotalHealing()
@@ -266,13 +338,14 @@ const std::map<uintptr_t, AgentStats>& AggregatedStats::GetAllAgents()
 	return *myAllAgents;
 }
 
-void AggregatedStats::Sort(AggregatedStatsVector& pVector)
+template<typename VectorType>
+void AggregatedStats::Sort(VectorType& pVector)
 {
 	switch (static_cast<SortOrder>(myOptions.SortOrderChoice))
 	{
 	case SortOrder::AscendingAlphabetical:
 		std::sort(pVector.begin(), pVector.end(),
-			[](const AggregatedStatsEntry& pLeft, const AggregatedStatsEntry& pRight)
+			[](const auto& pLeft, const auto& pRight)
 			{
 				return pLeft.Name < pRight.Name;
 			});
@@ -280,7 +353,7 @@ void AggregatedStats::Sort(AggregatedStatsVector& pVector)
 
 	case SortOrder::DescendingAlphabetical:
 		std::sort(pVector.begin(), pVector.end(),
-			[](const AggregatedStatsEntry& pLeft, const AggregatedStatsEntry& pRight)
+			[](const auto& pLeft, const auto& pRight)
 			{
 				return pLeft.Name > pRight.Name;
 			});
@@ -288,7 +361,7 @@ void AggregatedStats::Sort(AggregatedStatsVector& pVector)
 
 	case SortOrder::AscendingSize:
 		std::sort(pVector.begin(), pVector.end(),
-			[](const AggregatedStatsEntry& pLeft, const AggregatedStatsEntry& pRight)
+			[](const auto& pLeft, const auto& pRight)
 			{
 				return pLeft.PerSecond < pRight.PerSecond;
 			});
@@ -296,7 +369,7 @@ void AggregatedStats::Sort(AggregatedStatsVector& pVector)
 
 	case SortOrder::DescendingSize:
 		std::sort(pVector.begin(), pVector.end(),
-			[](const AggregatedStatsEntry& pLeft, const AggregatedStatsEntry& pRight)
+			[](const auto& pLeft, const auto& pRight)
 			{
 				return pLeft.PerSecond > pRight.PerSecond;
 			});

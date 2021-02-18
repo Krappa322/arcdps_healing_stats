@@ -28,34 +28,50 @@ enum class GroupFilter
 	Max
 };
 
-struct AggregatedStatsEntry
+struct AggregatedStatsSkill
 {
+	uint32_t Id;
 	std::string Name;
 	float PerSecond;
 
-	AggregatedStatsEntry(std::string&& pName, float pPerSecond);
+	AggregatedStatsSkill(uint32_t pSkillId, std::string&& pName, float pPerSecond);
 };
 
-using AggregatedStatsVector = std::vector<AggregatedStatsEntry>;
+struct AggregatedStatsAgent
+{
+	uintptr_t Id;
+	std::string Name;
+	float PerSecond;
+
+	AggregatedStatsAgent(uintptr_t pAgentId, std::string&& pName, float pPerSecond);
+};
+
+using AggregatedVectorSkills = std::vector<AggregatedStatsSkill>;
+using AggregatedVectorAgents = std::vector<AggregatedStatsAgent>;
 using TotalHealingStats = std::array<float, static_cast<size_t>(GroupFilter::Max)>;
+
+constexpr static uint32_t IndirectHealingSkillId = 0;
 
 class AggregatedStats
 {
 public:
 	AggregatedStats(HealingStats&& pSourceData, const HealTableOptions& pOptions);
 
-	const AggregatedStatsVector& GetAgents();
+	const AggregatedVectorAgents& GetAgents();
 	uint32_t GetLongestAgentName();
 
-	const AggregatedStatsVector& GetSkills();
+	const AggregatedVectorSkills& GetSkills();
 	uint32_t GetLongestSkillName();
+
+	const AggregatedVectorAgents& GetSkillDetails(uint32_t pSkillId);
 
 	TotalHealingStats GetTotalHealing();
 
 private:
 	const std::map<uintptr_t, AgentStats>& GetAllAgents();
 
-	void Sort(AggregatedStatsVector& pVector);
+	template<typename VectorType>
+	void Sort(VectorType& pVector);
 
 	bool Filter(uintptr_t pAgentId) const; // Returns true if agent should be filtered out
 	bool Filter(std::map<uintptr_t, HealedAgent>::const_iterator& pAgent) const; // Returns true if agent should be filtered out
@@ -65,11 +81,13 @@ private:
 
 	HealTableOptions myOptions;
 
-	std::unique_ptr<std::map<uintptr_t, AgentStats>> myAllAgents;
+	std::unique_ptr<std::map<uintptr_t, AgentStats>> myAllAgents; // uintptr_t => agent id
 
-	std::unique_ptr<AggregatedStatsVector> myFilteredAgents;
+	std::unique_ptr<AggregatedVectorAgents> myFilteredAgents;
 	uint32_t myLongestAgentName;
 
-	std::unique_ptr<AggregatedStatsVector> mySkills;
+	std::unique_ptr<AggregatedVectorSkills> mySkills;
 	uint32_t myLongestSkillName;
+
+	std::map<uint32_t, AggregatedVectorAgents> mySkillsDetailed; // uint32_t => skill id
 };
