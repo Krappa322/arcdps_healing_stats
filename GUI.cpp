@@ -100,9 +100,9 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 	if (pHealingOptions.ShowHealWindow == true)
 	{
-		ImGui::Begin("Heal Table", &pHealingOptions.ShowHealWindow, ImGuiWindowFlags_NoCollapse);
+		ImGui::Begin("Heal Table##HEAL", &pHealingOptions.ShowHealWindow, ImGuiWindowFlags_NoCollapse);
 
-		if (ImGui::BeginPopupContextItem("Options") == true || ImGui::BeginPopupContextWindow("Options") == true)
+		if (ImGui::BeginPopupContextItem("Options##HEAL") == true || ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 		{
 			const char* const sortOrderItems[] = { "Alphabetical Ascending", "Alphabetical Descending", "Heal Per Second Ascending", "Heal Per Second Descending" };
 			static_assert((sizeof(sortOrderItems) / sizeof(sortOrderItems[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
@@ -139,7 +139,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 			ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
 			ImGui::SetCursorPosY(oldPosY);
-			ImGui::InputInt("", &pHealingOptions.HealTableHotkey, 0);
+			ImGui::InputInt("##HOTKEY", &pHealingOptions.HealTableHotkey, 0);
 			ImGui_AddTooltipToLastItem(hotkeyTooltip);
 
 			ImGui::SameLine();
