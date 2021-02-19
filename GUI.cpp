@@ -100,7 +100,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 	if (pHealingOptions.ShowHealWindow == true)
 	{
-		ImGui::Begin("Heal Table", &pHealingOptions.ShowHealWindow, ImVec2(400, 600));
+		ImGui::Begin("Heal Table", &pHealingOptions.ShowHealWindow, ImVec2(400, 600), ImGuiWindowFlags_NoCollapse);
 
 		if (ImGui::BeginPopupContextItem("Options") == true || ImGui::BeginPopupContextWindow("Options") == true)
 		{
