@@ -58,11 +58,7 @@ public:
 	AggregatedStats(HealingStats&& pSourceData, const HealTableOptions& pOptions);
 
 	const AggregatedVectorAgents& GetAgents();
-	uint32_t GetLongestAgentName();
-
 	const AggregatedVectorSkills& GetSkills();
-	uint32_t GetLongestSkillName();
-
 	const AggregatedVectorAgents& GetSkillDetails(uint32_t pSkillId);
 
 	TotalHealingStats GetTotalHealing();
@@ -84,10 +80,7 @@ private:
 	std::unique_ptr<std::map<uintptr_t, AgentStats>> myAllAgents; // uintptr_t => agent id
 
 	std::unique_ptr<AggregatedVectorAgents> myFilteredAgents;
-	uint32_t myLongestAgentName;
-
 	std::unique_ptr<AggregatedVectorSkills> mySkills;
-	uint32_t myLongestSkillName;
 
 	std::map<uint32_t, AggregatedVectorAgents> mySkillsDetailed; // uint32_t => skill id
 };
