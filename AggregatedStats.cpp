@@ -29,9 +29,7 @@ AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealTableOpti
 	, myOptions(pOptions)
 	, myAllAgents(nullptr)
 	, myFilteredAgents(nullptr)
-	, myLongestAgentName(0)
 	, mySkills(nullptr)
-	, myLongestSkillName(0)
 {
 	assert(static_cast<SortOrder>(myOptions.SortOrderChoice) < SortOrder::Max);
 	assert(static_cast<GroupFilter>(myOptions.GroupFilterChoice) < GroupFilter::Max);
@@ -50,7 +48,6 @@ const AggregatedVectorAgents& AggregatedStats::GetAgents()
 	}
 
 	//LOG("Generating new agents vector");
-	myLongestAgentName = 0;
 	myFilteredAgents = std::make_unique<AggregatedVectorAgents>();
 
 	// Caching the result in a display friendly way
@@ -91,12 +88,6 @@ const AggregatedVectorAgents& AggregatedStats::GetAgents()
 			agentName = buffer;
 		}
 
-		uint32_t nameLength = utf8_strlen(agentName.c_str());
-		if (nameLength > myLongestAgentName)
-		{
-			myLongestAgentName = nameLength;
-		}
-
 		float perSecond = agent.TotalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
 
 		myFilteredAgents->emplace_back(agentId, std::move(agentName), perSecond);
@@ -107,16 +98,6 @@ const AggregatedVectorAgents& AggregatedStats::GetAgents()
 	return *myFilteredAgents;
 }
 
-uint32_t AggregatedStats::GetLongestAgentName()
-{
-	if (myFilteredAgents == nullptr)
-	{
-		GetAgents();
-	}
-
-	return myLongestAgentName;
-}
-
 const AggregatedVectorSkills& AggregatedStats::GetSkills()
 {
 	if (mySkills != nullptr)
@@ -125,7 +106,6 @@ const AggregatedVectorSkills& AggregatedStats::GetSkills()
 	}
 
 	//LOG("Generating new skills vector");
-	myLongestSkillName = 0;
 	mySkills = std::make_unique<AggregatedVectorSkills>();
 
 	uint64_t totalIndirectHealing = 0;
@@ -176,12 +156,6 @@ const AggregatedVectorSkills& AggregatedStats::GetSkills()
 			skillName = buffer;
 		}
 
-		uint32_t nameLength = utf8_strlen(skillName.c_str());
-		if (nameLength > myLongestSkillName)
-		{
-			myLongestSkillName = nameLength;
-		}
-
 		mySkills->emplace_back(skillId, std::move(skillName), perSecond);
 	}
 
@@ -190,11 +164,6 @@ const AggregatedVectorSkills& AggregatedStats::GetSkills()
 		float perSecond = totalIndirectHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
 
 		std::string skillName("Healing by Damage Dealt");
-		uint32_t nameLength = utf8_strlen(skillName.c_str());
-		if (nameLength > myLongestSkillName)
-		{
-			myLongestSkillName = nameLength;
-		}
 
 		mySkills->emplace_back(IndirectHealingSkillId, std::move(skillName), perSecond);
 	}
@@ -202,16 +171,6 @@ const AggregatedVectorSkills& AggregatedStats::GetSkills()
 	Sort(*mySkills);
 
 	return *mySkills;
-}
-
-uint32_t AggregatedStats::GetLongestSkillName()
-{
-	if (mySkills == nullptr)
-	{
-		GetSkills();
-	}
-
-	return myLongestSkillName;
 }
 
 const AggregatedVectorAgents& AggregatedStats::GetSkillDetails(uint32_t pSkillId)
