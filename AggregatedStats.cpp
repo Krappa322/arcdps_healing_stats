@@ -234,6 +234,8 @@ const AggregatedVectorAgents& AggregatedStats::GetSkillDetails(uint32_t pSkillId
 		entry->second.emplace_back(agentId, std::move(agentName), std::move(perSecond));
 	}
 
+	Sort(entry->second);
+
 	return entry->second;
 }
 
