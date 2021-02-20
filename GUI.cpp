@@ -1,11 +1,10 @@
 #include "GUI.h"
 
 #include "AggregatedStats.h"
+#include "ImGuiEx.h"
 #include "Log.h"
 #include "PersonalStats.h"
 #include "Utilities.h"
-
-#include "imgui/imgui.h"
 
 #include <array>
 #include <Windows.h>
@@ -27,15 +26,6 @@ static std::map<uint32_t, SkillWindowState> OPEN_SKILL_WINDOWS;
 static std::unique_ptr<AggregatedStats> currentAggregatedStats;
 static time_t lastAggregatedTime = 0;
 
-template <typename... Args>
-static void ImGui_AddTooltipToLastItem(const char* pFormatString, Args... args)
-{
-	if (ImGui::IsItemHovered() == true)
-	{
-		ImGui::SetTooltip(pFormatString, args...);
-	}
-}
-
 static void Display_SkillWindow(uint32_t pSkillId, const std::string& pSkillName, float pHealPerSecond, bool* pIsOpen)
 {
 	if (*pIsOpen == false)
@@ -43,21 +33,29 @@ static void Display_SkillWindow(uint32_t pSkillId, const std::string& pSkillName
 		return;
 	}
 
-	// Since we can't set bg alpha through BeginChild call, we set it through the style
-	ImVec4 oldChildBg = ImGui::GetStyle().Colors[ImGuiCol_ChildWindowBg];
-	ImGui::GetStyle().Colors[ImGuiCol_ChildWindowBg] = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
-
 	char buffer[1024];
 	// Using "###" means the id of the window is calculated only from the part after the hashes (which
 	// in turn means that the name of the window can change if necessary)
 	snprintf(buffer, sizeof(buffer), "%s###HEALSKILL%u", pSkillName.c_str(), pSkillId);
-	ImGui::Begin(buffer, pIsOpen, ImVec2(600, 360), ImGuiWindowFlags_NoCollapse);
+	ImGui::Begin(buffer, pIsOpen, ImVec2(600, 360), -1.0f, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
-	ImVec2 max = ImGui::GetWindowContentRegionMax();
-	ImVec2 min = ImGui::GetWindowContentRegionMin();
 	snprintf(buffer, sizeof(buffer), "##HEALSKILL.TOTALS.%u", pSkillId);
-	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.3, 0));
-	ImGui::TextColored(ImColor(0, 209, 165), "Hello World");
+
+	ImVec4 bgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
+	bgColor.w = 0.0f;
+	ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, bgColor);
+	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.35, 0));
+	ImGui::Text("total healing");
+	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+	ImGui::Text("healing per second");
+	ImGuiEx::TextRightAlignedSameLine("%.2f", pHealPerSecond);
+	ImGui::Text("healing per cast");
+	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+	ImGui::Text("hits");
+	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+	ImGui::Text("casts");
+	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+	ImGui::Text("id %u", pSkillId);
 	ImGui::EndChild();
 
 	ImGui::SameLine();
@@ -67,16 +65,12 @@ static void Display_SkillWindow(uint32_t pSkillId, const std::string& pSkillName
 	for (const auto& agent : currentAggregatedStats->GetSkillDetails(pSkillId))
 	{
 		ImGui::Text("%s", agent.Name.c_str());
-
-		snprintf(buffer, sizeof(buffer), "%.2f/s", agent.PerSecond);
-		ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x);
-		ImGui::Text("%s", buffer);
+		ImGuiEx::TextRightAlignedSameLine("%.2f/s", agent.PerSecond);
 	}
 	ImGui::EndChild();
+	ImGui::PopStyleColor();
 
 	ImGui::End();
-
-	ImGui::GetStyle().Colors[ImGuiCol_ChildWindowBg] = oldChildBg;
 }
 
 void SetContext(void* pImGuiContext)
@@ -108,19 +102,19 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			static_assert((sizeof(sortOrderItems) / sizeof(sortOrderItems[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
 
 			ImGui::Checkbox("Show Totals", &pHealingOptions.ShowTotals);
-			ImGui_AddTooltipToLastItem("Toggles if the 'Totals' section should be displayed.");
+			ImGuiEx::AddTooltipToLastItem("Toggles if the 'Totals' section should be displayed.");
 
 			ImGui::Checkbox("Show Targets", &pHealingOptions.ShowAgents);
-			ImGui_AddTooltipToLastItem("Toggles if the 'Targets' section should be displayed.");
+			ImGuiEx::AddTooltipToLastItem("Toggles if the 'Targets' section should be displayed.");
 
 			ImGui::Checkbox("Show Skills", &pHealingOptions.ShowSkills);
-			ImGui_AddTooltipToLastItem("Toggles if the 'Skills' section should be displayed.");
+			ImGuiEx::AddTooltipToLastItem("Toggles if the 'Skills' section should be displayed.");
 
 			ImGui::Combo("Sort Order", &pHealingOptions.SortOrderChoice, sortOrderItems, static_cast<int>(SortOrder::Max));
-			ImGui_AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
+			ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
 
 			ImGui::Combo("Target Filter", &pHealingOptions.GroupFilterChoice, GROUP_FILTER_STRING, static_cast<int>(GroupFilter::Max));
-			ImGui_AddTooltipToLastItem(
+			ImGuiEx::AddTooltipToLastItem(
 				"Filters out targets based on their subgroup and if they are part of the squad.\n\n"
 				"- '%s': Targets in the same subgroup as yourself\n"
 				"- '%s': Targets in your squad\n"
@@ -135,26 +129,26 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			float oldPosY = ImGui::GetCursorPosY();
 			ImGui::SetCursorPosY(oldPosY + ImGui::GetStyle().FramePadding.y);
 			ImGui::Text("Hotkey");
-			ImGui_AddTooltipToLastItem(hotkeyTooltip);
+			ImGuiEx::AddTooltipToLastItem(hotkeyTooltip);
 
 			ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
 			ImGui::SetCursorPosY(oldPosY);
 			ImGui::InputInt("##HOTKEY", &pHealingOptions.HealTableHotkey, 0);
-			ImGui_AddTooltipToLastItem(hotkeyTooltip);
+			ImGuiEx::AddTooltipToLastItem(hotkeyTooltip);
 
 			ImGui::SameLine();
 			ImGui::Text("(%s)", VirtualKeyToString(pHealingOptions.HealTableHotkey).c_str());
-			ImGui_AddTooltipToLastItem(hotkeyTooltip);
+			ImGuiEx::AddTooltipToLastItem(hotkeyTooltip);
 
 			ImGui::Checkbox("Exclude unmapped targets", &pHealingOptions.ExcludeUnmappedAgents);
-			ImGui_AddTooltipToLastItem(
+			ImGuiEx::AddTooltipToLastItem(
 				"Filters out targets which could not be mapped to a name. The filtering\n"
 				"applies to the 'Totals' section as well as 'Targets' and 'Skills'.\n"
 				"If not filtered, these targets will appear with a number instead of a name\n"
 				"in the 'Targets' section");
 
 			ImGui::Checkbox("Debug Mode", &pHealingOptions.DebugMode);
-			ImGui_AddTooltipToLastItem(
+			ImGuiEx::AddTooltipToLastItem(
 				"Includes debug data in target and skill names.\n"
 				"Turn this on before taking screenshots of potential calculation issues.");
 

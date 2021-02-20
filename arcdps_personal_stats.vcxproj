@@ -165,6 +165,7 @@
     <ClCompile Include="AggregatedStats.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="GUI.cpp" />
+    <ClCompile Include="ImGuiEx.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
     <ClCompile Include="imgui\imgui_tables.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="AggregatedStats.h" />
     <ClInclude Include="ArcDPS.h" />
     <ClInclude Include="GUI.h" />
+    <ClInclude Include="ImGuiEx.h" />
     <ClInclude Include="imgui\imconfig.h" />
     <ClInclude Include="imgui\imgui.h" />
     <ClInclude Include="imgui\imgui_internal.h" />
