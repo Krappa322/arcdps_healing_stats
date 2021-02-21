@@ -55,6 +55,7 @@ SkillTable::SkillTable()
 	ENTRY(57244); // Nourishment (Cilantro Lime Sous-Vide Steak)
 	ENTRY(57253); // Nourishment (Coq Au Vin with Salsa)
 	ENTRY(57267); // Nourishment (Mango Cilantro Creme Brulee)
+	ENTRY(57269); // Nourishment (Salsa-Topped Veggie Flatbread)
 	ENTRY(57295); // Nourishment (Clear Truffle and Cilantro Ravioli)
 	ENTRY(57341); // Nourishment (Poultry Aspic with Salsa Garnish)
 	ENTRY(57356); // Nourishment (Spherified Cilantro Oyster Soup)
@@ -62,12 +63,17 @@ SkillTable::SkillTable()
 	ENTRY(57409); // Nourishment (Cilantro and Cured Meat Flatbread)
 #undef ENTRY
 
+	mySkillNameOverrides.emplace(1066, "Revive"); // Pressing "f" on a downed person
 	mySkillNameOverrides.emplace(14024, "Natural Healing"); // The game does not map this one at all
+	mySkillNameOverrides.emplace(21750, "Signet of the Ether (Active)");
+	mySkillNameOverrides.emplace(21775, "Aqua Surge (Self)");
+	mySkillNameOverrides.emplace(21776, "Aqua Surge (Area)");
 	mySkillNameOverrides.emplace(26937, "Enchanted Daggers (Initial)");
 	mySkillNameOverrides.emplace(28313, "Enchanted Daggers (Siphon)");
 	mySkillNameOverrides.emplace(30313, "Escapist's Fortitude"); // The game maps this to the wrong skill
-	mySkillNameOverrides.emplace(45686, "Breakrazor's Bastion (Initial)");
-	mySkillNameOverrides.emplace(46232, "Breakrazor's Bastion (Tick)");
+	mySkillNameOverrides.emplace(45686, "Breakrazor's Bastion (Self)");
+	mySkillNameOverrides.emplace(46232, "Breakrazor's Bastion (Area)");
+	mySkillNameOverrides.emplace(49103, "Signet of the Ether (Passive)");
 }
 
 
