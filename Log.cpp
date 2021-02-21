@@ -71,6 +71,5 @@ void LogImplementationArc_(const char* pFunctionName, const char* pFormatString,
 
 	va_end(args);
 
-	DWORD written;
 	ARC_E3(buffer);
 }

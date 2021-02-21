@@ -38,13 +38,14 @@ static void Display_SkillDetailsWindow(uint32_t pSkillId, const std::string& pSk
 	// Using "###" means the id of the window is calculated only from the part after the hashes (which
 	// in turn means that the name of the window can change if necessary)
 	snprintf(buffer, sizeof(buffer), "%s###HEALSKILL%u", pSkillName.c_str(), pSkillId);
-	ImGui::Begin(buffer, pIsOpen, ImVec2(600, 360), -1.0f, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+	ImGui::SetNextWindowSize(ImVec2(600, 360), ImGuiCond_FirstUseEver);
+	ImGui::Begin(buffer, pIsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
 	snprintf(buffer, sizeof(buffer), "##HEALSKILL.TOTALS.%u", pSkillId);
 
 	ImVec4 bgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	bgColor.w = 0.0f;
-	ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, bgColor);
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, bgColor);
 	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.35, 0));
 	ImGui::Text("total healing");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
@@ -87,13 +88,14 @@ static void Display_AgentDetailsWindow(uintptr_t pAgentId, const std::string& pA
 	// Using "###" means the id of the window is calculated only from the part after the hashes (which
 	// in turn means that the name of the window can change if necessary)
 	snprintf(buffer, sizeof(buffer), "%s###HEALGENT%llu", pAgentName.c_str(), pAgentId);
-	ImGui::Begin(buffer, pIsOpen, ImVec2(600, 360), -1.0f, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+	ImGui::SetNextWindowSize(ImVec2(600, 360), ImGuiCond_FirstUseEver);
+	ImGui::Begin(buffer, pIsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
 	snprintf(buffer, sizeof(buffer), "##HEALAGENT.TOTALS.%llu", pAgentId);
 
 	ImVec4 bgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	bgColor.w = 0.0f;
-	ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, bgColor);
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, bgColor);
 	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.35, 0));
 	ImGui::Text("total healing");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
@@ -142,7 +144,8 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 	if (pHealingOptions.ShowHealWindow == true)
 	{
-		ImGui::Begin("Heal Table##HEAL", &pHealingOptions.ShowHealWindow, ImVec2(400, 600), ImGuiWindowFlags_NoCollapse);
+		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
+		ImGui::Begin("Heal Table##HEAL", &pHealingOptions.ShowHealWindow, ImGuiWindowFlags_NoCollapse);
 
 		if (ImGui::BeginPopupContextItem("Options##HEAL") == true || ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 		{
