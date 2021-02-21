@@ -130,10 +130,10 @@ const AggregatedVectorSkills& AggregatedStats::GetSkills()
 		bool isIndirectHealing = false;
 		if (SkillTable::GlobalState.IsSkillIndirectHealing(skillId, skill.Name) == true)
 		{
+			LOG("Translating skill %hu %s to indirect healing", skillId, skill.Name);
+
 			totalIndirectHealing += totalHealing;
 			totalIndirectTicks += ticks;
-
-			LOG("Translating skill %hu %s to indirect healing", skillId, skill.Name);
 			isIndirectHealing = true;
 
 			if (myOptions.DebugMode == false)
@@ -171,6 +171,74 @@ const AggregatedVectorSkills& AggregatedStats::GetSkills()
 	Sort(*mySkills);
 
 	return *mySkills;
+}
+
+const AggregatedVectorSkills& AggregatedStats::GetAgentDetails(uintptr_t pAgentId)
+{
+	const auto [entry, inserted] = myAgentsDetailed.emplace(std::piecewise_construct,
+		std::forward_as_tuple(pAgentId),
+		std::forward_as_tuple());
+	if (inserted == false)
+	{
+		return entry->second; // Return cached value
+	}
+
+	uint64_t totalIndirectHealing = 0;
+	uint64_t totalIndirectTicks = 0;
+
+	for (const auto& [skillId, skill] : mySourceData.SkillsHealing)
+	{
+		for (const auto& [agentId, agent] : skill.AgentsHealing)
+		{
+			if (agentId != pAgentId)
+			{
+				continue;
+			}
+
+			bool isIndirectHealing = false;
+			if (SkillTable::GlobalState.IsSkillIndirectHealing(skillId, skill.Name) == true)
+			{
+				LOG("Translating skill %hu %s to indirect healing", skillId, skill.Name);
+
+				totalIndirectHealing += agent.TotalHealing;
+				totalIndirectTicks += agent.Ticks;
+				isIndirectHealing = true;
+
+				if (myOptions.DebugMode == false)
+				{
+					continue;
+				}
+			}
+
+			std::string skillName;
+			if (myOptions.DebugMode == false)
+			{
+				skillName = skill.Name;
+			}
+			else
+			{
+				char buffer[1024];
+				snprintf(buffer, sizeof(buffer), "%s%u ; %s", isIndirectHealing ? "(INDIRECT) ; " : "", skillId, skill.Name);
+				skillName = buffer;
+			}
+
+			float perSecond = agent.TotalHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
+			entry->second.emplace_back(skillId, std::move(skillName), perSecond);
+		}
+	}
+
+	if (totalIndirectHealing != 0 || totalIndirectTicks != 0)
+	{
+		float perSecond = totalIndirectHealing / (static_cast<float>(mySourceData.TimeInCombat) / 1000);
+
+		std::string skillName("Healing by Damage Dealt");
+
+		entry->second.emplace_back(IndirectHealingSkillId, std::move(skillName), perSecond);
+	}
+
+	Sort(entry->second);
+
+	return entry->second;
 }
 
 const AggregatedVectorAgents& AggregatedStats::GetSkillDetails(uint32_t pSkillId)

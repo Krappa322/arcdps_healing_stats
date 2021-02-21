@@ -59,6 +59,8 @@ public:
 
 	const AggregatedVectorAgents& GetAgents();
 	const AggregatedVectorSkills& GetSkills();
+
+	const AggregatedVectorSkills& GetAgentDetails(uintptr_t pAgentId);
 	const AggregatedVectorAgents& GetSkillDetails(uint32_t pSkillId);
 
 	TotalHealingStats GetTotalHealing();
@@ -82,5 +84,6 @@ private:
 	std::unique_ptr<AggregatedVectorAgents> myFilteredAgents;
 	std::unique_ptr<AggregatedVectorSkills> mySkills;
 
+	std::map<uintptr_t, AggregatedVectorSkills> myAgentsDetailed; // uintptr_t => agent id
 	std::map<uint32_t, AggregatedVectorAgents> mySkillsDetailed; // uint32_t => skill id
 };
