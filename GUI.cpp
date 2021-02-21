@@ -13,20 +13,21 @@ constexpr const char* GROUP_FILTER_STRING[] = { "Group", "Squad", "All (Excludin
 static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
 constexpr static uint32_t MAX_GROUP_FILTER_NAME = LongestStringInArray<GROUP_FILTER_STRING, static_cast<size_t>(GroupFilter::Max) - 1>::value;
 
-struct SkillWindowState
+struct DetailsWindowState
 {
 	std::string CachedName;
 	float CachedPerSecond = 0;
 	bool IsOpen = false;
 };
 
-static std::map<uint32_t, SkillWindowState> OPEN_SKILL_WINDOWS;
+static std::map<uint32_t, DetailsWindowState> OPEN_SKILL_WINDOWS;
+static std::map<uintptr_t, DetailsWindowState> OPEN_AGENT_WINDOWS;
 
 //static std::unique_ptr<AggregatedStats> exampleAggregatedStats;
 static std::unique_ptr<AggregatedStats> currentAggregatedStats;
 static time_t lastAggregatedTime = 0;
 
-static void Display_SkillWindow(uint32_t pSkillId, const std::string& pSkillName, float pHealPerSecond, bool* pIsOpen)
+static void Display_SkillDetailsWindow(uint32_t pSkillId, const std::string& pSkillName, float pHealPerSecond, bool* pIsOpen)
 {
 	if (*pIsOpen == false)
 	{
@@ -49,6 +50,8 @@ static void Display_SkillWindow(uint32_t pSkillId, const std::string& pSkillName
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
 	ImGui::Text("healing per second");
 	ImGuiEx::TextRightAlignedSameLine("%.2f", pHealPerSecond);
+	ImGui::Text("healing per hit");
+	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
 	ImGui::Text("healing per cast");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
 	ImGui::Text("hits");
@@ -66,6 +69,51 @@ static void Display_SkillWindow(uint32_t pSkillId, const std::string& pSkillName
 	{
 		ImGui::Text("%s", agent.Name.c_str());
 		ImGuiEx::TextRightAlignedSameLine("%.2f/s", agent.PerSecond);
+	}
+	ImGui::EndChild();
+	ImGui::PopStyleColor();
+
+	ImGui::End();
+}
+
+static void Display_AgentDetailsWindow(uintptr_t pAgentId, const std::string& pAgentName, float pHealPerSecond, bool* pIsOpen)
+{
+	if (*pIsOpen == false)
+	{
+		return;
+	}
+
+	char buffer[1024];
+	// Using "###" means the id of the window is calculated only from the part after the hashes (which
+	// in turn means that the name of the window can change if necessary)
+	snprintf(buffer, sizeof(buffer), "%s###HEALGENT%llu", pAgentName.c_str(), pAgentId);
+	ImGui::Begin(buffer, pIsOpen, ImVec2(600, 360), -1.0f, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+
+	snprintf(buffer, sizeof(buffer), "##HEALAGENT.TOTALS.%llu", pAgentId);
+
+	ImVec4 bgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
+	bgColor.w = 0.0f;
+	ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, bgColor);
+	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.35, 0));
+	ImGui::Text("total healing");
+	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+	ImGui::Text("healing per second");
+	ImGuiEx::TextRightAlignedSameLine("%.2f", pHealPerSecond);
+	ImGui::Text("healing per hit");
+	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+	ImGui::Text("hits");
+	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+	ImGui::Text("id %llu", pAgentId);
+	ImGui::EndChild();
+
+	ImGui::SameLine();
+
+	snprintf(buffer, sizeof(buffer), "##HEALSKILL.AGENTS.%llu", pAgentId);
+	ImGui::BeginChild(buffer, ImVec2(0, 0));
+	for (const auto& skill : currentAggregatedStats->GetAgentDetails(pAgentId))
+	{
+		ImGui::Text("%s", skill.Name.c_str());
+		ImGuiEx::TextRightAlignedSameLine("%.2f/s", skill.PerSecond);
 	}
 	ImGui::EndChild();
 	ImGui::PopStyleColor();
@@ -179,11 +227,25 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 			for (const auto& agent : currentAggregatedStats->GetAgents())
 			{
+				ImGui::BeginGroup();
 				ImGui::Text("%s", agent.Name.c_str());
 
 				snprintf(buffer, sizeof(buffer), "%.2f/s", agent.PerSecond);
 				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x);
 				ImGui::Text("%s", buffer);
+
+				ImGui::EndGroup();
+
+				auto [state, _inserted] = OPEN_AGENT_WINDOWS.emplace(std::piecewise_construct, std::forward_as_tuple(agent.Id), std::forward_as_tuple());
+				state->second.CachedName = agent.Name;
+				state->second.CachedPerSecond = agent.PerSecond;
+
+				if (ImGui::IsItemClicked() == true)
+				{
+					state->second.IsOpen = !state->second.IsOpen;
+
+					LOG("Toggled details window for agent %llu %s", agent.Id, agent.Name.c_str());
+				}
 			}
 			ImGui::Spacing();
 		}
@@ -225,12 +287,17 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			ImGui::Spacing();
 		}
 
-		ImGui::End();
-
 		for (auto& [skillId, windowState] : OPEN_SKILL_WINDOWS)
 		{
-			Display_SkillWindow(skillId, windowState.CachedName, windowState.CachedPerSecond, &windowState.IsOpen);
+			Display_SkillDetailsWindow(skillId, windowState.CachedName, windowState.CachedPerSecond, &windowState.IsOpen);
 		}
+
+		for (auto& [agentId, windowState] : OPEN_AGENT_WINDOWS)
+		{
+			Display_AgentDetailsWindow(agentId, windowState.CachedName, windowState.CachedPerSecond, &windowState.IsOpen);
+		}
+
+		ImGui::End();
 	}
 }
 
