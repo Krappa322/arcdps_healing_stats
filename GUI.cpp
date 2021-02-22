@@ -27,6 +27,12 @@ static std::map<uintptr_t, DetailsWindowState> OPEN_AGENT_WINDOWS;
 static std::unique_ptr<AggregatedStats> currentAggregatedStats;
 static time_t lastAggregatedTime = 0;
 
+enum UniqueIdSpace
+{
+	UniqueIdSpace_Targets = 1,
+	UniqueIdSpace_Skills = 2
+};
+
 static void Display_SkillDetailsWindow(uint32_t pSkillId, const std::string& pSkillName, float pHealPerSecond, bool* pIsOpen)
 {
 	if (*pIsOpen == false)
@@ -39,7 +45,7 @@ static void Display_SkillDetailsWindow(uint32_t pSkillId, const std::string& pSk
 	// in turn means that the name of the window can change if necessary)
 	snprintf(buffer, sizeof(buffer), "%s###HEALSKILL%u", pSkillName.c_str(), pSkillId);
 	ImGui::SetNextWindowSize(ImVec2(600, 360), ImGuiCond_FirstUseEver);
-	ImGui::Begin(buffer, pIsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+	ImGui::Begin(buffer, pIsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
 
 	snprintf(buffer, sizeof(buffer), "##HEALSKILL.TOTALS.%u", pSkillId);
 
@@ -49,22 +55,27 @@ static void Display_SkillDetailsWindow(uint32_t pSkillId, const std::string& pSk
 	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.35, 0));
 	ImGui::Text("total healing");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+
 	ImGui::Text("healing per second");
-	ImGuiEx::TextRightAlignedSameLine("%.2f", pHealPerSecond);
+	ImGuiEx::TextRightAlignedSameLine("%.2f/s", pHealPerSecond);
+
 	ImGui::Text("healing per hit");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+
 	ImGui::Text("healing per cast");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+
 	ImGui::Text("hits");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+
 	ImGui::Text("casts");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
-	ImGui::Text("id %u", pSkillId);
+
+	ImGuiEx::BottomText("id %u", pSkillId);
 	ImGui::EndChild();
 
-	ImGui::SameLine();
-
 	snprintf(buffer, sizeof(buffer), "##HEALSKILL.AGENTS.%u", pSkillId);
+	ImGui::SameLine();
 	ImGui::BeginChild(buffer, ImVec2(0, 0));
 	for (const auto& agent : currentAggregatedStats->GetSkillDetails(pSkillId))
 	{
@@ -89,7 +100,7 @@ static void Display_AgentDetailsWindow(uintptr_t pAgentId, const std::string& pA
 	// in turn means that the name of the window can change if necessary)
 	snprintf(buffer, sizeof(buffer), "%s###HEALGENT%llu", pAgentName.c_str(), pAgentId);
 	ImGui::SetNextWindowSize(ImVec2(600, 360), ImGuiCond_FirstUseEver);
-	ImGui::Begin(buffer, pIsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+	ImGui::Begin(buffer, pIsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
 
 	snprintf(buffer, sizeof(buffer), "##HEALAGENT.TOTALS.%llu", pAgentId);
 
@@ -97,20 +108,24 @@ static void Display_AgentDetailsWindow(uintptr_t pAgentId, const std::string& pA
 	bgColor.w = 0.0f;
 	ImGui::PushStyleColor(ImGuiCol_ChildBg, bgColor);
 	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.35, 0));
+
 	ImGui::Text("total healing");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+
 	ImGui::Text("healing per second");
-	ImGuiEx::TextRightAlignedSameLine("%.2f", pHealPerSecond);
+	ImGuiEx::TextRightAlignedSameLine("%.2f/s", pHealPerSecond);
+
 	ImGui::Text("healing per hit");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
+
 	ImGui::Text("hits");
 	ImGuiEx::TextRightAlignedSameLine("soon (tm)");
-	ImGui::Text("id %llu", pAgentId);
+
+	ImGuiEx::BottomText("id %llu", pAgentId);
 	ImGui::EndChild();
 
-	ImGui::SameLine();
-
 	snprintf(buffer, sizeof(buffer), "##HEALSKILL.AGENTS.%llu", pAgentId);
+	ImGui::SameLine();
 	ImGui::BeginChild(buffer, ImVec2(0, 0));
 	for (const auto& skill : currentAggregatedStats->GetAgentDetails(pAgentId))
 	{
@@ -231,10 +246,20 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			for (const auto& agent : currentAggregatedStats->GetAgents())
 			{
 				ImGui::BeginGroup();
+				ImGui::PushID(UniqueIdSpace_Targets);
+				ImGui::PushID(agent.Id);
+				float startX = ImGui::GetCursorPosX();
+				ImGui::Selectable("", false, ImGuiSelectableFlags_SpanAllColumns);
+				ImGui::PopID();
+				ImGui::PopID();
+
+				ImGui::SameLine();
+				ImGui::SetCursorPosX(startX);
 				ImGui::Text("%s", agent.Name.c_str());
 
 				snprintf(buffer, sizeof(buffer), "%.2f/s", agent.PerSecond);
-				ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x);
+				ImGui::SameLine();
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x); // Setting x in SameLine would add group offset which makes the calculation incorrect
 				ImGui::Text("%s", buffer);
 
 				ImGui::EndGroup();
@@ -267,6 +292,15 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 					IM_COL32(0, 255, 0, 128));*/
 
 				ImGui::BeginGroup();
+				ImGui::PushID(UniqueIdSpace_Skills);
+				ImGui::PushID(skill.Id);
+				float startX = ImGui::GetCursorPosX();
+				ImGui::Selectable("", false, ImGuiSelectableFlags_SpanAllColumns);
+				ImGui::PopID();
+				ImGui::PopID();
+
+				ImGui::SameLine();
+				ImGui::SetCursorPosX(startX);
 				ImGui::Text("%s", skill.Name.c_str());
 
 				snprintf(buffer, sizeof(buffer), "%.2f/s", skill.PerSecond);
