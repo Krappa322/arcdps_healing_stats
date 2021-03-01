@@ -38,7 +38,7 @@ void LogImplementation_(const char* pFunctionName, const char* pFormatString, ..
 
 	DWORD written;
 	bool result = WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), buffer, static_cast<DWORD>(strlen(buffer)), &written, 0);
-	assert(result == true);
+	//assert(result == true); // Sometimes logging happens after mod_release for some reason
 }
 
 void LogImplementationArc_(const char* pFunctionName, const char* pFormatString, ...)

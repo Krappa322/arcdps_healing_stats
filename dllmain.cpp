@@ -345,16 +345,24 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 		{
 			std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 
-			if (HEAL_TABLE_OPTIONS.HealTableHotkey > 0 &&
-				HEAL_TABLE_OPTIONS.HealTableHotkey < sizeof(io.KeysDown) &&
-				virtualKey == HEAL_TABLE_OPTIONS.HealTableHotkey)
+			bool triggeredKey = false;
+			for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
 			{
-				assert(io.KeysDown[HEAL_TABLE_OPTIONS.HealTableHotkey] == true);
+				if (HEAL_TABLE_OPTIONS.Windows[i].Hotkey > 0 &&
+					HEAL_TABLE_OPTIONS.Windows[i].Hotkey < sizeof(io.KeysDown) &&
+					virtualKey == HEAL_TABLE_OPTIONS.Windows[i].Hotkey)
+				{
+					assert(io.KeysDown[HEAL_TABLE_OPTIONS.Windows[i].Hotkey] == true);
 
-				HEAL_TABLE_OPTIONS.ShowHealWindow = !HEAL_TABLE_OPTIONS.ShowHealWindow;
+					HEAL_TABLE_OPTIONS.Windows[i].Shown = !HEAL_TABLE_OPTIONS.Windows[i].Shown;
+					triggeredKey = true;
 
-				LOG("Key %i '%s' toggled window - new heal window state is %s", HEAL_TABLE_OPTIONS.HealTableHotkey, VirtualKeyToString(HEAL_TABLE_OPTIONS.HealTableHotkey).c_str(), BOOL_STR(HEAL_TABLE_OPTIONS.ShowHealWindow));
+					LOG("Key %i '%s' toggled window %u - new heal window state is %s", HEAL_TABLE_OPTIONS.Windows[i].Hotkey, VirtualKeyToString(HEAL_TABLE_OPTIONS.Windows[i].Hotkey).c_str(), i, BOOL_STR(HEAL_TABLE_OPTIONS.Windows[i].Shown));
+				}
+			}
 
+			if (triggeredKey == true)
+			{
 				return 0; // Don't process message by arcdps or game
 			}
 		}

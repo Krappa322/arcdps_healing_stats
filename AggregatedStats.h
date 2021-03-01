@@ -1,53 +1,38 @@
 #pragma once
 
-#include "Options.h"
+#include "State.h"
 #include "PersonalStats.h"
 
 #include <stdint.h>
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
-enum class SortOrder
-{
-	AscendingAlphabetical,
-	DescendingAlphabetical,
-	AscendingSize,
-	DescendingSize,
-	Max
-};
-
 enum class GroupFilter
 {
-	Group,
-	Squad,
-	AllExcludingMinions,
-	All,
+	Group = 0,
+	Squad = 1,
+	AllExcludingMinions = 2,
+	All = 3,
 	Max
 };
 
-struct AggregatedStatsSkill
+struct AggregatedStatsEntry
 {
-	uint32_t Id;
+	uint64_t Id;
 	std::string Name;
-	float PerSecond;
 
-	AggregatedStatsSkill(uint32_t pSkillId, std::string&& pName, float pPerSecond);
+	uint64_t Healing;
+	uint64_t Hits;
+	std::optional<uint64_t> Casts;
+
+	AggregatedStatsEntry(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts);
 };
 
-struct AggregatedStatsAgent
-{
-	uintptr_t Id;
-	std::string Name;
-	float PerSecond;
-
-	AggregatedStatsAgent(uintptr_t pAgentId, std::string&& pName, float pPerSecond);
-};
-
-using AggregatedVectorSkills = std::vector<AggregatedStatsSkill>;
-using AggregatedVectorAgents = std::vector<AggregatedStatsAgent>;
+using AggregatedVector = std::vector<AggregatedStatsEntry>;
 using TotalHealingStats = std::array<float, static_cast<size_t>(GroupFilter::Max)>;
 
 constexpr static uint32_t IndirectHealingSkillId = 0;
@@ -55,17 +40,22 @@ constexpr static uint32_t IndirectHealingSkillId = 0;
 class AggregatedStats
 {
 public:
-	AggregatedStats(HealingStats&& pSourceData, const HealTableOptions& pOptions);
+	AggregatedStats(HealingStats&& pSourceData, const HealWindowOptions& pOptions, bool pDebugMode);
 
-	const AggregatedVectorAgents& GetAgents();
-	const AggregatedVectorSkills& GetSkills();
+	const AggregatedStatsEntry& GetTotal();
+	const AggregatedVector& GetStats();
+	const AggregatedVector& GetDetails(uint64_t pId);
+	uint64_t GetCombatTime();
 
-	const AggregatedVectorSkills& GetAgentDetails(uintptr_t pAgentId);
-	const AggregatedVectorAgents& GetSkillDetails(uint32_t pSkillId);
+private:
+	const AggregatedVector& GetAgents();
+	const AggregatedVector& GetSkills();
+
+	const AggregatedVector& GetAgentDetails(uintptr_t pAgentId);
+	const AggregatedVector& GetSkillDetails(uint32_t pSkillId);
 
 	TotalHealingStats GetTotalHealing();
 
-private:
 	const std::map<uintptr_t, AgentStats>& GetAllAgents();
 
 	template<typename VectorType>
@@ -73,17 +63,19 @@ private:
 
 	bool Filter(uintptr_t pAgentId) const; // Returns true if agent should be filtered out
 	bool Filter(std::map<uintptr_t, HealedAgent>::const_iterator& pAgent) const; // Returns true if agent should be filtered out
-	bool FilterInternal(std::map<uintptr_t, HealedAgent>::const_iterator& pAgent, GroupFilter pFilter) const; // Returns true if agent should be filtered out
+	bool FilterInternal(std::map<uintptr_t, HealedAgent>::const_iterator& pAgent, const HealWindowOptions& pFilter) const; // Returns true if agent should be filtered out
 
 	HealingStats mySourceData;
 
-	HealTableOptions myOptions;
+	HealWindowOptions myOptions;
+	bool myDebugMode;
 
 	std::unique_ptr<std::map<uintptr_t, AgentStats>> myAllAgents; // uintptr_t => agent id
 
-	std::unique_ptr<AggregatedVectorAgents> myFilteredAgents;
-	std::unique_ptr<AggregatedVectorSkills> mySkills;
+	std::unique_ptr<AggregatedStatsEntry> myTotal;
+	std::unique_ptr<AggregatedVector> myFilteredAgents;
+	std::unique_ptr<AggregatedVector> mySkills;
 
-	std::map<uintptr_t, AggregatedVectorSkills> myAgentsDetailed; // uintptr_t => agent id
-	std::map<uint32_t, AggregatedVectorAgents> mySkillsDetailed; // uint32_t => skill id
+	std::map<uintptr_t, AggregatedVector> myAgentsDetailed; // uintptr_t => agent id
+	std::map<uint32_t, AggregatedVector> mySkillsDetailed; // uint32_t => skill id
 };

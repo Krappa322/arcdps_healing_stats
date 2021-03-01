@@ -10,58 +10,10 @@ static CSimpleIniA healtable_ini(true /* isUtf8 */);
 void WriteIni(const HealTableOptions& pOptions)
 {
 	// Store a version so that we can possibly translate ini file in the future (for example if some breaking change is made to enum values)
-	SI_Error error = healtable_ini.SetLongValue("ini", "version", 2);
+	SI_Error error = healtable_ini.SetLongValue("ini", "version", 3);
 	if (error < 0)
 	{
 		LOG("SetValue version failed with %i", error);
-	}
-
-	error = healtable_ini.SetBoolValue("settings", "show_heal_window", pOptions.ShowHealWindow);
-	if (error < 0)
-	{
-		LOG("SetValue show_heal_window failed with %i", error);
-	}
-
-	error = healtable_ini.SetBoolValue("settings", "show_totals", pOptions.ShowTotals);
-	if (error < 0)
-	{
-		LOG("SetValue show_totals failed with %i", error);
-	}
-
-	error = healtable_ini.SetBoolValue("settings", "show_agents", pOptions.ShowAgents);
-	if (error < 0)
-	{
-		LOG("SetValue show_agents failed with %i", error);
-	}
-
-	error = healtable_ini.SetBoolValue("settings", "show_skills", pOptions.ShowSkills);
-	if (error < 0)
-	{
-		LOG("SetValue show_skills failed with %i", error);
-	}
-
-	error = healtable_ini.SetLongValue("settings", "sort_order_choice", pOptions.SortOrderChoice);
-	if (error < 0)
-	{
-		LOG("SetValue sort_order_choice failed with %i", error);
-	}
-
-	error = healtable_ini.SetLongValue("settings", "group_filter_choice", pOptions.GroupFilterChoice);
-	if (error < 0)
-	{
-		LOG("SetValue group_filter_choice failed with %i", error);
-	}
-
-	error = healtable_ini.SetLongValue("settings", "heal_table_hotkey", pOptions.HealTableHotkey);
-	if (error < 0)
-	{
-		LOG("SetValue heal_table_hotkey failed with %i", error);
-	}
-
-	error = healtable_ini.SetBoolValue("settings", "exclude_unmapped_agents", pOptions.ExcludeUnmappedAgents);
-	if (error < 0)
-	{
-		LOG("SetValue exclude_unmapped_agents failed with %i", error);
 	}
 
 	error = healtable_ini.SetBoolValue("settings", "debug_mode", pOptions.DebugMode);
@@ -70,44 +22,95 @@ void WriteIni(const HealTableOptions& pOptions)
 		LOG("SetValue debug_mode failed with %i", error);
 	}
 
+	for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
+	{
+		char section[128];
+		snprintf(section, sizeof(section), "heal_window_%u", i);
+
+		error = healtable_ini.SetBoolValue(section, "show_window", pOptions.Windows[i].Shown);
+		if (error < 0)
+		{
+			LOG("SetValue show_window failed with %i", error);
+		}
+
+		error = healtable_ini.SetLongValue(section, "hotkey", pOptions.Windows[i].Hotkey);
+		if (error < 0)
+		{
+			LOG("SetValue hotkey failed with %i", error);
+		}
+
+		error = healtable_ini.SetLongValue(section, "data_source_choice", pOptions.Windows[i].DataSourceChoice);
+		if (error < 0)
+		{
+			LOG("SetValue data_source_choice failed with %i", error);
+		}
+
+		error = healtable_ini.SetLongValue(section, "sort_order_choice", pOptions.Windows[i].SortOrderChoice);
+		if (error < 0)
+		{
+			LOG("SetValue sort_order_choice failed with %i", error);
+		}
+
+		error = healtable_ini.SetBoolValue(section, "exclude_group", pOptions.Windows[i].ExcludeGroup);
+		if (error < 0)
+		{
+			LOG("SetValue exclude_group failed with %i", error);
+		}
+
+		error = healtable_ini.SetBoolValue(section, "exclude_off_group", pOptions.Windows[i].ExcludeOffGroup);
+		if (error < 0)
+		{
+			LOG("SetValue exclude_off_group failed with %i", error);
+		}
+
+		error = healtable_ini.SetBoolValue(section, "exclude_off_squad", pOptions.Windows[i].ExcludeOffSquad);
+		if (error < 0)
+		{
+			LOG("SetValue exclude_off_squad failed with %i", error);
+		}
+
+		error = healtable_ini.SetBoolValue(section, "exclude_minions", pOptions.Windows[i].ExcludeMinions);
+		if (error < 0)
+		{
+			LOG("SetValue exclude_minions failed with %i", error);
+		}
+
+		error = healtable_ini.SetBoolValue(section, "exclude_unmapped", pOptions.Windows[i].ExcludeUnmapped);
+		if (error < 0)
+		{
+			LOG("SetValue exclude_unmapped failed with %i", error);
+		}
+
+		error = healtable_ini.SetValue(section, "name", pOptions.Windows[i].Name);
+		if (error < 0)
+		{
+			LOG("SetValue name failed with %i", error);
+		}
+
+		error = healtable_ini.SetValue(section, "title_format", pOptions.Windows[i].TitleFormat);
+		if (error < 0)
+		{
+			LOG("SetValue title_format failed with %i", error);
+		}
+
+		error = healtable_ini.SetValue(section, "entry_format", pOptions.Windows[i].EntryFormat);
+		if (error < 0)
+		{
+			LOG("SetValue entry_format failed with %i", error);
+		}
+
+		error = healtable_ini.SetValue(section, "details_entry_format", pOptions.Windows[i].DetailsEntryFormat);
+		if (error < 0)
+		{
+			LOG("SetValue details_entry_format failed with %i", error);
+		}
+	}
+
 	error = healtable_ini.SaveFile("addons\\arcdps\\arcdps_healing_stats.ini");
 	if (error < 0)
 	{
 		LOG("SaveFile failed with %i", error);
 	}
-}
-
-static void ReadIni_V1(HealTableOptions& pOptions)
-{
-	const char* stringValue = healtable_ini.GetValue("settings", "show_heal_window", "0");
-	pOptions.ShowHealWindow = (atoi(stringValue) != 0);
-
-	stringValue = healtable_ini.GetValue("settings", "show_totals", "1");
-	pOptions.ShowTotals = (atoi(stringValue) != 0);
-
-	stringValue = healtable_ini.GetValue("settings", "show_agents", "1");
-	pOptions.ShowAgents = (atoi(stringValue) != 0);
-
-	stringValue = healtable_ini.GetValue("settings", "show_skills", "1");
-	pOptions.ShowSkills = (atoi(stringValue) != 0);
-
-	stringValue = healtable_ini.GetValue("settings", "sort_order_choice", "3");
-	pOptions.SortOrderChoice = atoi(stringValue);
-
-	stringValue = healtable_ini.GetValue("settings", "group_filter_choice", "1");
-	pOptions.GroupFilterChoice = atoi(stringValue);
-
-	stringValue = healtable_ini.GetValue("settings", "heal_table_hotkey", "0");
-	pOptions.HealTableHotkey = atoi(stringValue);
-
-	stringValue = healtable_ini.GetValue("settings", "exclude_unmapped_agents", "1");
-	pOptions.ExcludeUnmappedAgents = (atoi(stringValue) != 0);
-
-	stringValue = healtable_ini.GetValue("settings", "debug_mode", "0");
-	pOptions.DebugMode = (atoi(stringValue) != 0);
-
-	LOG("Read options from ini file: show_heal_window=%s show_totals=%s show_agents=%s show_skills=%s sort_order_choice=%i group_filter_choice=%i heal_table_hotkey=%i exclude_unmapped_agents=%s debug_mode=%s",
-		BOOL_STR(pOptions.ShowHealWindow), BOOL_STR(pOptions.ShowTotals), BOOL_STR(pOptions.ShowAgents), BOOL_STR(pOptions.ShowSkills), pOptions.SortOrderChoice, pOptions.GroupFilterChoice, pOptions.HealTableHotkey, BOOL_STR(pOptions.ExcludeUnmappedAgents), BOOL_STR(pOptions.DebugMode));
 }
 
 void ReadIni(HealTableOptions& pOptions)
@@ -119,23 +122,86 @@ void ReadIni(HealTableOptions& pOptions)
 	}
 
 	uint32_t version = healtable_ini.GetLongValue("ini", "version");
-	if (version == 1)
+	if (version <= 2)
 	{
-		return ReadIni_V1(pOptions);
+		healtable_ini.Reset(); // Remove everything from the old ini file
+		return;
 	}
 
-	pOptions.ShowHealWindow = healtable_ini.GetBoolValue("settings", "show_heal_window", false);
-	pOptions.ShowTotals = healtable_ini.GetBoolValue("settings", "show_totals", true);
-	pOptions.ShowAgents = healtable_ini.GetBoolValue("settings", "show_agents", true);
-	pOptions.ShowSkills = healtable_ini.GetBoolValue("settings", "show_skills", true);
+	pOptions.DebugMode = healtable_ini.GetBoolValue("settings", "debug_mode", pOptions.DebugMode);
 
-	pOptions.SortOrderChoice = healtable_ini.GetLongValue("settings", "sort_order_choice", static_cast<long>(SortOrder::DescendingSize));
-	pOptions.GroupFilterChoice = healtable_ini.GetLongValue("settings", "group_filter_choice", static_cast<long>(GroupFilter::Squad));
-	pOptions.HealTableHotkey = healtable_ini.GetLongValue("settings", "heal_table_hotkey", 0);
+	for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
+	{
+		char section[128];
+		snprintf(section, sizeof(section), "heal_window_%u", i);
 
-	pOptions.ExcludeUnmappedAgents = healtable_ini.GetBoolValue("settings", "exclude_unmapped_agents", true);
-	pOptions.DebugMode = healtable_ini.GetBoolValue("settings", "debug_mode", false);
+		pOptions.Windows[i].Shown = healtable_ini.GetBoolValue(section, "show_window", pOptions.Windows[i].Shown);
+		pOptions.Windows[i].Hotkey = healtable_ini.GetLongValue(section, "hotkey", pOptions.Windows[i].Hotkey);
 
-	LOG("Read options from ini file: show_heal_window=%s show_totals=%s show_agents=%s show_skills=%s sort_order_choice=%i group_filter_choice=%i heal_table_hotkey=%i exclude_unmapped_agents=%s debug_mode=%s",
-		BOOL_STR(pOptions.ShowHealWindow), BOOL_STR(pOptions.ShowTotals), BOOL_STR(pOptions.ShowAgents), BOOL_STR(pOptions.ShowSkills), pOptions.SortOrderChoice, pOptions.GroupFilterChoice, pOptions.HealTableHotkey, BOOL_STR(pOptions.ExcludeUnmappedAgents), BOOL_STR(pOptions.DebugMode));
+		pOptions.Windows[i].DataSourceChoice = healtable_ini.GetLongValue(section, "data_source_choice", pOptions.Windows[i].DataSourceChoice);
+		pOptions.Windows[i].SortOrderChoice = healtable_ini.GetLongValue(section, "sort_order_choice", pOptions.Windows[i].SortOrderChoice);
+
+		pOptions.Windows[i].ExcludeGroup = healtable_ini.GetBoolValue(section, "exclude_group", pOptions.Windows[i].ExcludeGroup);
+		pOptions.Windows[i].ExcludeOffGroup = healtable_ini.GetBoolValue(section, "exclude_off_group", pOptions.Windows[i].ExcludeOffGroup);
+		pOptions.Windows[i].ExcludeOffSquad = healtable_ini.GetBoolValue(section, "exclude_off_squad", pOptions.Windows[i].ExcludeOffSquad);
+		pOptions.Windows[i].ExcludeMinions = healtable_ini.GetBoolValue(section, "exclude_minions", pOptions.Windows[i].ExcludeMinions);
+		pOptions.Windows[i].ExcludeUnmapped = healtable_ini.GetBoolValue(section, "exclude_unmapped", pOptions.Windows[i].ExcludeUnmapped);
+
+		const char* val = healtable_ini.GetValue(section, "name", nullptr);
+		if (val != nullptr)
+		{
+			snprintf(pOptions.Windows[i].Name, sizeof(pOptions.Windows[i].Name), "%s", val);
+		}
+
+		val = healtable_ini.GetValue(section, "title_format", nullptr);
+		if (val != nullptr)
+		{
+			snprintf(pOptions.Windows[i].TitleFormat, sizeof(pOptions.Windows[i].TitleFormat), "%s", val);
+		}
+
+		val = healtable_ini.GetValue(section, "entry_format", nullptr);
+		if (val != nullptr)
+		{
+			snprintf(pOptions.Windows[i].EntryFormat, sizeof(pOptions.Windows[i].EntryFormat), "%s", val);
+		}
+
+		val = healtable_ini.GetValue(section, "details_entry_format", nullptr);
+		if (val != nullptr)
+		{
+			snprintf(pOptions.Windows[i].DetailsEntryFormat, sizeof(pOptions.Windows[i].DetailsEntryFormat), "%s", val);
+		}
+
+		LOG("Read window %u from ini file: show_window=%s data_source_choice=%i sort_order_choice=%i exclude_group=%s exclude_off_group=%s exclude_off_squad=%s exclude_minions=%s exclude_unmapped=%s name='%s' title_format='%s' entry_format='%s' details_entry_format='%s'",
+			i, BOOL_STR(pOptions.Windows[i].Shown), pOptions.Windows[i].DataSourceChoice, pOptions.Windows[i].SortOrderChoice, BOOL_STR(pOptions.Windows[i].ExcludeGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffSquad), BOOL_STR(pOptions.Windows[i].ExcludeMinions), BOOL_STR(pOptions.Windows[i].ExcludeUnmapped), pOptions.Windows[i].Name, pOptions.Windows[i].TitleFormat, pOptions.Windows[i].EntryFormat, pOptions.Windows[i].DetailsEntryFormat);
+	}
+
+	LOG("Read ini file debug_mode=%s", BOOL_STR(pOptions.DebugMode));
+}
+
+DetailsWindowState::DetailsWindowState(const AggregatedStatsEntry& pEntry)
+	: AggregatedStatsEntry(pEntry)
+{
+}
+
+HealTableOptions::HealTableOptions()
+{
+	Windows[0].DataSourceChoice = static_cast<int>(DataSource::Agents);
+	snprintf(Windows[0].Name, sizeof(Windows[0].Name), "%s", "Targets");
+	snprintf(Windows[0].TitleFormat, sizeof(Windows[0].TitleFormat), "%s", "Targets {1} ({4}/s, {7}s in combat)");
+
+	Windows[1].DataSourceChoice = static_cast<int>(DataSource::Skills);
+	snprintf(Windows[1].Name, sizeof(Windows[1].Name), "%s", "Skills");
+	snprintf(Windows[1].TitleFormat, sizeof(Windows[1].TitleFormat), "%s", "Skills {1} ({4}/s, {7}s in combat)");
+
+	Windows[2].DataSourceChoice = static_cast<int>(DataSource::Agents);
+	snprintf(Windows[2].Name, sizeof(Windows[2].Name), "%s", "Targets (hits)");
+	snprintf(Windows[2].TitleFormat, sizeof(Windows[2].TitleFormat), "%s", "Targets {1} ({5}/hit, {2} hits)");
+	snprintf(Windows[2].EntryFormat, sizeof(Windows[2].EntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
+	snprintf(Windows[2].DetailsEntryFormat, sizeof(Windows[2].DetailsEntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
+
+	Windows[3].DataSourceChoice = static_cast<int>(DataSource::Skills);
+	snprintf(Windows[3].Name, sizeof(Windows[3].Name), "%s", "Skills (hits)");
+	snprintf(Windows[3].TitleFormat, sizeof(Windows[3].TitleFormat), "%s", "Skills {1} ({5}/hit, {2} hits)");
+	snprintf(Windows[3].EntryFormat, sizeof(Windows[3].EntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
+	snprintf(Windows[3].DetailsEntryFormat, sizeof(Windows[3].DetailsEntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
 }

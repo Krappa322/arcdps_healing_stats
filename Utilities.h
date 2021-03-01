@@ -1,9 +1,36 @@
 #pragma once
 
 #include <assert.h>
+#include <math.h>
+#include <stdlib.h>
 #include <Windows.h>
 
 #include <algorithm>
+#include <array>
+#include <optional>
+#include <variant>
+
+uint64_t constexpr divide_rounded_safe(uint64_t pDividend, uint64_t pDivisor)
+{
+	if (pDivisor == 0)
+	{
+		return 0;
+	}
+
+	return (pDividend + (pDivisor / 2)) / pDivisor;
+}
+
+// Implicitly coerces any dividend into a double
+template <typename T, typename U>
+double constexpr divide_safe(T pDividend, U pDivisor)
+{
+	if (pDivisor == 0)
+	{
+		return 0;
+	}
+
+	return static_cast<double>(pDividend) / static_cast<double>(pDivisor);
+}
 
 size_t constexpr constexpr_strlen(const char* pString)
 {
@@ -68,4 +95,95 @@ static inline std::string VirtualKeyToString(int pVirtualKey)
 	}
 
 	return std::string{buffer};
+}
+
+// Prints pNumber to pResultBuffer with magnitude suffix if necessary
+// Returns output with the same rules as snprintf
+template<typename NumberType>
+static inline int snprint_magnitude(char* pResultBuffer, size_t pResultBufferLength, NumberType pNumber)
+{
+	if (pNumber < 10000)
+	{
+		if constexpr (std::is_same<NumberType, uint64_t>::value == true)
+		{
+			return snprintf(pResultBuffer, pResultBufferLength, "%llu", pNumber);
+		}
+		else if constexpr (std::is_same<NumberType, double>::value == true)
+		{
+			return snprintf(pResultBuffer, pResultBufferLength, "%.1f", pNumber);
+		}
+		else
+		{
+			static_assert(false, "Bad type");
+		}
+	}
+
+	static constexpr char bases[] = {'k', 'M', 'G', 'T', 'P', 'E'};
+
+	int magnitude = static_cast<int>(log(pNumber) / log(1000));
+	return snprintf(pResultBuffer, pResultBufferLength, "%.1f%c", pNumber / pow(1000, magnitude), bases[magnitude - 1]);
+}
+
+// Replaces "{1}", "{2}", etc. with pArgs[0], pArgs[1], etc. If that argument is nullopt, the entry is not replaced.
+// Returns the amount of bytes written
+template<int ArgCount>
+static inline size_t ReplaceFormatted(char* pResultBuffer, size_t pResultBufferLength, const char* pFormatString, std::array<std::optional<std::variant<uint64_t, double>>, ArgCount> pArgs)
+{
+	char* startBuffer = pResultBuffer;
+	assert(pFormatString != nullptr);
+
+	for (const char* curChar = pFormatString; *curChar != '\0'; curChar++)
+	{
+		if (*curChar == '{')
+		{
+			const char* key = curChar + 1;
+			const char* closeBrace = curChar + 2;
+			if (*key >= '1' && *key <= '9' && *closeBrace == '}')
+			{
+				uint32_t num = *key - '1';
+
+				if (pArgs.size() > num && pArgs[num].has_value() == true)
+				{
+					int count;
+					if (std::holds_alternative<uint64_t>(*pArgs[num]) == true)
+					{
+						count = snprint_magnitude(pResultBuffer, pResultBufferLength, std::get<uint64_t>(*pArgs[num]));
+					}
+					else
+					{
+						assert(std::holds_alternative<double>(*pArgs[num]) == true);
+						count = snprint_magnitude(pResultBuffer, pResultBufferLength, std::get<double>(*pArgs[num]));
+					}
+
+					if (count >= pResultBufferLength)
+					{
+						// Value was truncated. Break the loop, which will insert a null character at the start of the
+						// printed value (thus not showing the truncated value)
+						LOG("Truncated value for format string %s at pos %llu - would require %i bytes but only %zu are available", pFormatString, curChar - pFormatString, count, pResultBufferLength);
+						break;
+					}
+
+					curChar += 2; // We've processed the braces as well
+					pResultBuffer += count;
+					pResultBufferLength -= count;
+					continue;
+				}
+			}
+		}
+
+		if (pResultBufferLength == 1)
+		{
+			// Not enough space in buffer
+			break;
+		}
+
+		*pResultBuffer = *curChar;
+		pResultBufferLength--;
+		pResultBuffer++;
+	}
+
+	assert(pResultBufferLength > 0);
+	*pResultBuffer = '\0';
+
+	return pResultBuffer - startBuffer;
 }

@@ -10,7 +10,8 @@ namespace ImGuiEx
 		char buffer[1024];
 
 		snprintf(buffer, sizeof(buffer), pFormatString, pArgs...);
-		ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x);
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x); // Sending x in SameLine messes with alignment when inside of a group
 		ImGui::Text("%s", buffer);
 	}
 
