@@ -84,6 +84,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	{
 		ImGui::Text("%s", entry.Name.c_str());
 
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(204, 204, 212, 255));
 		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			entry.Healing,
 			entry.Hits,
@@ -94,6 +95,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 			divide_safe(entry.Healing * 100, aggregatedTotal.Healing)};
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.DetailsEntryFormat, entryValues);
 		ImGuiEx::TextRightAlignedSameLine("%s", buffer);
+		ImGui::PopStyleColor();
 	}
 	ImGui::EndChild();
 
@@ -148,7 +150,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 		{
-			const char* const dataSourceItems[] = {"targets", "skills"};
+			const char* const dataSourceItems[] = {"targets", "skills", "totals"};
 			static_assert((sizeof(dataSourceItems) / sizeof(dataSourceItems[0])) == static_cast<uint64_t>(DataSource::Max), "Added data source without updating gui?");
 			ImGui::Combo("data source", &curWindow.DataSourceChoice, dataSourceItems, static_cast<int>(DataSource::Max));
 			ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
