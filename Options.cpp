@@ -185,23 +185,28 @@ DetailsWindowState::DetailsWindowState(const AggregatedStatsEntry& pEntry)
 
 HealTableOptions::HealTableOptions()
 {
-	Windows[0].DataSourceChoice = static_cast<int>(DataSource::Agents);
-	snprintf(Windows[0].Name, sizeof(Windows[0].Name), "%s", "Targets");
-	snprintf(Windows[0].TitleFormat, sizeof(Windows[0].TitleFormat), "%s", "Targets {1} ({4}/s, {7}s in combat)");
+	Windows[0].DataSourceChoice = static_cast<int>(DataSource::Totals);
+	snprintf(Windows[0].Name, sizeof(Windows[0].Name), "%s", "Totals");
+	snprintf(Windows[0].TitleFormat, sizeof(Windows[0].TitleFormat), "%s", "Totals ({1}s in combat)");
+	snprintf(Windows[0].EntryFormat, sizeof(Windows[0].EntryFormat), "%s", "{1} ({4}/s)");
 
-	Windows[1].DataSourceChoice = static_cast<int>(DataSource::Skills);
-	snprintf(Windows[1].Name, sizeof(Windows[1].Name), "%s", "Skills");
-	snprintf(Windows[1].TitleFormat, sizeof(Windows[1].TitleFormat), "%s", "Skills {1} ({4}/s, {7}s in combat)");
+	Windows[1].DataSourceChoice = static_cast<int>(DataSource::Agents);
+	snprintf(Windows[1].Name, sizeof(Windows[1].Name), "%s", "Targets");
+	snprintf(Windows[1].TitleFormat, sizeof(Windows[1].TitleFormat), "%s", "Targets {1} ({4}/s, {7}s in combat)");
 
-	Windows[2].DataSourceChoice = static_cast<int>(DataSource::Agents);
-	snprintf(Windows[2].Name, sizeof(Windows[2].Name), "%s", "Targets (hits)");
-	snprintf(Windows[2].TitleFormat, sizeof(Windows[2].TitleFormat), "%s", "Targets {1} ({5}/hit, {2} hits)");
-	snprintf(Windows[2].EntryFormat, sizeof(Windows[2].EntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
-	snprintf(Windows[2].DetailsEntryFormat, sizeof(Windows[2].DetailsEntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
+	Windows[2].DataSourceChoice = static_cast<int>(DataSource::Skills);
+	snprintf(Windows[2].Name, sizeof(Windows[2].Name), "%s", "Skills");
+	snprintf(Windows[2].TitleFormat, sizeof(Windows[2].TitleFormat), "%s", "Skills {1} ({4}/s, {7}s in combat)");
 
-	Windows[3].DataSourceChoice = static_cast<int>(DataSource::Skills);
-	snprintf(Windows[3].Name, sizeof(Windows[3].Name), "%s", "Skills (hits)");
-	snprintf(Windows[3].TitleFormat, sizeof(Windows[3].TitleFormat), "%s", "Skills {1} ({5}/hit, {2} hits)");
+	Windows[3].DataSourceChoice = static_cast<int>(DataSource::Agents);
+	snprintf(Windows[3].Name, sizeof(Windows[3].Name), "%s", "Targets (hits)");
+	snprintf(Windows[3].TitleFormat, sizeof(Windows[3].TitleFormat), "%s", "Targets {1} ({5}/hit, {2} hits)");
 	snprintf(Windows[3].EntryFormat, sizeof(Windows[3].EntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
 	snprintf(Windows[3].DetailsEntryFormat, sizeof(Windows[3].DetailsEntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
+
+	Windows[4].DataSourceChoice = static_cast<int>(DataSource::Skills);
+	snprintf(Windows[4].Name, sizeof(Windows[4].Name), "%s", "Skills (hits)");
+	snprintf(Windows[4].TitleFormat, sizeof(Windows[4].TitleFormat), "%s", "Skills {1} ({5}/hit, {2} hits)");
+	snprintf(Windows[4].EntryFormat, sizeof(Windows[4].EntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
+	snprintf(Windows[4].DetailsEntryFormat, sizeof(Windows[4].DetailsEntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
 }

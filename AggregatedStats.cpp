@@ -10,6 +10,9 @@
 #include <algorithm>
 #include <map>
 
+constexpr const char* GROUP_FILTER_STRING[] = { "Group", "Squad", "All (Excluding Summons)", "All (Including Summons)" };
+static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
+
 AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts)
 	: Id{pId}
 	, Name{pName}
@@ -25,6 +28,7 @@ AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealWindowOpt
 	, myAllAgents(nullptr)
 	, myFilteredAgents(nullptr)
 	, mySkills(nullptr)
+	, myGroupFilterTotals(nullptr)
 	, myDebugMode(pDebugMode)
 {
 	assert(static_cast<SortOrder>(myOptions.SortOrderChoice) < SortOrder::Max);
@@ -57,13 +61,15 @@ const AggregatedStatsEntry& AggregatedStats::GetTotal()
 
 const AggregatedVector& AggregatedStats::GetStats()
 {
-	if (static_cast<DataSource>(myOptions.DataSourceChoice) == DataSource::Skills)
+	switch (static_cast<DataSource>(myOptions.DataSourceChoice))
 	{
+	case DataSource::Skills:
 		return GetSkills();
-	}
-	else
-	{
+	case DataSource::Agents:
 		return GetAgents();
+	case DataSource::Totals:
+	default:
+		return GetGroupFilterTotals();
 	}
 }
 
@@ -340,12 +346,17 @@ const AggregatedVector& AggregatedStats::GetSkillDetails(uint32_t pSkillId)
 	return entry->second;
 }
 
-TotalHealingStats AggregatedStats::GetTotalHealing()
+const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 {
-	TotalHealingStats stats;
-	for (auto& i : stats)
+	if (myGroupFilterTotals != nullptr)
 	{
-		i = 0.0;
+		return *myGroupFilterTotals;
+	}
+
+	myGroupFilterTotals = std::make_unique<AggregatedVector>();
+	for (uint32_t i = 0; i < static_cast<uint32_t>(GroupFilter::Max); i++)
+	{
+		myGroupFilterTotals->emplace_back(0, GROUP_FILTER_STRING[i], 0, 0, std::nullopt);
 	}
 
 	HealWindowOptions fakeOptions;
@@ -356,7 +367,7 @@ TotalHealingStats AggregatedStats::GetTotalHealing()
 
 		// Loop through the array and pretend index is GroupFilter, if agent does not get filtered by that filter then add
 		// the total healing to that agent to the total for that filter
-		for (size_t i = 0; i < stats.size(); i++)
+		for (size_t i = 0; i < static_cast<uint32_t>(GroupFilter::Max); i++)
 		{
 			switch (static_cast<GroupFilter>(i))
 			{
@@ -394,18 +405,13 @@ TotalHealingStats AggregatedStats::GetTotalHealing()
 
 			if (FilterInternal(mapAgent, fakeOptions) == false)
 			{
-				stats[i] += agent.TotalHealing;
+				(*myGroupFilterTotals)[i].Healing += agent.TotalHealing;
+				(*myGroupFilterTotals)[i].Hits += agent.Ticks;
 			}
 		}
 	}
 
-	// Divide the total number by time in combat to make it per second instead
-	for (auto& i : stats)
-	{
-		i /= (static_cast<float>(mySourceData.TimeInCombat) / 1000);
-	}
-
-	return stats;
+	return *myGroupFilterTotals;
 }
 
 const std::map<uintptr_t, AgentStats>& AggregatedStats::GetAllAgents()

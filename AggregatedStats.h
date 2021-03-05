@@ -33,7 +33,7 @@ struct AggregatedStatsEntry
 };
 
 using AggregatedVector = std::vector<AggregatedStatsEntry>;
-using TotalHealingStats = std::array<float, static_cast<size_t>(GroupFilter::Max)>;
+using TotalHealingStats = std::array<uint64_t, static_cast<size_t>(GroupFilter::Max)>;
 
 constexpr static uint32_t IndirectHealingSkillId = 0;
 
@@ -47,6 +47,8 @@ public:
 	const AggregatedVector& GetDetails(uint64_t pId);
 	uint64_t GetCombatTime();
 
+	const AggregatedVector& GetGroupFilterTotals();
+
 private:
 	const AggregatedVector& GetAgents();
 	const AggregatedVector& GetSkills();
@@ -54,7 +56,6 @@ private:
 	const AggregatedVector& GetAgentDetails(uintptr_t pAgentId);
 	const AggregatedVector& GetSkillDetails(uint32_t pSkillId);
 
-	TotalHealingStats GetTotalHealing();
 
 	const std::map<uintptr_t, AgentStats>& GetAllAgents();
 
@@ -75,6 +76,7 @@ private:
 	std::unique_ptr<AggregatedStatsEntry> myTotal;
 	std::unique_ptr<AggregatedVector> myFilteredAgents;
 	std::unique_ptr<AggregatedVector> mySkills;
+	std::unique_ptr<AggregatedVector> myGroupFilterTotals;
 
 	std::map<uintptr_t, AggregatedVector> myAgentsDetailed; // uintptr_t => agent id
 	std::map<uint32_t, AggregatedVector> mySkillsDetailed; // uint32_t => skill id

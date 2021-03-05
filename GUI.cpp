@@ -9,10 +9,6 @@
 #include <array>
 #include <Windows.h>
 
-constexpr const char* GROUP_FILTER_STRING[] = { "Group", "Squad", "All (Excluding Summons)", "All (Including Summons)" };
-static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
-constexpr static uint32_t MAX_GROUP_FILTER_NAME = LongestStringInArray<GROUP_FILTER_STRING, static_cast<size_t>(GroupFilter::Max) - 1>::value;
-
 static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowState& pState)
 {
 	if (pState.IsOpen == false)
@@ -103,6 +99,70 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImGui::End();
 }
 
+static void Display_Content(HealWindowContext& pContext, uint32_t pWindowIndex)
+{
+	char buffer[1024];
+
+	uint64_t timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
+	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal();
+
+	for (const auto& entry : pContext.CurrentAggregatedStats->GetStats())
+	{
+		ImGui::BeginGroup();
+		ImGui::PushID(static_cast<int>(entry.Id));
+		float startX = ImGui::GetCursorPosX();
+		ImGui::Selectable("", false, ImGuiSelectableFlags_SpanAllColumns);
+		ImGui::PopID();
+
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(startX);
+		ImGui::Text("%s", entry.Name.c_str());
+
+		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
+			entry.Healing,
+			entry.Hits,
+			entry.Casts,
+			divide_safe(entry.Healing, timeInCombat),
+			divide_safe(entry.Healing, entry.Hits),
+			entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
+			static_cast<DataSource>(pContext.DataSourceChoice) != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
+		ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
+		ImGuiEx::TextRightAlignedSameLine("%s", buffer);
+
+		ImGui::EndGroup();
+
+		DetailsWindowState* state = nullptr;
+		if (entry.Id != 0)
+		{
+			for (auto& iter : pContext.OpenDetailWindows)
+			{
+				if (iter.Id == entry.Id)
+				{
+					state = &(iter);
+					break;
+				}
+			}
+		}
+
+		// If it was opened in a previous frame, we need the update the statistics stored so they are up to date
+		if (state != nullptr)
+		{
+			*static_cast<AggregatedStatsEntry*>(state) = entry;
+		}
+
+		if (ImGui::IsItemClicked() == true && entry.Id != 0)
+		{
+			if (state == nullptr)
+			{
+				state = &pContext.OpenDetailWindows.emplace_back(entry);
+			}
+			state->IsOpen = !state->IsOpen;
+
+			LOG("Toggled details window for entry %llu %s in window %u", entry.Id, entry.Name.c_str(), pWindowIndex);
+		}
+	}
+}
+
 void SetContext(void* pImGuiContext)
 {
 	ImGui::SetCurrentContext((ImGuiContext*)pImGuiContext);
@@ -132,18 +192,28 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		}
 
 		uint64_t timeInCombat = curWindow.CurrentAggregatedStats->GetCombatTime();
-
 		const AggregatedStatsEntry& aggregatedTotal = curWindow.CurrentAggregatedStats->GetTotal();
-		std::array<std::optional<std::variant<uint64_t, double>>, 7> titleValues{
-			aggregatedTotal.Healing,
-			aggregatedTotal.Hits,
-			aggregatedTotal.Casts,
-			divide_safe(aggregatedTotal.Healing, timeInCombat),
-			divide_safe(aggregatedTotal.Healing, aggregatedTotal.Hits),
-			aggregatedTotal.Casts.has_value() == true ? std::optional{divide_safe(aggregatedTotal.Healing, *aggregatedTotal.Casts)} : std::nullopt,
-			timeInCombat};
-		size_t written = ReplaceFormatted(buffer, 128, curWindow.TitleFormat, titleValues);
-		snprintf(buffer + written, sizeof(buffer) - written, "###HEALWINDOW%u", i);
+
+		if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
+		{
+			std::array<std::optional<std::variant<uint64_t, double>>, 7> titleValues{
+				aggregatedTotal.Healing,
+				aggregatedTotal.Hits,
+				aggregatedTotal.Casts,
+				divide_safe(aggregatedTotal.Healing, timeInCombat),
+				divide_safe(aggregatedTotal.Healing, aggregatedTotal.Hits),
+				aggregatedTotal.Casts.has_value() == true ? std::optional{divide_safe(aggregatedTotal.Healing, *aggregatedTotal.Casts)} : std::nullopt,
+				timeInCombat };
+			size_t written = ReplaceFormatted(buffer, 128, curWindow.TitleFormat, titleValues);
+			snprintf(buffer + written, sizeof(buffer) - written, "###HEALWINDOW%u", i);
+		}
+		else
+		{
+			std::array<std::optional<std::variant<uint64_t, double>>, 7> titleValues{
+			timeInCombat };
+			size_t written = ReplaceFormatted(buffer, 128, curWindow.TitleFormat, titleValues);
+			snprintf(buffer + written, sizeof(buffer) - written, "###HEALWINDOW%u", i);
+		}
 
 		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
 		ImGui::Begin(buffer, &curWindow.Shown, ImGuiWindowFlags_NoCollapse);
@@ -155,43 +225,67 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			ImGui::Combo("data source", &curWindow.DataSourceChoice, dataSourceItems, static_cast<int>(DataSource::Max));
 			ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
 
-			const char* const sortOrderItems[] = {"alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending"};
-			static_assert((sizeof(sortOrderItems) / sizeof(sortOrderItems[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
-			ImGui::Combo("sort order", &curWindow.SortOrderChoice, sortOrderItems, static_cast<int>(SortOrder::Max));
-			ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
-
-			if (ImGui::BeginMenu("stats exclude") == true)
+			if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
 			{
-				ImGui::Checkbox("group", &curWindow.ExcludeGroup);
-				ImGui::Checkbox("off-group", &curWindow.ExcludeOffGroup);
-				ImGui::Checkbox("off-squad", &curWindow.ExcludeOffSquad);
-				ImGui::Checkbox("summons", &curWindow.ExcludeMinions);
-				ImGui::Checkbox("unmapped", &curWindow.ExcludeUnmapped);
-				ImGui::EndMenu();
+				const char* const sortOrderItems[] = { "alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending" };
+				static_assert((sizeof(sortOrderItems) / sizeof(sortOrderItems[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
+				ImGui::Combo("sort order", &curWindow.SortOrderChoice, sortOrderItems, static_cast<int>(SortOrder::Max));
+				ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
+
+				if (ImGui::BeginMenu("stats exclude") == true)
+				{
+					ImGui::Checkbox("group", &curWindow.ExcludeGroup);
+					ImGui::Checkbox("off-group", &curWindow.ExcludeOffGroup);
+					ImGui::Checkbox("off-squad", &curWindow.ExcludeOffSquad);
+					ImGui::Checkbox("summons", &curWindow.ExcludeMinions);
+					ImGui::Checkbox("unmapped", &curWindow.ExcludeUnmapped);
+					ImGui::EndMenu();
+				}
 			}
 
 			ImGui::InputText("short name", curWindow.Name, sizeof(curWindow.Name));
 			ImGuiEx::AddTooltipToLastItem("The name used to represent this window in the \"heal stats\" menu");
 
 			ImGui::InputText("window title", curWindow.TitleFormat, sizeof(curWindow.TitleFormat));
-			ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
-				                          "{1}: Total healing\n"
-			                              "{2}: Total hits\n"
-			                              "{3}: Total casts (not implemented yet)\n"
-			                              "{4}: Healing per second\n"
-			                              "{5}: Healing per hit\n"
-			                              "{6}: Healing per cast (not implemented yet)\n"
-			                              "{7}: Time in combat\n");
+			if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
+			{
+				ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
+											  "{1}: Total healing\n"
+											  "{2}: Total hits\n"
+											  "{3}: Total casts (not implemented yet)\n"
+											  "{4}: Healing per second\n"
+											  "{5}: Healing per hit\n"
+											  "{6}: Healing per cast (not implemented yet)\n"
+											  "{7}: Time in combat");
+			}
+			else
+			{
+				ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
+											  "{1}: Time in combat");
+			}
 
 			ImGui::InputText("entry format", curWindow.EntryFormat, sizeof(curWindow.EntryFormat));
-			ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
-			                              "{1}: Healing\n"
-			                              "{2}: Hits\n"
-			                              "{3}: Casts (not implemented yet)\n"
-			                              "{4}: Healing per second\n"
-			                              "{5}: Healing per hit\n"
-			                              "{6}: Healing per cast (not implemented yet)\n"
-			                              "{7}: Percent of total healing\n");
+			if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
+			{
+				ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
+											  "{1}: Healing\n"
+											  "{2}: Hits\n"
+											  "{3}: Casts (not implemented yet)\n"
+											  "{4}: Healing per second\n"
+											  "{5}: Healing per hit\n"
+											  "{6}: Healing per cast (not implemented yet)\n"
+											  "{7}: Percent of total healing");
+			}
+			else
+			{
+				ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
+											  "{1}: Healing\n"
+											  "{2}: Hits\n"
+											  "{3}: Casts (not implemented yet)\n"
+											  "{4}: Healing per second\n"
+											  "{5}: Healing per hit\n"
+											  "{6}: Healing per cast (not implemented yet)");
+			}
 
 			float oldPosY = ImGui::GetCursorPosY();
 			ImGui::BeginGroup();
@@ -208,63 +302,12 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 			ImGui::EndGroup();
 			ImGuiEx::AddTooltipToLastItem("Numerical value (virtual key code) for the key\n"
-				"used to open and close this window");
+			                              "used to open and close this window");
 
 			ImGui::EndPopup();
 		}
 
-		for (const auto& entry : curWindow.CurrentAggregatedStats->GetStats())
-		{
-			ImGui::BeginGroup();
-			ImGui::PushID(static_cast<int>(entry.Id));
-			float startX = ImGui::GetCursorPosX();
-			ImGui::Selectable("", false, ImGuiSelectableFlags_SpanAllColumns);
-			ImGui::PopID();
-
-			ImGui::SameLine();
-			ImGui::SetCursorPosX(startX);
-			ImGui::Text("%s", entry.Name.c_str());
-
-			std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
-				entry.Healing,
-				entry.Hits,
-				entry.Casts,
-				divide_safe(entry.Healing, timeInCombat),
-				divide_safe(entry.Healing, entry.Hits),
-				entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
-				divide_safe(entry.Healing * 100, aggregatedTotal.Healing)};
-			ReplaceFormatted(buffer, sizeof(buffer), curWindow.EntryFormat, entryValues);
-			ImGuiEx::TextRightAlignedSameLine("%s", buffer);
-
-			ImGui::EndGroup();
-
-			DetailsWindowState* state = nullptr;
-			for (auto& iter : curWindow.OpenDetailWindows)
-			{
-				if (iter.Id == entry.Id)
-				{
-					state = &(iter);
-					break;
-				}
-			}
-
-			// If it was opened in a previous frame, we need the update the statistics stored so they are up to date
-			if (state != nullptr)
-			{
-				*static_cast<AggregatedStatsEntry*>(state) = entry;
-			}
-
-			if (ImGui::IsItemClicked() == true)
-			{
-				if (state == nullptr)
-				{
-					state = &curWindow.OpenDetailWindows.emplace_back(entry);
-				}
-				state->IsOpen = !state->IsOpen;
-
-				LOG("Toggled details window for entry %llu %s in window %u", entry.Id, entry.Name.c_str(), i);
-			}
-		}
+		Display_Content(curWindow, i);
 
 		auto iter = curWindow.OpenDetailWindows.begin();
 		while (iter != curWindow.OpenDetailWindows.end())
