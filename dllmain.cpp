@@ -134,7 +134,7 @@ arcdps_exports* mod_init()
 	ARC_EXPORTS.imguivers = IMGUI_VERSION_NUM;
 	ARC_EXPORTS.size = sizeof(arcdps_exports);
 	ARC_EXPORTS.out_name = "healing_stats";
-	ARC_EXPORTS.out_build = "1.0rc1";
+	ARC_EXPORTS.out_build = "1.0rc2";
 	ARC_EXPORTS.combat = mod_combat;
 	ARC_EXPORTS.imgui = mod_imgui;
 	ARC_EXPORTS.options_end = mod_options_end;
