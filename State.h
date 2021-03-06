@@ -12,6 +12,7 @@ enum class DataSource
 	Agents = 0,
 	Skills = 1,
 	Totals = 2,
+	Combined = 3,
 	Max
 };
 

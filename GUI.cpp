@@ -9,7 +9,7 @@
 #include <array>
 #include <Windows.h>
 
-static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowState& pState)
+static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowState& pState, DataSource pDataSource)
 {
 	if (pState.IsOpen == false)
 	{
@@ -22,7 +22,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	char buffer[1024];
 	// Using "###" means the id of the window is calculated only from the part after the hashes (which
 	// in turn means that the name of the window can change if necessary)
-	snprintf(buffer, sizeof(buffer), "%s###HEALDETAILS%llu", pState.Name.c_str(), pState.Id);
+	snprintf(buffer, sizeof(buffer), "%s###HEALDETAILS.%i.%llu", pState.Name.c_str(), static_cast<int>(pDataSource), pState.Id);
 	ImGui::SetNextWindowSize(ImVec2(600, 360), ImGuiCond_FirstUseEver);
 	ImGui::Begin(buffer, &pState.IsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
 
@@ -44,7 +44,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImVec4 bgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	bgColor.w = 0.0f;
 	ImGui::PushStyleColor(ImGuiCol_ChildBg, bgColor);
-	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.TOTALS.%llu", pState.Id);
+	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.TOTALS.%i.%llu", static_cast<int>(pDataSource), pState.Id);
 	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.35f, 0));
 	ImGui::Text("total healing");
 	ImGuiEx::TextRightAlignedSameLine("%llu", pState.Healing);
@@ -73,10 +73,10 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImGuiEx::BottomText("id %u", pState.Id);
 	ImGui::EndChild();
 
-	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.ENTRIES.%llu", pState.Id);
+	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.ENTRIES.%i.%llu", static_cast<int>(pDataSource), pState.Id);
 	ImGui::SameLine();
 	ImGui::BeginChild(buffer, ImVec2(0, 0));
-	for (const auto& entry : pContext.CurrentAggregatedStats->GetDetails(pState.Id))
+	for (const auto& entry : pContext.CurrentAggregatedStats->GetDetails(pDataSource, pState.Id))
 	{
 		ImGui::Text("%s", entry.Name.c_str());
 
@@ -99,17 +99,20 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImGui::End();
 }
 
-static void Display_Content(HealWindowContext& pContext, uint32_t pWindowIndex)
+static void Display_Content(HealWindowContext& pContext, DataSource pDataSource, uint32_t pWindowIndex)
 {
 	char buffer[1024];
 
 	uint64_t timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
 	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal();
 
-	for (const auto& entry : pContext.CurrentAggregatedStats->GetStats())
+	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetStats(pDataSource);
+	for (int i = 0; i < stats.size(); i++)
 	{
+		const auto& entry = stats[i];
+
 		ImGui::BeginGroup();
-		ImGui::PushID(static_cast<int>(entry.Id));
+		ImGui::PushID(i);
 		float startX = ImGui::GetCursorPosX();
 		ImGui::Selectable("", false, ImGuiSelectableFlags_SpanAllColumns);
 		ImGui::PopID();
@@ -132,9 +135,23 @@ static void Display_Content(HealWindowContext& pContext, uint32_t pWindowIndex)
 		ImGui::EndGroup();
 
 		DetailsWindowState* state = nullptr;
-		if (entry.Id != 0)
+		std::vector<DetailsWindowState>* vec;
+		switch (pDataSource)
 		{
-			for (auto& iter : pContext.OpenDetailWindows)
+		case DataSource::Agents:
+			vec = &pContext.OpenAgentWindows;
+			break;
+		case DataSource::Skills:
+			vec = &pContext.OpenSkillWindows;
+			break;
+		default:
+			vec = nullptr;
+			break;
+		}
+
+		if (vec != nullptr)
+		{
+			for (auto& iter : *vec)
 			{
 				if (iter.Id == entry.Id)
 				{
@@ -150,11 +167,11 @@ static void Display_Content(HealWindowContext& pContext, uint32_t pWindowIndex)
 			*static_cast<AggregatedStatsEntry*>(state) = entry;
 		}
 
-		if (ImGui::IsItemClicked() == true && entry.Id != 0)
+		if (vec != nullptr && ImGui::IsItemClicked() == true)
 		{
 			if (state == nullptr)
 			{
-				state = &pContext.OpenDetailWindows.emplace_back(entry);
+				state = &vec->emplace_back(entry);
 			}
 			state->IsOpen = !state->IsOpen;
 
@@ -220,7 +237,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 		{
-			const char* const dataSourceItems[] = {"targets", "skills", "totals"};
+			const char* const dataSourceItems[] = {"targets", "skills", "totals", "combined"};
 			static_assert((sizeof(dataSourceItems) / sizeof(dataSourceItems[0])) == static_cast<uint64_t>(DataSource::Max), "Added data source without updating gui?");
 			ImGui::Combo("data source", &curWindow.DataSourceChoice, dataSourceItems, static_cast<int>(DataSource::Max));
 			ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
@@ -307,19 +324,56 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			ImGui::EndPopup();
 		}
 
-		Display_Content(curWindow, i);
-
-		auto iter = curWindow.OpenDetailWindows.begin();
-		while (iter != curWindow.OpenDetailWindows.end())
+		if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Combined)
 		{
-			if (iter->IsOpen == false)
+			Display_Content(curWindow, static_cast<DataSource>(curWindow.DataSourceChoice), i);
+		}
+		else
+		{
+			ImGui::PushID(static_cast<int>(DataSource::Totals));
+			ImGuiEx::TextColoredCentered(ImColor(0, 209, 165), "Totals");
+			Display_Content(curWindow, DataSource::Totals, i);
+			ImGui::PopID();
+
+			ImGui::PushID(static_cast<int>(DataSource::Agents));
+			ImGuiEx::TextColoredCentered(ImColor(0, 209, 165), "Targets");
+			Display_Content(curWindow, DataSource::Agents, i);
+			ImGui::PopID();
+
+			ImGui::PushID(static_cast<int>(DataSource::Skills));
+			ImGuiEx::TextColoredCentered(ImColor(0, 209, 165), "Skills");
+			Display_Content(curWindow, DataSource::Skills, i);
+			ImGui::PopID();
+		}
+
+		for (const DataSource dataSource : std::array{DataSource::Agents, DataSource::Skills})
+		{
+			std::vector<DetailsWindowState>* vec;
+			switch (dataSource)
 			{
-				iter = curWindow.OpenDetailWindows.erase(iter);
-				continue;
+			case DataSource::Agents:
+				vec = &curWindow.OpenAgentWindows;
+				break;
+			case DataSource::Skills:
+				vec = &curWindow.OpenSkillWindows;
+				break;
+			default:
+				vec = nullptr;
+				break;
 			}
 
-			Display_DetailsWindow(curWindow, *iter);
-			iter++;
+			auto iter = vec->begin();
+			while (iter != vec->end())
+			{
+				if (iter->IsOpen == false)
+				{
+					iter = vec->erase(iter);
+					continue;
+				}
+
+				Display_DetailsWindow(curWindow, *iter, dataSource);
+				iter++;
+			}
 		}
 
 		ImGui::End();

@@ -16,6 +16,16 @@ namespace ImGuiEx
 	}
 
 	template <typename... Args>
+	void TextColoredCentered(ImColor pColor, const char* pFormatString, Args... pArgs)
+	{
+		char buffer[1024];
+
+		snprintf(buffer, sizeof(buffer), pFormatString, pArgs...);
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * 0.5f - ImGui::CalcTextSize(buffer).x * 0.5f);
+		ImGui::TextColored(pColor, "%s", buffer);
+	}
+
+	template <typename... Args>
 	void BottomText(const char* pFormatString, Args... pArgs)
 	{
 		char buffer[1024];

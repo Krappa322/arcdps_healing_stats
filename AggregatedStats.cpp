@@ -49,7 +49,7 @@ const AggregatedStatsEntry& AggregatedStats::GetTotal()
 
 	uint64_t healing = 0;
 	uint64_t hits = 0;
-	for (const AggregatedStatsEntry& entry : GetStats())
+	for (const AggregatedStatsEntry& entry : GetSkills())
 	{
 		healing += entry.Healing;
 		hits += entry.Hits;
@@ -59,9 +59,9 @@ const AggregatedStatsEntry& AggregatedStats::GetTotal()
 	return *myTotal;
 }
 
-const AggregatedVector& AggregatedStats::GetStats()
+const AggregatedVector& AggregatedStats::GetStats(DataSource pDataSource)
 {
-	switch (static_cast<DataSource>(myOptions.DataSourceChoice))
+	switch (pDataSource)
 	{
 	case DataSource::Skills:
 		return GetSkills();
@@ -73,14 +73,14 @@ const AggregatedVector& AggregatedStats::GetStats()
 	}
 }
 
-const AggregatedVector& AggregatedStats::GetDetails(uint64_t pId)
+const AggregatedVector& AggregatedStats::GetDetails(DataSource pDataSource, uint64_t pId)
 {
-	if (static_cast<DataSource>(myOptions.DataSourceChoice) == DataSource::Skills)
+	switch (pDataSource)
 	{
-		return GetSkillDetails(static_cast<uint32_t>(pId));
-	}
-	else
-	{
+	case DataSource::Skills:
+		GetSkillDetails(static_cast<uint32_t>(pId));
+	case DataSource::Agents:
+	default:
 		return GetAgentDetails(pId);
 	}
 }

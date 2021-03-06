@@ -23,7 +23,8 @@ struct HealWindowContext : HealWindowOptions
 	std::unique_ptr<AggregatedStats> CurrentAggregatedStats; // In-Memory only
 	time_t LastAggregatedTime = 0; // In-Memory only
 
-	std::vector<DetailsWindowState> OpenDetailWindows; // In-Memory only
+	std::vector<DetailsWindowState> OpenSkillWindows; // In-Memory only
+	std::vector<DetailsWindowState> OpenAgentWindows; // In-Memory only
 };
 
 struct HealTableOptions
