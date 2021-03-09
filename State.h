@@ -38,6 +38,8 @@ struct HealWindowOptions
 	bool ExcludeMinions = true;
 	bool ExcludeUnmapped = true;
 
+	bool ShowProgressBars = true;
+
 	char Name[MAX_HEAL_WINDOW_NAME + 1] = {};
 	char TitleFormat[MAX_HEAL_WINDOW_TITLE + 1] = "{1} ({4}/s, {7}s in combat)";
 	char EntryFormat[MAX_HEAL_WINDOW_ENTRY + 1] = "{1} ({4}/s, {7}%)";

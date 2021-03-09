@@ -32,7 +32,15 @@ struct AggregatedStatsEntry
 	AggregatedStatsEntry(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts);
 };
 
-using AggregatedVector = std::vector<AggregatedStatsEntry>;
+struct AggregatedVector
+{
+	std::vector<AggregatedStatsEntry> Entries;
+	uint64_t HighestHealing{0};
+
+	void Add(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts);
+};
+
+
 using TotalHealingStats = std::array<uint64_t, static_cast<size_t>(GroupFilter::Max)>;
 
 constexpr static uint32_t IndirectHealingSkillId = 0;

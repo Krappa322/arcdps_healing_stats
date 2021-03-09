@@ -76,11 +76,10 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.ENTRIES.%i.%llu", static_cast<int>(pDataSource), pState.Id);
 	ImGui::SameLine();
 	ImGui::BeginChild(buffer, ImVec2(0, 0));
-	for (const auto& entry : pContext.CurrentAggregatedStats->GetDetails(pDataSource, pState.Id))
-	{
-		ImGui::Text("%s", entry.Name.c_str());
 
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(204, 204, 212, 255));
+	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetDetails(pDataSource, pState.Id);
+	for (const auto& entry : stats.Entries)
+	{
 		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			entry.Healing,
 			entry.Hits,
@@ -90,8 +89,9 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 			entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
 			divide_safe(entry.Healing * 100, aggregatedTotal.Healing)};
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.DetailsEntryFormat, entryValues);
-		ImGuiEx::TextRightAlignedSameLine("%s", buffer);
-		ImGui::PopStyleColor();
+
+		float fillRatio = divide_safe(entry.Healing, stats.HighestHealing);
+		ImGuiEx::StatsEntry(entry.Name.c_str(), buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
 	}
 	ImGui::EndChild();
 
@@ -107,19 +107,9 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal();
 
 	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetStats(pDataSource);
-	for (int i = 0; i < stats.size(); i++)
+	for (int i = 0; i < stats.Entries.size(); i++)
 	{
-		const auto& entry = stats[i];
-
-		ImGui::BeginGroup();
-		ImGui::PushID(i);
-		float startX = ImGui::GetCursorPosX();
-		ImGui::Selectable("", false, ImGuiSelectableFlags_SpanAllColumns);
-		ImGui::PopID();
-
-		ImGui::SameLine();
-		ImGui::SetCursorPosX(startX);
-		ImGui::Text("%s", entry.Name.c_str());
+		const auto& entry = stats.Entries[i];
 
 		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			entry.Healing,
@@ -130,9 +120,9 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
 			static_cast<DataSource>(pContext.DataSourceChoice) != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
-		ImGuiEx::TextRightAlignedSameLine("%s", buffer);
 
-		ImGui::EndGroup();
+		float fillRatio = divide_safe(entry.Healing, stats.HighestHealing);
+		ImGuiEx::StatsEntry(entry.Name.c_str(), buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
 
 		DetailsWindowState* state = nullptr;
 		std::vector<DetailsWindowState>* vec;
@@ -259,6 +249,10 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 					ImGui::EndMenu();
 				}
 			}
+
+			ImGui::Checkbox("show progress bars", &curWindow.ShowProgressBars);
+			ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
+			                              "that entry is in proportion to the largest entry");
 
 			ImGui::InputText("short name", curWindow.Name, sizeof(curWindow.Name));
 			ImGuiEx::AddTooltipToLastItem("The name used to represent this window in the \"heal stats\" menu");

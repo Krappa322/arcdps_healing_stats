@@ -1,6 +1,8 @@
 #pragma once
 #include "imgui/imgui.h"
 
+#include <optional>
+
 // Helpers for ImGui functions
 namespace ImGuiEx
 {
@@ -36,11 +38,13 @@ namespace ImGuiEx
 	}
 
 	template <typename... Args>
-	static void AddTooltipToLastItem(const char* pFormatString, Args... pArgs)
+	void AddTooltipToLastItem(const char* pFormatString, Args... pArgs)
 	{
 		if (ImGui::IsItemHovered() == true)
 		{
 			ImGui::SetTooltip(pFormatString, pArgs...);
 		}
 	}
+
+	void StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio);
 }

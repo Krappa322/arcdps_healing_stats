@@ -40,6 +40,12 @@ AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealWindowOpt
 	}
 }
 
+void AggregatedVector::Add(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts)
+{
+	const AggregatedStatsEntry& newEntry = Entries.emplace_back(pId, std::move(pName), pHealing, pHits, std::move(pCasts));
+	HighestHealing = (std::max)(HighestHealing, newEntry.Healing);
+}
+
 const AggregatedStatsEntry& AggregatedStats::GetTotal()
 {
 	if (myTotal != nullptr)
@@ -49,7 +55,7 @@ const AggregatedStatsEntry& AggregatedStats::GetTotal()
 
 	uint64_t healing = 0;
 	uint64_t hits = 0;
-	for (const AggregatedStatsEntry& entry : GetSkills())
+	for (const AggregatedStatsEntry& entry : GetSkills().Entries)
 	{
 		healing += entry.Healing;
 		hits += entry.Hits;
@@ -138,10 +144,10 @@ const AggregatedVector& AggregatedStats::GetAgents()
 			agentName = buffer;
 		}
 
-		myFilteredAgents->emplace_back(agentId, std::move(agentName), agent.TotalHealing, agent.Ticks, std::nullopt);
+		myFilteredAgents->Add(agentId, std::move(agentName), agent.TotalHealing, agent.Ticks, std::nullopt);
 	}
 
-	Sort(*myFilteredAgents);
+	Sort(myFilteredAgents->Entries);
 
 	return *myFilteredAgents;
 }
@@ -202,17 +208,17 @@ const AggregatedVector& AggregatedStats::GetSkills()
 			skillName = buffer;
 		}
 
-		mySkills->emplace_back(skillId, std::move(skillName), totalHealing, ticks, std::nullopt);
+		mySkills->Add(skillId, std::move(skillName), totalHealing, ticks, std::nullopt);
 	}
 
 	if (totalIndirectHealing != 0 || totalIndirectTicks != 0)
 	{
 		std::string skillName("Healing by Damage Dealt");
 
-		mySkills->emplace_back(IndirectHealingSkillId, std::move(skillName), totalIndirectHealing, totalIndirectTicks, std::nullopt);
+		mySkills->Add(IndirectHealingSkillId, std::move(skillName), totalIndirectHealing, totalIndirectTicks, std::nullopt);
 	}
 
-	Sort(*mySkills);
+	Sort(mySkills->Entries);
 
 	return *mySkills;
 }
@@ -266,7 +272,7 @@ const AggregatedVector& AggregatedStats::GetAgentDetails(uintptr_t pAgentId)
 				skillName = buffer;
 			}
 
-			entry->second.emplace_back(skillId, std::move(skillName), agent.TotalHealing, agent.Ticks, std::nullopt);
+			entry->second.Add(skillId, std::move(skillName), agent.TotalHealing, agent.Ticks, std::nullopt);
 		}
 	}
 
@@ -274,10 +280,10 @@ const AggregatedVector& AggregatedStats::GetAgentDetails(uintptr_t pAgentId)
 	{
 		std::string skillName("Healing by Damage Dealt");
 
-		entry->second.emplace_back(IndirectHealingSkillId, std::move(skillName), totalIndirectHealing, totalIndirectTicks, std::nullopt);
+		entry->second.Add(IndirectHealingSkillId, std::move(skillName), totalIndirectHealing, totalIndirectTicks, std::nullopt);
 	}
 
-	Sort(entry->second);
+	Sort(entry->second.Entries);
 
 	return entry->second;
 }
@@ -338,10 +344,10 @@ const AggregatedVector& AggregatedStats::GetSkillDetails(uint32_t pSkillId)
 			agentName = buffer;
 		}
 
-		entry->second.emplace_back(agentId, std::move(agentName), agent.TotalHealing, agent.Ticks, std::nullopt);
+		entry->second.Add(agentId, std::move(agentName), agent.TotalHealing, agent.Ticks, std::nullopt);
 	}
 
-	Sort(entry->second);
+	Sort(entry->second.Entries);
 
 	return entry->second;
 }
@@ -356,7 +362,7 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 	myGroupFilterTotals = std::make_unique<AggregatedVector>();
 	for (uint32_t i = 0; i < static_cast<uint32_t>(GroupFilter::Max); i++)
 	{
-		myGroupFilterTotals->emplace_back(0, GROUP_FILTER_STRING[i], 0, 0, std::nullopt);
+		myGroupFilterTotals->Add(0, GROUP_FILTER_STRING[i], 0, 0, std::nullopt);
 	}
 
 	HealWindowOptions fakeOptions;
@@ -405,10 +411,15 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 
 			if (FilterInternal(mapAgent, fakeOptions) == false)
 			{
-				(*myGroupFilterTotals)[i].Healing += agent.TotalHealing;
-				(*myGroupFilterTotals)[i].Hits += agent.Ticks;
+				myGroupFilterTotals->Entries[i].Healing += agent.TotalHealing;
+				myGroupFilterTotals->Entries[i].Hits += agent.Ticks;
 			}
 		}
+	}
+
+	for (const AggregatedStatsEntry& entry : myGroupFilterTotals->Entries)
+	{
+		myGroupFilterTotals->HighestHealing = (std::max)(myGroupFilterTotals->HighestHealing, entry.Healing);
 	}
 
 	return *myGroupFilterTotals;

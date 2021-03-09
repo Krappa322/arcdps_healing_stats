@@ -81,6 +81,12 @@ void WriteIni(const HealTableOptions& pOptions)
 			LOG("SetValue exclude_unmapped failed with %i", error);
 		}
 
+		error = healtable_ini.SetBoolValue(section, "show_progress_bars", pOptions.Windows[i].ShowProgressBars);
+		if (error < 0)
+		{
+			LOG("SetValue show_progress_bars failed with %i", error);
+		}
+
 		error = healtable_ini.SetValue(section, "name", pOptions.Windows[i].Name);
 		if (error < 0)
 		{
@@ -146,6 +152,8 @@ void ReadIni(HealTableOptions& pOptions)
 		pOptions.Windows[i].ExcludeOffSquad = healtable_ini.GetBoolValue(section, "exclude_off_squad", pOptions.Windows[i].ExcludeOffSquad);
 		pOptions.Windows[i].ExcludeMinions = healtable_ini.GetBoolValue(section, "exclude_minions", pOptions.Windows[i].ExcludeMinions);
 		pOptions.Windows[i].ExcludeUnmapped = healtable_ini.GetBoolValue(section, "exclude_unmapped", pOptions.Windows[i].ExcludeUnmapped);
+
+		pOptions.Windows[i].ShowProgressBars = healtable_ini.GetBoolValue(section, "show_progress_bars", pOptions.Windows[i].ShowProgressBars);
 
 		const char* val = healtable_ini.GetValue(section, "name", nullptr);
 		if (val != nullptr)
