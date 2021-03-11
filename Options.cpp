@@ -51,6 +51,12 @@ void WriteIni(const HealTableOptions& pOptions)
 			LOG("SetValue sort_order_choice failed with %i", error);
 		}
 
+		/*error = healtable_ini.SetLongValue(section, "combat_end_condition_choice", pOptions.Windows[i].CombatEndConditionChoice);
+		if (error < 0)
+		{
+			LOG("SetValue combat_end_condition_choice failed with %i", error);
+		}*/
+
 		error = healtable_ini.SetBoolValue(section, "exclude_group", pOptions.Windows[i].ExcludeGroup);
 		if (error < 0)
 		{
@@ -146,6 +152,7 @@ void ReadIni(HealTableOptions& pOptions)
 
 		pOptions.Windows[i].DataSourceChoice = healtable_ini.GetLongValue(section, "data_source_choice", pOptions.Windows[i].DataSourceChoice);
 		pOptions.Windows[i].SortOrderChoice = healtable_ini.GetLongValue(section, "sort_order_choice", pOptions.Windows[i].SortOrderChoice);
+		pOptions.Windows[i].CombatEndConditionChoice = healtable_ini.GetLongValue(section, "combat_end_condition_choice", pOptions.Windows[i].CombatEndConditionChoice);
 
 		pOptions.Windows[i].ExcludeGroup = healtable_ini.GetBoolValue(section, "exclude_group", pOptions.Windows[i].ExcludeGroup);
 		pOptions.Windows[i].ExcludeOffGroup = healtable_ini.GetBoolValue(section, "exclude_off_group", pOptions.Windows[i].ExcludeOffGroup);
@@ -179,8 +186,8 @@ void ReadIni(HealTableOptions& pOptions)
 			snprintf(pOptions.Windows[i].DetailsEntryFormat, sizeof(pOptions.Windows[i].DetailsEntryFormat), "%s", val);
 		}
 
-		LOG("Read window %u from ini file: show_window=%s data_source_choice=%i sort_order_choice=%i exclude_group=%s exclude_off_group=%s exclude_off_squad=%s exclude_minions=%s exclude_unmapped=%s name='%s' title_format='%s' entry_format='%s' details_entry_format='%s'",
-			i, BOOL_STR(pOptions.Windows[i].Shown), pOptions.Windows[i].DataSourceChoice, pOptions.Windows[i].SortOrderChoice, BOOL_STR(pOptions.Windows[i].ExcludeGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffSquad), BOOL_STR(pOptions.Windows[i].ExcludeMinions), BOOL_STR(pOptions.Windows[i].ExcludeUnmapped), pOptions.Windows[i].Name, pOptions.Windows[i].TitleFormat, pOptions.Windows[i].EntryFormat, pOptions.Windows[i].DetailsEntryFormat);
+		LOG("Read window %u from ini file: show_window=%s data_source_choice=%i sort_order_choice=%i combat_end_condition_choice=%i, exclude_group=%s exclude_off_group=%s exclude_off_squad=%s exclude_minions=%s exclude_unmapped=%s show_progress_bars=%s, name='%s' title_format='%s' entry_format='%s' details_entry_format='%s'",
+			i, BOOL_STR(pOptions.Windows[i].Shown), pOptions.Windows[i].DataSourceChoice, pOptions.Windows[i].SortOrderChoice, pOptions.Windows[i].CombatEndConditionChoice, BOOL_STR(pOptions.Windows[i].ExcludeGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffSquad), BOOL_STR(pOptions.Windows[i].ExcludeMinions), BOOL_STR(pOptions.Windows[i].ExcludeUnmapped), BOOL_STR(pOptions.Windows[i].ShowProgressBars), pOptions.Windows[i].Name, pOptions.Windows[i].TitleFormat, pOptions.Windows[i].EntryFormat, pOptions.Windows[i].DetailsEntryFormat);
 	}
 
 	LOG("Read ini file debug_mode=%s", BOOL_STR(pOptions.DebugMode));

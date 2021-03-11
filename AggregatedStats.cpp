@@ -33,11 +33,6 @@ AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealWindowOpt
 {
 	assert(static_cast<SortOrder>(myOptions.SortOrderChoice) < SortOrder::Max);
 	assert(static_cast<DataSource>(myOptions.DataSourceChoice) < DataSource::Max);
-
-	if (mySourceData.TimeInCombat == 0)
-	{
-		mySourceData.TimeInCombat = 1; // Can't handle zero time right now - divide by zero issues etc.
-	}
 }
 
 void AggregatedVector::Add(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts)
@@ -91,9 +86,26 @@ const AggregatedVector& AggregatedStats::GetDetails(DataSource pDataSource, uint
 	}
 }
 
-uint64_t AggregatedStats::GetCombatTime()
+float AggregatedStats::GetCombatTime()
 {
-	return mySourceData.TimeInCombat / 1000;
+	uint64_t end = 0;
+	CombatEndCondition endCondition = static_cast<CombatEndCondition>(myOptions.CombatEndConditionChoice);
+	if (endCondition == CombatEndCondition::CombatExit && mySourceData.ExitedCombatTime != 0)
+	{
+		end = mySourceData.ExitedCombatTime;
+	}
+	else if (endCondition == CombatEndCondition::LastHealEvent && mySourceData.LastHealEvent != 0)
+	{
+		end = mySourceData.LastHealEvent;
+	}
+	else
+	{
+		// Use EnteredCombatTime as a last resort if there are no events yet
+		end = (std::max)(mySourceData.EnteredCombatTime, (std::max)(mySourceData.LastHealEvent, mySourceData.LastDamageEvent));
+	}
+
+	assert(mySourceData.EnteredCombatTime <= end);
+	return (static_cast<float>(end) - mySourceData.EnteredCombatTime) / 1000;
 }
 
 const AggregatedVector& AggregatedStats::GetAgents()

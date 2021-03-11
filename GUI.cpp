@@ -16,7 +16,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		return;
 	}
 
-	uint64_t timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
+	float timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
 	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal();
 
 	char buffer[1024];
@@ -103,7 +103,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 {
 	char buffer[1024];
 
-	uint64_t timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
+	float timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
 	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal();
 
 	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetStats(pDataSource);
@@ -198,7 +198,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			curWindow.LastAggregatedTime = curTime;
 		}
 
-		uint64_t timeInCombat = curWindow.CurrentAggregatedStats->GetCombatTime();
+		float timeInCombat = curWindow.CurrentAggregatedStats->GetCombatTime();
 		const AggregatedStatsEntry& aggregatedTotal = curWindow.CurrentAggregatedStats->GetTotal();
 
 		if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
@@ -249,6 +249,12 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 					ImGui::EndMenu();
 				}
 			}
+
+			const char* const combatEndConditionItems[] = { "combat exit", "last damage/heal event", "last heal event" };
+			static_assert((sizeof(combatEndConditionItems) / sizeof(combatEndConditionItems[0])) == static_cast<uint64_t>(CombatEndCondition::Max), "Added combat end condition without updating gui?");
+			ImGui::Combo("combat end", &curWindow.CombatEndConditionChoice, combatEndConditionItems, static_cast<int>(CombatEndCondition::Max));
+			ImGuiEx::AddTooltipToLastItem("Decides what should be used for determining combat\n"
+			                              "end (and consequently time in combat)");
 
 			ImGui::Checkbox("show progress bars", &curWindow.ShowProgressBars);
 			ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"

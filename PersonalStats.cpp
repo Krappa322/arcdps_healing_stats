@@ -28,7 +28,6 @@ HealingSkill::HealingSkill(const char* pName)
 
 
 PersonalStats::PersonalStats()
-	: myEnteredCombatTime(0)
 {
 }
 
@@ -63,9 +62,12 @@ void PersonalStats::EnteredCombat(uint64_t pTime, uint16_t pSubGroup)
 {
 	std::lock_guard<std::mutex> lock(myLock);
 
-	if (myEnteredCombatTime == 0)
+	if (myStats.ExitedCombatTime != 0 || myStats.EnteredCombatTime == 0)
 	{
-		myEnteredCombatTime = pTime;
+		myStats.EnteredCombatTime = pTime;
+		myStats.ExitedCombatTime = 0;
+		myStats.LastHealEvent = 0;
+		myStats.LastDamageEvent = 0;
 
 		// Clearing agents here is problematic because the healed agent could've entered combat before us. Not clearing it at
 		// all is also problematic because eventually the map will grow very big. Not clearing it for now and will see if
@@ -78,7 +80,7 @@ void PersonalStats::EnteredCombat(uint64_t pTime, uint16_t pSubGroup)
 	}
 	else
 	{
-		LOG("Tried to enter combat when already in combat (old time %llu, current time %llu)", myEnteredCombatTime, pTime);
+		LOG("Tried to enter combat when already in combat (old time %llu, current time %llu)", myStats.EnteredCombatTime, pTime);
 	}
 }
 
@@ -86,22 +88,35 @@ void PersonalStats::ExitedCombat(uint64_t pTime)
 {
 	std::lock_guard<std::mutex> lock(myLock);
 
-	if (myEnteredCombatTime == 0)
+	if (myStats.ExitedCombatTime != 0 || myStats.EnteredCombatTime == 0)
 	{
 		LOG("Tried to exit combat when not in combat (current time %llu)", pTime);
 		return;
 	}
 
-	if (pTime <= myEnteredCombatTime)
+	if (pTime <= myStats.EnteredCombatTime)
 	{
-		LOG("Tried to exit combat with timestamp earlier than combat start (current time %llu, combat start %llu)", pTime, myEnteredCombatTime);
+		LOG("Tried to exit combat with timestamp earlier than combat start (current time %llu, combat start %llu)", pTime, myStats.EnteredCombatTime);
 		return;
 	}
 
-	myStats.TimeInCombat = pTime - myEnteredCombatTime;
-	myEnteredCombatTime = 0;
+	myStats.ExitedCombatTime = pTime;
 
-	LOG("Spent %llu ms in combat", myStats.TimeInCombat);
+	LOG("Spent %llu ms in combat", myStats.ExitedCombatTime - myStats.EnteredCombatTime);
+}
+
+void PersonalStats::DamageEvent(cbtevent* pEvent)
+{
+	{
+		std::lock_guard<std::mutex> lock(myLock);
+
+		if (myStats.EnteredCombatTime == 0 || myStats.ExitedCombatTime != 0)
+		{
+			return;
+		}
+
+		myStats.LastDamageEvent = pEvent->time;
+	}
 }
 
 void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, bool pDestinationAgentIsMinion, const char* pSkillname)
@@ -116,9 +131,8 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId
 	{
 		std::lock_guard<std::mutex> lock(myLock);
 
-		if (myEnteredCombatTime == 0)
+		if (myStats.EnteredCombatTime == 0 || myStats.ExitedCombatTime != 0)
 		{
-			//LOG("Tried to register healing event but not in combat - size %i from %s:%u to %s:%llu", healedAmount, pSkillname, pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
 			return;
 		}
 
@@ -149,6 +163,8 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId
 			agent->second.TotalHealing += healedAmount;
 			agent->second.Ticks += 1;
 		}
+
+		myStats.LastHealEvent = pEvent->time;
 	}
 
 	LOG("Registered heal event size %i from %s:%u to %s:%llu", healedAmount, pSkillname, pEvent->skillid, pDestinationAgentName, pDestinationAgentId);
@@ -158,19 +174,5 @@ HealingStats PersonalStats::GetGlobalState()
 {
 	std::lock_guard<std::mutex> lock(PersonalStats::GlobalState.myLock);
 
-	HealingStats result;
-	if (PersonalStats::GlobalState.myEnteredCombatTime == 0)
-	{
-		result.TimeInCombat = PersonalStats::GlobalState.myStats.TimeInCombat;
-	}
-	else
-	{
-		result.TimeInCombat = timeGetTime() - PersonalStats::GlobalState.myEnteredCombatTime;
-	}
-
-	result.Agents = PersonalStats::GlobalState.myStats.Agents;
-	result.SkillsHealing = PersonalStats::GlobalState.myStats.SkillsHealing;
-	result.SubGroup = PersonalStats::GlobalState.myStats.SubGroup;
-
-	return result;
+	return HealingStats{PersonalStats::GlobalState.myStats};
 }

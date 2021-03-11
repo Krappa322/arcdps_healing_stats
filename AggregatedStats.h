@@ -53,7 +53,7 @@ public:
 	const AggregatedStatsEntry& GetTotal();
 	const AggregatedVector& GetStats(DataSource pDataSource);
 	const AggregatedVector& GetDetails(DataSource pDataSource, uint64_t pId);
-	uint64_t GetCombatTime();
+	float GetCombatTime();
 
 	const AggregatedVector& GetGroupFilterTotals();
 

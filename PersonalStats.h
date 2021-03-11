@@ -34,7 +34,11 @@ struct HealingSkill
 
 struct HealingStats
 {
-	uint64_t TimeInCombat = 0;
+	uint64_t EnteredCombatTime = 0;
+	uint64_t ExitedCombatTime = 0;
+	uint64_t LastHealEvent = 0;
+	uint64_t LastDamageEvent = 0;
+
 	std::map<uint32_t, HealingSkill> SkillsHealing; // <Skill Id, Stats>
 	std::map<uintptr_t, HealedAgent> Agents; // <Agent Id, Agent>
 	uint16_t SubGroup = 0;
@@ -49,6 +53,8 @@ public:
 
 	void EnteredCombat(uint64_t pTime, uint16_t pSubGroup);
 	void ExitedCombat(uint64_t pTime);
+
+	void DamageEvent(cbtevent* pEvent);
 	void HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, bool pDestinationAgentIsMinion, const char* pSkillname); // pDestinationAgentName can be nullptr
 
 
@@ -59,6 +65,5 @@ public:
 private:
 	std::mutex myLock;
 
-	uint64_t myEnteredCombatTime;
 	HealingStats myStats;
 };

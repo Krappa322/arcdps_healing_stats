@@ -25,12 +25,21 @@ enum class SortOrder
 	Max
 };
 
+enum class CombatEndCondition
+{
+	CombatExit = 0,
+	LastDamageOrHealEvent = 1,
+	LastHealEvent = 2,
+	Max
+};
+
 struct HealWindowOptions
 {
 	bool Shown = false;
 
 	int DataSourceChoice = static_cast<int>(DataSource::Agents);
 	int SortOrderChoice = static_cast<int>(SortOrder::DescendingSize);
+	int CombatEndConditionChoice = static_cast<int>(CombatEndCondition::CombatExit);
 
 	bool ExcludeGroup = false;
 	bool ExcludeOffGroup = false;
