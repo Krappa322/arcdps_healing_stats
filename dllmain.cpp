@@ -232,6 +232,9 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 
 	if (pEvent->is_statechange == CBTS_ENTERCOMBAT)
 	{
+		LOG("EnterCombat agent %s %llu %hu %u",
+			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self);
+
 		if (pSourceAgent->self != 0)
 		{
 			PersonalStats::GlobalState.EnteredCombat(pEvent->time, static_cast<uint16_t>(pEvent->dst_agent));
@@ -248,6 +251,9 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 	}
 	else if (pEvent->is_statechange == CBTS_EXITCOMBAT)
 	{
+		LOG("ExitCombat agent %s %llu %hu %u",
+			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self);
+
 		if (pSourceAgent->self != 0)
 		{
 			PersonalStats::GlobalState.ExitedCombat(pEvent->time);
