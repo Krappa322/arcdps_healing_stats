@@ -79,7 +79,7 @@ const AggregatedVector& AggregatedStats::GetDetails(DataSource pDataSource, uint
 	switch (pDataSource)
 	{
 	case DataSource::Skills:
-		GetSkillDetails(static_cast<uint32_t>(pId));
+		return GetSkillDetails(static_cast<uint32_t>(pId));
 	case DataSource::Agents:
 	default:
 		return GetAgentDetails(pId);
