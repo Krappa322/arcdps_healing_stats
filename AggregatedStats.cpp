@@ -25,7 +25,6 @@ AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, std::string&& pName, ui
 AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealWindowOptions& pOptions, bool pDebugMode)
 	: mySourceData(std::move(pSourceData))
 	, myOptions(pOptions)
-	, myAllAgents(nullptr)
 	, myFilteredAgents(nullptr)
 	, mySkills(nullptr)
 	, myGroupFilterTotals(nullptr)
@@ -50,7 +49,7 @@ const AggregatedStatsEntry& AggregatedStats::GetTotal()
 
 	uint64_t healing = 0;
 	uint64_t hits = 0;
-	for (const AggregatedStatsEntry& entry : GetSkills().Entries)
+	for (const AggregatedStatsEntry& entry : GetSkills(std::nullopt).Entries)
 	{
 		healing += entry.Healing;
 		hits += entry.Hits;
@@ -65,9 +64,9 @@ const AggregatedVector& AggregatedStats::GetStats(DataSource pDataSource)
 	switch (pDataSource)
 	{
 	case DataSource::Skills:
-		return GetSkills();
+		return GetSkills(std::nullopt);
 	case DataSource::Agents:
-		return GetAgents();
+		return GetAgents(std::nullopt);
 	case DataSource::Totals:
 	default:
 		return GetGroupFilterTotals();
@@ -79,10 +78,10 @@ const AggregatedVector& AggregatedStats::GetDetails(DataSource pDataSource, uint
 	switch (pDataSource)
 	{
 	case DataSource::Skills:
-		return GetSkillDetails(static_cast<uint32_t>(pId));
+		return GetAgents(static_cast<uint32_t>(pId));
 	case DataSource::Agents:
 	default:
-		return GetAgentDetails(pId);
+		return GetSkills(static_cast<uintptr_t>(pId));
 	}
 }
 
@@ -94,46 +93,98 @@ float AggregatedStats::GetCombatTime()
 	{
 		end = mySourceData.ExitedCombatTime;
 	}
-	else if (endCondition == CombatEndCondition::LastHealEvent && mySourceData.LastHealEvent != 0)
+	else if (endCondition == CombatEndCondition::LastHealEvent && mySourceData.Events.size() != 0)
 	{
-		end = mySourceData.LastHealEvent;
+		end = mySourceData.Events.back().Time;
 	}
 	else
 	{
 		// Use EnteredCombatTime as a last resort if there are no events yet
-		end = (std::max)(mySourceData.EnteredCombatTime, (std::max)(mySourceData.LastHealEvent, mySourceData.LastDamageEvent));
+		end = (std::max)(mySourceData.EnteredCombatTime, mySourceData.LastDamageEvent);
+		if (mySourceData.Events.size() != 0)
+		{
+			end = (std::max)(end, end = mySourceData.Events.back().Time);
+		}
 	}
 
 	assert(mySourceData.EnteredCombatTime <= end);
 	return (static_cast<float>(end) - mySourceData.EnteredCombatTime) / 1000;
 }
 
-const AggregatedVector& AggregatedStats::GetAgents()
+const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkillId)
 {
-	if (myFilteredAgents != nullptr)
+	AggregatedVector* entry = nullptr;
+
+	if (pSkillId.has_value() == true)
 	{
-		return *myFilteredAgents;
+		const auto [mapEntry, inserted] = mySkillsDetailed.emplace(std::piecewise_construct,
+			std::forward_as_tuple(*pSkillId),
+			std::forward_as_tuple());
+		if (inserted == false)
+		{
+			return mapEntry->second; // Return cached value
+		}
+
+		entry = &mapEntry->second;
+	}
+	else
+	{
+		if (myFilteredAgents != nullptr)
+		{
+			return *myFilteredAgents; // Return cached value
+		}
+
+		myFilteredAgents = std::make_unique<AggregatedVector>();
+		entry = myFilteredAgents.get();
 	}
 
-	//LOG("Generating new agents vector");
-	myFilteredAgents = std::make_unique<AggregatedVector>();
+	struct TempAgent
+	{
+		std::map<uintptr_t, HealedAgent>::const_iterator Iterator;
+		uint64_t Ticks;
+		uint64_t Healing;
+
+		TempAgent(std::map<uintptr_t, HealedAgent>::const_iterator&& pIterator, uint64_t pTicks, uint64_t pHealing)
+			: Iterator{std::move(pIterator)}
+			, Ticks{pTicks}
+			, Healing{pHealing}
+		{
+		}
+	};
+	std::map<uintptr_t, TempAgent> tempMap;
+
+	for (const HealEvent& curEvent : mySourceData.Events)
+	{
+		if (pSkillId.has_value() == true)
+		{
+			if (curEvent.SkillId != *pSkillId)
+			{
+				continue;
+			}
+		}
+
+		auto mapAgent = std::as_const(mySourceData.Agents).find(curEvent.AgentId);
+		if (Filter(mapAgent) == true)
+		{
+			continue;
+		}
+
+		auto [agent, _inserted] = tempMap.try_emplace(curEvent.AgentId, std::move(mapAgent), 0, 0);
+
+		agent->second.Ticks += 1;
+		agent->second.Healing += curEvent.Size;
+	}
 
 	// Caching the result in a display friendly way
-	for (const auto& [agentId, agent] : GetAllAgents())
+	for (const auto& [agentId, agent] : tempMap)
 	{
 		std::string agentName;
 
-		auto mapAgent = std::as_const(mySourceData.Agents).find(agentId);
-		if (Filter(mapAgent) == true)
-		{
-			continue; // Exclude agent
-		}
-
 		if (myDebugMode == false)
 		{
-			if (mapAgent != mySourceData.Agents.end())
+			if (agent.Iterator != mySourceData.Agents.end())
 			{
-				agentName = mapAgent->second.Name;
+				agentName = agent.Iterator->second.Name;
 			}
 			else
 			{
@@ -144,9 +195,9 @@ const AggregatedVector& AggregatedStats::GetAgents()
 		else
 		{
 			char buffer[1024];
-			if (mapAgent != mySourceData.Agents.end())
+			if (agent.Iterator != mySourceData.Agents.end())
 			{
-				snprintf(buffer, sizeof(buffer), "%llu ; %u ; %u ; %s", agentId, mapAgent->second.Subgroup, mapAgent->second.IsMinion, mapAgent->second.Name.c_str());
+				snprintf(buffer, sizeof(buffer), "%llu ; %u ; %u ; %s", agentId, agent.Iterator->second.Subgroup, agent.Iterator->second.IsMinion, agent.Iterator->second.Name.c_str());
 			}
 			else
 			{
@@ -156,50 +207,107 @@ const AggregatedVector& AggregatedStats::GetAgents()
 			agentName = buffer;
 		}
 
-		myFilteredAgents->Add(agentId, std::move(agentName), agent.TotalHealing, agent.Ticks, std::nullopt);
+		entry->Add(agentId, std::move(agentName), agent.Healing, agent.Ticks, std::nullopt);
 	}
 
-	Sort(myFilteredAgents->Entries);
+	Sort(entry->Entries);
 
-	return *myFilteredAgents;
+	return *entry;
 }
 
-const AggregatedVector& AggregatedStats::GetSkills()
+const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAgentId)
 {
-	if (mySkills != nullptr)
+	AggregatedVector* entry = nullptr;
+
+	if (pAgentId.has_value() == true)
 	{
-		return *mySkills;
+		const auto [mapEntry, inserted] = myAgentsDetailed.emplace(std::piecewise_construct,
+			std::forward_as_tuple(*pAgentId),
+			std::forward_as_tuple());
+		if (inserted == false)
+		{
+			return mapEntry->second; // Return cached value
+		}
+
+		entry = &mapEntry->second;
+	}
+	else
+	{
+		if (mySkills != nullptr)
+		{
+			return *mySkills; // Return cached value
+		}
+
+		mySkills = std::make_unique<AggregatedVector>();
+		entry = mySkills.get();
 	}
 
-	//LOG("Generating new skills vector");
-	mySkills = std::make_unique<AggregatedVector>();
+	struct TempSkill
+	{
+		uint64_t Ticks;
+		uint64_t Healing;
+
+		TempSkill(uint64_t pTicks, uint64_t pHealing)
+			: Ticks{pTicks}
+			, Healing{pHealing}
+		{
+		}
+	};
+	std::map<uint32_t, TempSkill> tempMap;
 
 	uint64_t totalIndirectHealing = 0;
 	uint64_t totalIndirectTicks = 0;
 
-	for (const auto& [skillId, skill] : mySourceData.SkillsHealing)
+	for (const HealEvent& curEvent : mySourceData.Events)
 	{
-		uint64_t totalHealing = 0;
-		uint64_t ticks = 0;
-
-		for (const auto& [agentId, agent] : skill.AgentsHealing)
+		if (pAgentId.has_value() == true)
 		{
-			if (Filter(agentId) == true)
+			if (curEvent.AgentId != *pAgentId)
 			{
-				continue; // Skip this agent since it doesn't match filter
+				continue;
 			}
+		}
+		else
+		{
+			auto mapAgent = std::as_const(mySourceData.Agents).find(curEvent.AgentId);
+			if (Filter(mapAgent) == true)
+			{
+				continue;
+			}
+		}
 
-			totalHealing += agent.TotalHealing;
-			ticks += agent.Ticks;
+		auto [skill, _inserted] = tempMap.try_emplace(curEvent.SkillId, 0, 0);
+
+		skill->second.Ticks += 1;
+		skill->second.Healing += curEvent.Size;
+	}
+
+	for (const auto& [skillId, skill] : tempMap)
+	{
+		char buffer[1024];
+		char buffer2[1024];
+
+		const char* skillName = nullptr;
+
+		auto mapSkill = std::as_const(mySourceData.Skills).find(skillId);
+		if (mapSkill != mySourceData.Skills.end())
+		{
+			skillName = mapSkill->second.Name;
+		}
+		else
+		{
+			LOG("Couldn't map skill %u", skillId);
+			snprintf(buffer2, sizeof(buffer2), "%u", skillId);
+			skillName = buffer2;
 		}
 
 		bool isIndirectHealing = false;
-		if (SkillTable::GlobalState.IsSkillIndirectHealing(skillId, skill.Name) == true)
+		if (SkillTable::GlobalState.IsSkillIndirectHealing(skillId, skillName) == true)
 		{
-			LOG("Translating skill %hu %s to indirect healing", skillId, skill.Name);
+			LOG("Translating skill %hu %s to indirect healing", skillId, skillName);
 
-			totalIndirectHealing += totalHealing;
-			totalIndirectTicks += ticks;
+			totalIndirectHealing += skill.Healing;
+			totalIndirectTicks += skill.Ticks;
 			isIndirectHealing = true;
 
 			if (myDebugMode == false)
@@ -208,160 +316,25 @@ const AggregatedVector& AggregatedStats::GetSkills()
 			}
 		}
 
-		std::string skillName;
-		if (myDebugMode == false)
+		if (myDebugMode == true)
 		{
-			skillName = skill.Name;
-		}
-		else
-		{
-			char buffer[1024];
-			snprintf(buffer, sizeof(buffer), "%s%u ; %s", isIndirectHealing ? "(INDIRECT) ; " : "", skillId, skill.Name);
+			snprintf(buffer, sizeof(buffer), "%s%u ; %s", isIndirectHealing ? "(INDIRECT) ; " : "", skillId, skillName);
 			skillName = buffer;
 		}
 
-		mySkills->Add(skillId, std::move(skillName), totalHealing, ticks, std::nullopt);
+		entry->Add(skillId, std::string{skillName}, skill.Healing, skill.Ticks, std::nullopt);
 	}
 
 	if (totalIndirectHealing != 0 || totalIndirectTicks != 0)
 	{
 		std::string skillName("Healing by Damage Dealt");
 
-		mySkills->Add(IndirectHealingSkillId, std::move(skillName), totalIndirectHealing, totalIndirectTicks, std::nullopt);
+		entry->Add(IndirectHealingSkillId, std::move(skillName), totalIndirectHealing, totalIndirectTicks, std::nullopt);
 	}
 
-	Sort(mySkills->Entries);
+	Sort(entry->Entries);
 
-	return *mySkills;
-}
-
-const AggregatedVector& AggregatedStats::GetAgentDetails(uintptr_t pAgentId)
-{
-	const auto [entry, inserted] = myAgentsDetailed.emplace(std::piecewise_construct,
-		std::forward_as_tuple(pAgentId),
-		std::forward_as_tuple());
-	if (inserted == false)
-	{
-		return entry->second; // Return cached value
-	}
-
-	uint64_t totalIndirectHealing = 0;
-	uint64_t totalIndirectTicks = 0;
-
-	for (const auto& [skillId, skill] : mySourceData.SkillsHealing)
-	{
-		for (const auto& [agentId, agent] : skill.AgentsHealing)
-		{
-			if (agentId != pAgentId)
-			{
-				continue;
-			}
-
-			bool isIndirectHealing = false;
-			if (SkillTable::GlobalState.IsSkillIndirectHealing(skillId, skill.Name) == true)
-			{
-				LOG("Translating skill %hu %s to indirect healing", skillId, skill.Name);
-
-				totalIndirectHealing += agent.TotalHealing;
-				totalIndirectTicks += agent.Ticks;
-				isIndirectHealing = true;
-
-				if (myDebugMode == false)
-				{
-					continue;
-				}
-			}
-
-			std::string skillName;
-			if (myDebugMode == false)
-			{
-				skillName = skill.Name;
-			}
-			else
-			{
-				char buffer[1024];
-				snprintf(buffer, sizeof(buffer), "%s%u ; %s", isIndirectHealing ? "(INDIRECT) ; " : "", skillId, skill.Name);
-				skillName = buffer;
-			}
-
-			entry->second.Add(skillId, std::move(skillName), agent.TotalHealing, agent.Ticks, std::nullopt);
-		}
-	}
-
-	if (totalIndirectHealing != 0 || totalIndirectTicks != 0)
-	{
-		std::string skillName("Healing by Damage Dealt");
-
-		entry->second.Add(IndirectHealingSkillId, std::move(skillName), totalIndirectHealing, totalIndirectTicks, std::nullopt);
-	}
-
-	Sort(entry->second.Entries);
-
-	return entry->second;
-}
-
-const AggregatedVector& AggregatedStats::GetSkillDetails(uint32_t pSkillId)
-{
-	const auto [entry, inserted] = mySkillsDetailed.emplace(std::piecewise_construct,
-		std::forward_as_tuple(pSkillId),
-		std::forward_as_tuple());
-	if (inserted == false)
-	{
-		return entry->second; // Return cached value
-	}
-
-	const auto sourceData = mySourceData.SkillsHealing.find(pSkillId);
-	if (sourceData == mySourceData.SkillsHealing.end())
-	{
-		// This should never happen
-		LOG("Couldn't find source data for skill %u", pSkillId);
-
-		return entry->second; // Just return the empty vector
-	}
-
-	for (const auto& [agentId, agent] : sourceData->second.AgentsHealing)
-	{
-		std::string agentName;
-
-		auto mapAgent = std::as_const(mySourceData.Agents).find(agentId);
-		if (Filter(mapAgent) == true)
-		{
-			continue; // Exclude agent
-		}
-
-		if (myDebugMode == false)
-		{
-			if (mapAgent != mySourceData.Agents.end())
-			{
-				agentName = mapAgent->second.Name;
-			}
-			else
-			{
-				LOG("Couldn't find a name for agent %llu", agentId);
-				agentName = std::to_string(agentId);
-			}
-		}
-		else
-		{
-			char buffer[1024];
-			if (mapAgent != mySourceData.Agents.end())
-			{
-				snprintf(buffer, sizeof(buffer), "%llu ; %u ; %u ; %s", agentId, mapAgent->second.Subgroup, mapAgent->second.IsMinion, mapAgent->second.Name.c_str());
-			}
-			else
-			{
-				snprintf(buffer, sizeof(buffer), "%llu ; (UNMAPPED)", agentId);
-			}
-
-			agentName = buffer;
-		}
-
-		entry->second.Add(agentId, std::move(agentName), agent.TotalHealing, agent.Ticks, std::nullopt);
-	}
-
-	Sort(entry->second.Entries);
-
-	return entry->second;
+	return *entry;
 }
 
 const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
@@ -379,9 +352,9 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 
 	HealWindowOptions fakeOptions;
 
-	for (const auto& [agentId, agent] : GetAllAgents())
+	for (const HealEvent& curEvent : mySourceData.Events)
 	{
-		auto mapAgent = std::as_const(mySourceData.Agents).find(agentId);
+		auto mapAgent = std::as_const(mySourceData.Agents).find(curEvent.AgentId);
 
 		// Loop through the array and pretend index is GroupFilter, if agent does not get filtered by that filter then add
 		// the total healing to that agent to the total for that filter
@@ -423,8 +396,8 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 
 			if (FilterInternal(mapAgent, fakeOptions) == false)
 			{
-				myGroupFilterTotals->Entries[i].Healing += agent.TotalHealing;
-				myGroupFilterTotals->Entries[i].Hits += agent.Ticks;
+				myGroupFilterTotals->Entries[i].Hits += 1;
+				myGroupFilterTotals->Entries[i].Healing += curEvent.Size;
 			}
 		}
 	}
@@ -435,33 +408,6 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 	}
 
 	return *myGroupFilterTotals;
-}
-
-const std::map<uintptr_t, AgentStats>& AggregatedStats::GetAllAgents()
-{
-	if (myAllAgents != nullptr)
-	{
-		return *myAllAgents;
-	}
-
-	myAllAgents = std::make_unique<std::map<uintptr_t, AgentStats>>();
-
-	for (const auto& [skillId, skill] : mySourceData.SkillsHealing)
-	{
-		for (const auto& [agentId, agent] : skill.AgentsHealing)
-		{
-			auto result = myAllAgents->emplace(std::piecewise_construct,
-				std::forward_as_tuple(agentId),
-				std::forward_as_tuple(agent.TotalHealing, agent.Ticks));
-			if (result.second == false) // Didn't insert new entry
-			{
-				result.first->second.TotalHealing += agent.TotalHealing;
-				result.first->second.Ticks += agent.Ticks;
-			}
-		}
-	}
-
-	return *myAllAgents;
 }
 
 template<typename VectorType>

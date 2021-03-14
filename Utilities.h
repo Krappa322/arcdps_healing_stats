@@ -65,7 +65,7 @@ static inline size_t utf8_strlen(const char* pString)
 	assert(charCount > 0);
 
 	// charCount includes null character so remove 1
-	return charCount - 1;
+	return static_cast<size_t>(charCount) - 1;
 }
 
 static inline std::string VirtualKeyToString(int pVirtualKey)

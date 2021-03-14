@@ -58,14 +58,8 @@ public:
 	const AggregatedVector& GetGroupFilterTotals();
 
 private:
-	const AggregatedVector& GetAgents();
-	const AggregatedVector& GetSkills();
-
-	const AggregatedVector& GetAgentDetails(uintptr_t pAgentId);
-	const AggregatedVector& GetSkillDetails(uint32_t pSkillId);
-
-
-	const std::map<uintptr_t, AgentStats>& GetAllAgents();
+	const AggregatedVector& GetAgents(std::optional<uint32_t> pSkillId);
+	const AggregatedVector& GetSkills(std::optional<uintptr_t> pAgentId);
 
 	template<typename VectorType>
 	void Sort(VectorType& pVector);
@@ -78,8 +72,6 @@ private:
 
 	HealWindowOptions myOptions;
 	bool myDebugMode;
-
-	std::unique_ptr<std::map<uintptr_t, AgentStats>> myAllAgents; // uintptr_t => agent id
 
 	std::unique_ptr<AggregatedStatsEntry> myTotal;
 	std::unique_ptr<AggregatedVector> myFilteredAgents;
