@@ -39,6 +39,7 @@ struct HealingStats
 	uint64_t EnteredCombatTime = 0;
 	uint64_t ExitedCombatTime = 0;
 	uint64_t LastDamageEvent = 0;
+	uint64_t CollectionTime = 0;
 	uint16_t SubGroup = 0;
 
 	std::map<uintptr_t, HealedAgent> Agents; // <Agent Id, Agent>

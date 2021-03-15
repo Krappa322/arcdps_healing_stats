@@ -2,7 +2,8 @@
 #include <stdint.h>
 
 /* arcdps export table */
-typedef struct arcdps_exports {
+typedef struct arcdps_exports
+{
 	uintptr_t size; /* size of exports table */
 	uint32_t sig; /* pick a number between 0 and uint32_t max that isn't used by other modules */
 	uint32_t imguivers; /* set this to IMGUI_VERSION_NUM. if you don't use imgui, 18000 (as of 2021-02-02) */
@@ -17,7 +18,8 @@ typedef struct arcdps_exports {
 	void* options_windows; /* called once per 'window' option checkbox, with null at the end, non-zero return disables drawing that option, fn(char* windowname) */
 } arcdps_exports;
 
-enum cbtstatechange {
+enum cbtstatechange
+{
 	CBTS_NONE, // not used - not this kind of event
 	CBTS_ENTERCOMBAT, // src_agent entered combat, dst_agent is subgroup
 	CBTS_EXITCOMBAT, // src_agent left combat
@@ -60,8 +62,16 @@ enum cbtstatechange {
 	CBTS_UNKNOWN // unknown or invalid, ignore
 };
 
+enum iff : uint8_t
+{
+	IFF_FRIEND,
+	IFF_FOE,
+	IFF_UNKNOWN // or uncertain
+};
+
 /* combat event - see evtc docs for details, revision param in combat cb is equivalent of revision byte header */
-typedef struct cbtevent {
+typedef struct cbtevent
+{
 	uint64_t time;
 	uintptr_t src_agent;
 	uintptr_t dst_agent;

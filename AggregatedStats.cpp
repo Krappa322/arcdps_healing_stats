@@ -85,30 +85,146 @@ const AggregatedVector& AggregatedStats::GetDetails(DataSource pDataSource, uint
 	}
 }
 
-float AggregatedStats::GetCombatTime()
+
+const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 {
-	uint64_t end = 0;
-	CombatEndCondition endCondition = static_cast<CombatEndCondition>(myOptions.CombatEndConditionChoice);
-	if (endCondition == CombatEndCondition::CombatExit && mySourceData.ExitedCombatTime != 0)
+	if (myGroupFilterTotals != nullptr)
 	{
-		end = mySourceData.ExitedCombatTime;
+		return *myGroupFilterTotals;
 	}
-	else if (endCondition == CombatEndCondition::LastHealEvent && mySourceData.Events.size() != 0)
+
+	myGroupFilterTotals = std::make_unique<AggregatedVector>();
+	for (uint32_t i = 0; i < static_cast<uint32_t>(GroupFilter::Max); i++)
 	{
-		end = mySourceData.Events.back().Time;
+		myGroupFilterTotals->Add(0, GROUP_FILTER_STRING[i], 0, 0, std::nullopt);
 	}
-	else
+
+	HealWindowOptions fakeOptions;
+
+	uint64_t combatEnd = GetCombatEnd();
+
+	for (const HealEvent& curEvent : mySourceData.Events)
 	{
-		// Use EnteredCombatTime as a last resort if there are no events yet
-		end = (std::max)(mySourceData.EnteredCombatTime, mySourceData.LastDamageEvent);
-		if (mySourceData.Events.size() != 0)
+		if (curEvent.Time > combatEnd)
 		{
-			end = (std::max)(end, end = mySourceData.Events.back().Time);
+			continue;
+		}
+
+		auto mapAgent = std::as_const(mySourceData.Agents).find(curEvent.AgentId);
+
+		// Loop through the array and pretend index is GroupFilter, if agent does not get filtered by that filter then add
+		// the total healing to that agent to the total for that filter
+		for (size_t i = 0; i < static_cast<uint32_t>(GroupFilter::Max); i++)
+		{
+			switch (static_cast<GroupFilter>(i))
+			{
+			case GroupFilter::Group:
+				fakeOptions.ExcludeGroup = false;
+				fakeOptions.ExcludeOffGroup = true;
+				fakeOptions.ExcludeOffSquad = true;
+				fakeOptions.ExcludeMinions = true;
+				fakeOptions.ExcludeUnmapped = true;
+				break;
+			case GroupFilter::Squad:
+				fakeOptions.ExcludeGroup = false;
+				fakeOptions.ExcludeOffGroup = false;
+				fakeOptions.ExcludeOffSquad = true;
+				fakeOptions.ExcludeMinions = true;
+				fakeOptions.ExcludeUnmapped = true;
+				break;
+			case GroupFilter::AllExcludingMinions:
+				fakeOptions.ExcludeGroup = false;
+				fakeOptions.ExcludeOffGroup = false;
+				fakeOptions.ExcludeOffSquad = false;
+				fakeOptions.ExcludeMinions = true;
+				fakeOptions.ExcludeUnmapped = true;
+				break;
+			case GroupFilter::All:
+				fakeOptions.ExcludeGroup = false;
+				fakeOptions.ExcludeOffGroup = false;
+				fakeOptions.ExcludeOffSquad = false;
+				fakeOptions.ExcludeMinions = false;
+				fakeOptions.ExcludeUnmapped = true;
+				break;
+			default:
+				assert(false);
+			}
+
+			if (FilterInternal(mapAgent, fakeOptions) == false)
+			{
+				myGroupFilterTotals->Entries[i].Hits += 1;
+				myGroupFilterTotals->Entries[i].Healing += curEvent.Size;
+			}
 		}
 	}
 
-	assert(mySourceData.EnteredCombatTime <= end);
-	return (static_cast<float>(end) - mySourceData.EnteredCombatTime) / 1000;
+	for (const AggregatedStatsEntry& entry : myGroupFilterTotals->Entries)
+	{
+		myGroupFilterTotals->HighestHealing = (std::max)(myGroupFilterTotals->HighestHealing, entry.Healing);
+	}
+
+	return *myGroupFilterTotals;
+}
+
+
+float AggregatedStats::GetCombatTime()
+{
+	if (mySourceData.EnteredCombatTime == 0)
+	{
+		return 0.0f;
+	}
+
+	uint64_t end = GetCombatEnd();
+	assert(end >= mySourceData.EnteredCombatTime);
+	return (end - mySourceData.EnteredCombatTime) / 1000;
+}
+
+uint64_t AggregatedStats::GetCombatEnd()
+{
+	uint64_t end = 0;
+	CombatEndCondition endCondition = static_cast<CombatEndCondition>(myOptions.CombatEndConditionChoice);
+	if (endCondition == CombatEndCondition::CombatExit)
+	{
+		end = mySourceData.ExitedCombatTime;
+	}
+	else if (endCondition == CombatEndCondition::LastHealEvent)
+	{
+		if (mySourceData.Events.size() != 0)
+		{
+			end = mySourceData.Events.back().Time;
+		}
+	}
+	else if (endCondition == CombatEndCondition::LastDamageEvent)
+	{
+		end = mySourceData.LastDamageEvent;
+	}
+	else
+	{
+		assert(endCondition == CombatEndCondition::LastDamageOrHealEvent);
+
+		if (mySourceData.Events.size() != 0)
+		{
+			end = (std::max)(mySourceData.LastDamageEvent, mySourceData.Events.back().Time);
+		}
+		else
+		{
+			end = mySourceData.LastDamageEvent;
+		}
+	}
+
+	if (end == 0)
+	{
+		if (mySourceData.ExitedCombatTime != 0)
+		{
+			end = mySourceData.ExitedCombatTime;
+		}
+		else
+		{
+			end = mySourceData.CollectionTime;
+		}
+	}
+
+	return end;
 }
 
 const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkillId)
@@ -153,8 +269,15 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 	};
 	std::map<uintptr_t, TempAgent> tempMap;
 
+	uint64_t combatEnd = GetCombatEnd();
+
 	for (const HealEvent& curEvent : mySourceData.Events)
 	{
+		if (curEvent.Time > combatEnd)
+		{
+			continue;
+		}
+
 		if (pSkillId.has_value() == true)
 		{
 			if (curEvent.SkillId != *pSkillId)
@@ -255,11 +378,17 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 	};
 	std::map<uint32_t, TempSkill> tempMap;
 
+	uint64_t combatEnd = GetCombatEnd();
 	uint64_t totalIndirectHealing = 0;
 	uint64_t totalIndirectTicks = 0;
 
 	for (const HealEvent& curEvent : mySourceData.Events)
 	{
+		if (curEvent.Time > combatEnd)
+		{
+			continue;
+		}
+
 		if (pAgentId.has_value() == true)
 		{
 			if (curEvent.AgentId != *pAgentId)
@@ -335,79 +464,6 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 	Sort(entry->Entries);
 
 	return *entry;
-}
-
-const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
-{
-	if (myGroupFilterTotals != nullptr)
-	{
-		return *myGroupFilterTotals;
-	}
-
-	myGroupFilterTotals = std::make_unique<AggregatedVector>();
-	for (uint32_t i = 0; i < static_cast<uint32_t>(GroupFilter::Max); i++)
-	{
-		myGroupFilterTotals->Add(0, GROUP_FILTER_STRING[i], 0, 0, std::nullopt);
-	}
-
-	HealWindowOptions fakeOptions;
-
-	for (const HealEvent& curEvent : mySourceData.Events)
-	{
-		auto mapAgent = std::as_const(mySourceData.Agents).find(curEvent.AgentId);
-
-		// Loop through the array and pretend index is GroupFilter, if agent does not get filtered by that filter then add
-		// the total healing to that agent to the total for that filter
-		for (size_t i = 0; i < static_cast<uint32_t>(GroupFilter::Max); i++)
-		{
-			switch (static_cast<GroupFilter>(i))
-			{
-			case GroupFilter::Group:
-				fakeOptions.ExcludeGroup = false;
-				fakeOptions.ExcludeOffGroup = true;
-				fakeOptions.ExcludeOffSquad = true;
-				fakeOptions.ExcludeMinions = true;
-				fakeOptions.ExcludeUnmapped = true;
-				break;
-			case GroupFilter::Squad:
-				fakeOptions.ExcludeGroup = false;
-				fakeOptions.ExcludeOffGroup = false;
-				fakeOptions.ExcludeOffSquad = true;
-				fakeOptions.ExcludeMinions = true;
-				fakeOptions.ExcludeUnmapped = true;
-				break;
-			case GroupFilter::AllExcludingMinions:
-				fakeOptions.ExcludeGroup = false;
-				fakeOptions.ExcludeOffGroup = false;
-				fakeOptions.ExcludeOffSquad = false;
-				fakeOptions.ExcludeMinions = true;
-				fakeOptions.ExcludeUnmapped = true;
-				break;
-			case GroupFilter::All:
-				fakeOptions.ExcludeGroup = false;
-				fakeOptions.ExcludeOffGroup = false;
-				fakeOptions.ExcludeOffSquad = false;
-				fakeOptions.ExcludeMinions = false;
-				fakeOptions.ExcludeUnmapped = true;
-				break;
-			default:
-				assert(false);
-			}
-
-			if (FilterInternal(mapAgent, fakeOptions) == false)
-			{
-				myGroupFilterTotals->Entries[i].Hits += 1;
-				myGroupFilterTotals->Entries[i].Healing += curEvent.Size;
-			}
-		}
-	}
-
-	for (const AggregatedStatsEntry& entry : myGroupFilterTotals->Entries)
-	{
-		myGroupFilterTotals->HighestHealing = (std::max)(myGroupFilterTotals->HighestHealing, entry.Healing);
-	}
-
-	return *myGroupFilterTotals;
 }
 
 template<typename VectorType>

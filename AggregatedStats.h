@@ -53,11 +53,14 @@ public:
 	const AggregatedStatsEntry& GetTotal();
 	const AggregatedVector& GetStats(DataSource pDataSource);
 	const AggregatedVector& GetDetails(DataSource pDataSource, uint64_t pId);
-	float GetCombatTime();
 
 	const AggregatedVector& GetGroupFilterTotals();
 
+	float GetCombatTime();
+
 private:
+	uint64_t GetCombatEnd();
+
 	const AggregatedVector& GetAgents(std::optional<uint32_t> pSkillId);
 	const AggregatedVector& GetSkills(std::optional<uintptr_t> pAgentId);
 

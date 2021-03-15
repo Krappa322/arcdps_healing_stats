@@ -167,5 +167,7 @@ HealingStats PersonalStats::GetGlobalState()
 {
 	std::lock_guard<std::mutex> lock(PersonalStats::GlobalState.myLock);
 
-	return HealingStats{PersonalStats::GlobalState.myStats};
+	HealingStats result{PersonalStats::GlobalState.myStats};
+	result.CollectionTime = timeGetTime();
+	return result;
 }

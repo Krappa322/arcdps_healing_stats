@@ -28,8 +28,9 @@ enum class SortOrder
 enum class CombatEndCondition
 {
 	CombatExit = 0,
-	LastDamageOrHealEvent = 1,
+	LastDamageEvent = 1,
 	LastHealEvent = 2,
+	LastDamageOrHealEvent = 3,
 	Max
 };
 

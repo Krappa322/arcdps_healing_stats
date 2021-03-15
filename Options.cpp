@@ -51,11 +51,11 @@ void WriteIni(const HealTableOptions& pOptions)
 			LOG("SetValue sort_order_choice failed with %i", error);
 		}
 
-		/*error = healtable_ini.SetLongValue(section, "combat_end_condition_choice", pOptions.Windows[i].CombatEndConditionChoice);
+		error = healtable_ini.SetLongValue(section, "combat_end_condition_choice", pOptions.Windows[i].CombatEndConditionChoice);
 		if (error < 0)
 		{
 			LOG("SetValue combat_end_condition_choice failed with %i", error);
-		}*/
+		}
 
 		error = healtable_ini.SetBoolValue(section, "exclude_group", pOptions.Windows[i].ExcludeGroup);
 		if (error < 0)

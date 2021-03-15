@@ -250,7 +250,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				}
 			}
 
-			const char* const combatEndConditionItems[] = { "combat exit", "last damage/heal event", "last heal event" };
+			const char* const combatEndConditionItems[] = { "combat exit", "last damage event", "last heal event", "last damage / heal event" };
 			static_assert((sizeof(combatEndConditionItems) / sizeof(combatEndConditionItems[0])) == static_cast<uint64_t>(CombatEndCondition::Max), "Added combat end condition without updating gui?");
 			ImGui::Combo("combat end", &curWindow.CombatEndConditionChoice, combatEndConditionItems, static_cast<int>(CombatEndCondition::Max));
 			ImGuiEx::AddTooltipToLastItem("Decides what should be used for determining combat\n"

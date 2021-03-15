@@ -274,6 +274,7 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 	if (pEvent->buff_dmg > 0 || pEvent->value > 0)
 	{
 		SkillTable::GlobalState.RegisterDamagingSkill(pEvent->skillid, pSkillname);
+
 		return 0;
 	}
 
@@ -296,16 +297,22 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 		return 0;
 	}
 
+	if (pEvent->value <= 0 && pEvent->buff_dmg <= 0)
+	{
+		LOG("Damage event %s %u %u (%llu %s %s)->(%llu %s %s) iff=%hhu", pSkillname, pEvent->value, pEvent->buff_dmg, pSourceAgent->id, pSourceAgent->name, BOOL_STR(pSourceAgent->self), pDestinationAgent->id, pDestinationAgent->name, BOOL_STR(pDestinationAgent->self), pEvent->iff);
+
+		if ((pSourceAgent->self == true || pDestinationAgent->self == true) && pEvent->iff == IFF_FOE)
+		{
+			PersonalStats::GlobalState.DamageEvent(pEvent);
+		}
+
+		return 0;
+	}
+
 	if (pSourceAgent->self == 0 &&
 		pEvent->src_master_instid != SELF_INSTANCE_ID.load(std::memory_order_relaxed))
 	{
 		// Source is someone else - not interesting
-		return 0;
-	}
-
-	if (pEvent->value <= 0 && pEvent->buff_dmg <= 0)
-	{
-		// Not healing - not interesting
 		return 0;
 	}
 
