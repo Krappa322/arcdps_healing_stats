@@ -20,7 +20,6 @@ uint64_t constexpr divide_rounded_safe(uint64_t pDividend, uint64_t pDivisor)
 	return (pDividend + (pDivisor / 2)) / pDivisor;
 }
 
-// Implicitly coerces any dividend into a double
 template <typename T, typename U>
 double constexpr divide_safe(T pDividend, U pDivisor)
 {

@@ -301,7 +301,7 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 	{
 		LOG("Damage event %s %u %u (%llu %s %s)->(%llu %s %s) iff=%hhu", pSkillname, pEvent->value, pEvent->buff_dmg, pSourceAgent->id, pSourceAgent->name, BOOL_STR(pSourceAgent->self), pDestinationAgent->id, pDestinationAgent->name, BOOL_STR(pDestinationAgent->self), pEvent->iff);
 
-		if ((pSourceAgent->self == true || pDestinationAgent->self == true) && pEvent->iff == IFF_FOE)
+		if ((pSourceAgent->self != 0 || pDestinationAgent->self != 0) && pEvent->iff == IFF_FOE)
 		{
 			PersonalStats::GlobalState.DamageEvent(pEvent);
 		}
