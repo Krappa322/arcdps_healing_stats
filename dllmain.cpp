@@ -381,3 +381,10 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 
 	return pMessage;
 }
+
+#ifdef STANDALONE
+int main(int pArgCount, char** pArgVector)
+{
+	return 0;
+}
+#endif
