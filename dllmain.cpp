@@ -11,6 +11,8 @@
 
 #include "imgui/imgui.h"
 
+#include "standalone/standalone_main.h"
+
 #include <atomic>
 
 #include <assert.h>
@@ -19,14 +21,9 @@
 #include <stdio.h>
 #include <Windows.h>
 
-typedef void* (*MallocSignature)(size_t);
-typedef void (*FreeSignature)(void*);
-
 /* proto/globals */
 void dll_init(HANDLE pModule);
 void dll_exit();
-extern "C" __declspec(dllexport) void* get_init_addr(char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HMODULE pArcModule, MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree);
-extern "C" __declspec(dllexport) void* get_release_addr();
 arcdps_exports* mod_init();
 uintptr_t mod_release();
 uintptr_t mod_imgui(uint32_t pNotCharselOrLoading);
@@ -38,7 +35,7 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 static MallocSignature ARCDPS_MALLOC = nullptr;
 static FreeSignature ARCDPS_FREE = nullptr;
 static arcdps_exports ARC_EXPORTS;
-static char* ARCDPS_VERSION;
+static const char* ARCDPS_VERSION;
 
 std::mutex HEAL_TABLE_OPTIONS_MUTEX;
 static HealTableOptions HEAL_TABLE_OPTIONS;
@@ -79,12 +76,20 @@ static void FreeWrapper(void* pPointer, void* pUserData)
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
-extern "C" __declspec(dllexport) void* get_init_addr(char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
+extern "C" __declspec(dllexport) void* get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
-	ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(pArcModule, "e7"));
-	assert(ARC_E7 != nullptr);
+#ifndef STANDALONE
 	ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(ARC_E3 != nullptr);
+	ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(pArcModule, "e7"));
+	assert(ARC_E7 != nullptr);
+#else
+	mock_exports* exports = reinterpret_cast<mock_exports*>(pArcModule);
+	ARC_E3 = exports->e3;
+	assert(ARC_E3 != nullptr);
+	ARC_E7 = exports->e7;
+	assert(ARC_E7 != nullptr);
+#endif
 
 	ARCDPS_VERSION = pArcdpsVersionString;
 	SetContext(pImguiContext);
@@ -156,11 +161,11 @@ uintptr_t mod_release()
 	return 0;
 }
 
-uintptr_t mod_imgui(uint32_t pNotCharSelOrLoading)
+uintptr_t mod_imgui(uint32_t pNotCharSelectionOrLoading)
 {
-	if (pNotCharSelOrLoading == false)
+	if (pNotCharSelectionOrLoading == 0)
 	{
-		return false;
+		return 0;
 	}
 
 	{
@@ -381,10 +386,3 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 
 	return pMessage;
 }
-
-#ifdef STANDALONE
-int main(int pArgCount, char** pArgVector)
-{
-	return 0;
-}
-#endif
