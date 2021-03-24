@@ -60,6 +60,9 @@
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="standalone\CombatMock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h">
@@ -117,6 +120,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="standalone\standalone_main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="standalone\CombatMock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

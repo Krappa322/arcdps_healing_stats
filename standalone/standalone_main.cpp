@@ -3,6 +3,7 @@
 #ifdef STANDALONE
 
 #include "standalone_main.h"
+#include "CombatMock.h"
 
 #include "../imgui/imgui.h"
 #include "../imgui/backends/imgui_impl_dx9.h"
@@ -50,6 +51,8 @@ void mock_e3(const char* pString)
 	return; // Logging, ignored
 }
 
+const char* MOCK_VERSION = "ARCDPS_MOCK 0.01";
+
 // Main code
 int main(int, char**)
 {
@@ -86,6 +89,8 @@ int main(int, char**)
 	ImGui_ImplWin32_Init(hwnd);
 	ImGui_ImplDX9_Init(g_pd3dDevice);
 
+	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
 	// Load Fonts
 	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
 	// - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
@@ -106,16 +111,12 @@ int main(int, char**)
 	mockedExports.e3 = &mock_e3;
 	mockedExports.e7 = &mock_e7;
 
-	arcdps_exports* (*mod_init)() = reinterpret_cast<arcdps_exports*(*)()>(get_init_addr("standalone_mock", ImGui::GetCurrentContext(), g_pd3dDevice, reinterpret_cast<HMODULE>(&mockedExports), malloc, free));
-	uintptr_t(*mod_release)() = reinterpret_cast<uintptr_t(*)()>(get_release_addr());
+	arcdps_exports* (*mod_init)() = reinterpret_cast<arcdps_exports*(*)()>(get_init_addr(MOCK_VERSION, ImGui::GetCurrentContext(), g_pd3dDevice, reinterpret_cast<HMODULE>(&mockedExports), malloc, free));
 
 	arcdps_exports* temp_exports = mod_init();
-
 	memcpy(&TEST_MODULE_EXPORTS, temp_exports, sizeof(TEST_MODULE_EXPORTS)); // Maybe do some deep copy at some point but we're not using the strings in there anyways
 
-	// Our state
-	bool show_another_window = false;
-	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	CombatMock combatMock;
 
 	// Main loop
 	MSG msg;
@@ -149,6 +150,8 @@ int main(int, char**)
 			ImGui::End();
 		}
 
+		combatMock.DisplayWindow();
+
 		if (TEST_MODULE_EXPORTS.imgui != nullptr)
 		{
 			TEST_MODULE_EXPORTS.imgui(static_cast<uint32_t>(true));
@@ -174,6 +177,7 @@ int main(int, char**)
 			ResetDevice();
 	}
 
+	uintptr_t(*mod_release)() = reinterpret_cast<uintptr_t(*)()>(get_release_addr());
 	mod_release();
 
 	ImGui_ImplDX9_Shutdown();

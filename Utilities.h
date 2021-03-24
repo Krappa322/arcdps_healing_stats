@@ -84,6 +84,7 @@ static inline std::string VirtualKeyToString(int pVirtualKey)
 	case VK_DIVIDE:
 	case VK_NUMLOCK:
 		scanCode |= KF_EXTENDED;
+		[[fallthrough]];
 	default:
 		int result = GetKeyNameTextA(scanCode << 16, buffer, sizeof(buffer));
 		if (result == 0)
@@ -91,6 +92,7 @@ static inline std::string VirtualKeyToString(int pVirtualKey)
 			//LOG("Translating key %i failed - error %u", pVirtualKey, GetLastError());
 			return std::string{};
 		}
+		break;
 	}
 
 	return std::string{buffer};
