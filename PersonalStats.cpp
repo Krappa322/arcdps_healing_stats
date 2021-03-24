@@ -67,7 +67,7 @@ void PersonalStats::EnteredCombat(uint64_t pTime, uint16_t pSubGroup)
 		myStats.ExitedCombatTime = 0;
 		myStats.LastDamageEvent = 0;
 
-		myStats.Agents.clear();
+		//myStats.Agents.clear(); // Clearing agents here doesn't work because then agents can get combat entered events before we do, meaning their subgroup is not mapped
 		myStats.Skills.clear();
 		myStats.Events.clear();
 		myStats.SubGroup = pSubGroup;

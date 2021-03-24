@@ -235,8 +235,8 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 
 	if (pEvent->is_statechange == CBTS_ENTERCOMBAT)
 	{
-		LOG("EnterCombat agent %s %llu %hu %u",
-			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self);
+		LOG("EnterCombat agent %s %llu %hu %u %llu",
+			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self, pEvent->dst_agent);
 
 		if (pSourceAgent->self != 0)
 		{
