@@ -259,6 +259,7 @@
     <ClInclude Include="imgui\stb_rect_pack.h" />
     <ClInclude Include="imgui\stb_textedit.h" />
     <ClInclude Include="imgui\stb_truetype.h" />
+    <ClInclude Include="json\json.hpp" />
     <ClInclude Include="Options.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="PersonalStats.h" />
