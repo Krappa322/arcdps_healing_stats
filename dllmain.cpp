@@ -329,6 +329,15 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 
 	bool isMinion = (pEvent->dst_master_instid != 0);
 	PersonalStats::GlobalState.HealingEvent(pEvent, pDestinationAgent->id, pDestinationAgent->name, isMinion, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname));
+
+	uint32_t healedAmount = pEvent->value;
+	if (healedAmount == 0)
+	{
+		healedAmount = pEvent->buff_dmg;
+		assert(healedAmount != 0);
+	}
+	LOG("Registered heal event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+
 	return 0;
 }
 

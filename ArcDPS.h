@@ -3,6 +3,22 @@
 #include <stdint.h>
 #include <Windows.h>
 
+enum cbtresult
+{
+	CBTR_NORMAL, // strike was neither crit or glance
+	CBTR_CRIT, // strike was crit
+	CBTR_GLANCE, // strike was glance
+	CBTR_BLOCK, // strike was blocked eg. mesmer shield 4
+	CBTR_EVADE, // strike was evaded, eg. dodge or mesmer sword 2
+	CBTR_INTERRUPT, // strike interrupted something
+	CBTR_ABSORB, // strike was "invluned" or absorbed eg. guardian elite
+	CBTR_BLIND, // strike missed
+	CBTR_KILLINGBLOW, // not a damage strike, target was killed by skill by
+	CBTR_DOWNED, // not a damage strike, target was downed by skill by
+	CBTR_BREAKBAR, // not a damage strike, target had value of breakbar damage dealt
+	CBTR_UNKNOWN // unknown or invalid, ignore
+};
+
 enum cbtstatechange
 {
 	CBTS_NONE, // not used - not this kind of event

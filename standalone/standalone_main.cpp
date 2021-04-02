@@ -116,7 +116,7 @@ int main(int, char**)
 	arcdps_exports* temp_exports = mod_init();
 	memcpy(&TEST_MODULE_EXPORTS, temp_exports, sizeof(TEST_MODULE_EXPORTS)); // Maybe do some deep copy at some point but we're not using the strings in there anyways
 
-	CombatMock combatMock;
+	CombatMock combatMock{&TEST_MODULE_EXPORTS};
 
 	// Main loop
 	MSG msg;
