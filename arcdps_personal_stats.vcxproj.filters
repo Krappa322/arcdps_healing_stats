@@ -51,16 +51,10 @@
     <ClCompile Include="ImGuiEx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="standalone\standalone_main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="imgui\backends\imgui_impl_dx9.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="standalone\CombatMock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -117,12 +111,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="imgui\backends\imgui_impl_win32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="standalone\standalone_main.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="standalone\CombatMock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="json\json.hpp">

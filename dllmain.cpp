@@ -11,8 +11,6 @@
 
 #include "imgui/imgui.h"
 
-#include "standalone/standalone_main.h"
-
 #include <atomic>
 
 #include <assert.h>
@@ -78,18 +76,10 @@ static void FreeWrapper(void* pPointer, void* pUserData)
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
 extern "C" __declspec(dllexport) void* get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
-#ifndef STANDALONE
 	ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(ARC_E3 != nullptr);
 	ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(pArcModule, "e7"));
 	assert(ARC_E7 != nullptr);
-#else
-	mock_exports* exports = reinterpret_cast<mock_exports*>(pArcModule);
-	ARC_E3 = exports->e3;
-	assert(ARC_E3 != nullptr);
-	ARC_E7 = exports->e7;
-	assert(ARC_E7 != nullptr);
-#endif
 
 	ARCDPS_VERSION = pArcdpsVersionString;
 	SetContext(pImguiContext);

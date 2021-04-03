@@ -7,8 +7,10 @@
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Standalone|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Mock Debug|x64'">
     <LocalDebuggerDebuggerType>NativeOnly</LocalDebuggerDebuggerType>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommand>..\arcdps_mock\x64\Debug\arcdps_mock.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments>"$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName)"</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>
