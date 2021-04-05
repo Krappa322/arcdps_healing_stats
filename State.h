@@ -40,7 +40,7 @@ struct HealWindowOptions
 
 	int DataSourceChoice = static_cast<int>(DataSource::Agents);
 	int SortOrderChoice = static_cast<int>(SortOrder::DescendingSize);
-	int CombatEndConditionChoice = static_cast<int>(CombatEndCondition::CombatExit);
+	int CombatEndConditionChoice = static_cast<int>(CombatEndCondition::LastDamageEvent);
 
 	bool ExcludeGroup = false;
 	bool ExcludeOffGroup = false;
