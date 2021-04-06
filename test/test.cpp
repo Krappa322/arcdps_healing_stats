@@ -3,6 +3,7 @@
 #include "AggregatedStats.h"
 #include "arcdps_mock/CombatMock.h"
 #include "Exports.h"
+#include "Options.h"
 
 extern "C" __declspec(dllexport) void e3(const char* pString);
 extern "C" __declspec(dllexport) uint64_t e6();
@@ -58,26 +59,26 @@ TEST(all, druid_solo)
 	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 47.0f);
 	
 	const AggregatedStatsEntry& totalEntry = stats.GetTotal();
-	EXPECT_EQ(totalEntry.Healing, 114951);
-	EXPECT_EQ(totalEntry.Hits, 194);
+	EXPECT_EQ(totalEntry.Healing, 121095);
+	EXPECT_EQ(totalEntry.Hits, 204);
 
 	const AggregatedVector& agentStats = stats.GetStats(DataSource::Agents);
 	ASSERT_EQ(agentStats.Entries.size(), 1);
 	EXPECT_EQ(agentStats.Entries[0].GetTie(),
-		AggregatedStatsEntry(2000, "Zarwae", 114951, 194, std::nullopt).GetTie());
+		AggregatedStatsEntry(2000, "Zarwae", 121095, 204, std::nullopt).GetTie());
 
 	AggregatedVector expectedSkills;
 	expectedSkills.Add(31796, "Cosmic Ray", 25140, 30, std::nullopt);
 	expectedSkills.Add(31894, "Rejuvenating Tides", 15362, 20, std::nullopt);
-	expectedSkills.Add(718, "Regeneration", 13140, 45, std::nullopt);
+	expectedSkills.Add(718, "Regeneration", 14016, 48, std::nullopt);
 	expectedSkills.Add(21775, "Aqua Surge (Self)", 12954, 3, std::nullopt);
 	expectedSkills.Add(31318, "Lunar Impact", 12090, 4, std::nullopt);
-	expectedSkills.Add(31535, "Ancestral Grace", 8232, 3, std::nullopt);
-	expectedSkills.Add(29863, "Vigorous Recovery", 8160, 30, std::nullopt);
+	expectedSkills.Add(31535, "Ancestral Grace", 10976, 4, std::nullopt);
+	expectedSkills.Add(29863, "Vigorous Recovery", 8432, 31, std::nullopt);
+	expectedSkills.Add(12567, "Nature's Renewal Aura", 6862, 47, std::nullopt);
 	expectedSkills.Add(21776, "Aqua Surge (Area)", 6597, 3, std::nullopt);
-	expectedSkills.Add(12567, "Nature's Renewal Aura", 6424, 44, std::nullopt);
-	expectedSkills.Add(12836, "Water Blast Combo", 3158, 2, std::nullopt);
-	expectedSkills.Add(13980, "Windborne Notes", 2115, 9, std::nullopt);
+	expectedSkills.Add(12836, "Water Blast Combo", 4737, 3, std::nullopt);
+	expectedSkills.Add(13980, "Windborne Notes", 2350, 10, std::nullopt);
 	expectedSkills.Add(12825, "Water Blast Combo", 1579, 1, std::nullopt);
 
 	const AggregatedVector& skillStats = stats.GetStats(DataSource::Skills);
@@ -103,5 +104,67 @@ TEST(all, druid_solo)
 		EXPECT_EQ(skillDetails.Entries.size(), 1);
 		EXPECT_EQ(skillDetails.HighestHealing, expectedSkills.Entries[i].Healing);
 		EXPECT_EQ(skillDetails.Entries[0].GetTie(), expected.GetTie());
+	}
+}
+
+
+TEST(all, druid_MO)
+{
+	ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
+
+	arcdps_exports exports;
+	{
+		arcdps_exports* temp_exports = mod_init();
+		memcpy(&exports, temp_exports, sizeof(exports)); // Maybe do some deep copy at some point but we're not using the strings in there anyways
+	}
+
+	CombatMock mock{ &exports };
+	uint32_t result = mock.ExecuteFromXevtc("logs\\druid_MO.xevtc");
+	ASSERT_EQ(result, 0);
+
+	HealTableOptions options;
+
+	// Use the "Combined" window
+	HealingStats rawStats = PersonalStats::GetGlobalState();
+	AggregatedStats stats{std::move(rawStats), options.Windows[9], false};
+
+	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 95.0f);
+
+	const AggregatedStatsEntry& totalEntry = stats.GetTotal();
+	EXPECT_EQ(totalEntry.Healing, 304967);
+	EXPECT_EQ(totalEntry.Hits, 727);
+
+	AggregatedVector expectedTotals;
+	expectedTotals.Add(0, "Group", 207634, 449, std::nullopt);
+	expectedTotals.Add(0, "Squad", 304967, 727, std::nullopt);
+	expectedTotals.Add(0, "All (Excluding Summons)", 304967, 727, std::nullopt);
+	expectedTotals.Add(0, "All (Including Summons)", 409220, 1186, std::nullopt);
+
+	const AggregatedVector& totals = stats.GetStats(DataSource::Totals);
+	EXPECT_EQ(totals.Entries.size(), expectedTotals.Entries.size());
+	EXPECT_EQ(totals.HighestHealing, expectedTotals.HighestHealing);
+	for (uint32_t i = 0; i < expectedTotals.Entries.size(); i++)
+	{
+		EXPECT_EQ(totals.Entries[i].GetTie(), expectedTotals.Entries[i].GetTie());
+	}
+
+	AggregatedVector expectedAgents;
+	expectedAgents.Add(2000, "Zarwae", 51011, 135, std::nullopt);
+	expectedAgents.Add(3148, "Apocalypse Dawn", 47929, 89, std::nullopt);
+	expectedAgents.Add(3150, "Waiana Sulis", 40005, 86, std::nullopt);
+	expectedAgents.Add(3149, "And Avr Two L Q E A", 39603, 71, std::nullopt);
+	expectedAgents.Add(3144, "Taya Celeste", 29086, 68, std::nullopt);
+	expectedAgents.Add(3145, "Teivarus", 26490, 71, std::nullopt);
+	expectedAgents.Add(3151, "Janna Larion", 21902, 71, std::nullopt);
+	expectedAgents.Add(3137, "Lady Manyak", 20637, 52, std::nullopt);
+	expectedAgents.Add(3146, "Akashi Vi Britannia", 20084, 55, std::nullopt);
+	expectedAgents.Add(3147, u8"Moa Fhómhair", 8220, 29, std::nullopt);
+
+	const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
+	EXPECT_EQ(agents.Entries.size(), expectedAgents.Entries.size());
+	EXPECT_EQ(agents.HighestHealing, expectedAgents.HighestHealing);
+	for (uint32_t i = 0; i < expectedAgents.Entries.size(); i++)
+	{
+		EXPECT_EQ(agents.Entries[i].GetTie(), expectedAgents.Entries[i].GetTie());
 	}
 }

@@ -225,11 +225,6 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 		LOG("EnterCombat agent %s %llu %hu %u %llu",
 			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self, pEvent->dst_agent);
 
-		if (pSourceAgent->self != 0)
-		{
-			PersonalStats::GlobalState.EnteredCombat(pEvent->time, static_cast<uint16_t>(pEvent->dst_agent));
-		}
-
 		bool isMinion = false;
 		if (pEvent->src_master_instid != 0)
 		{
@@ -243,12 +238,6 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 	{
 		LOG("ExitCombat agent %s %llu %hu %u",
 			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self);
-
-		if (pSourceAgent->self != 0)
-		{
-			PersonalStats::GlobalState.ExitedCombat(pEvent->time);
-			return 0;
-		}
 	}
 
 	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
@@ -280,6 +269,31 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 	if (pEvent == nullptr)
 	{
 		// Agent notification - not interesting
+		return 0;
+	}
+
+	if (pEvent->is_statechange == CBTS_ENTERCOMBAT)
+	{
+		LOG("EnterCombat agent %s %llu %hu %u %llu",
+			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self, pEvent->dst_agent);
+
+		if (pSourceAgent->self != 0)
+		{
+			PersonalStats::GlobalState.EnteredCombat(pEvent->time, static_cast<uint16_t>(pEvent->dst_agent));
+		}
+
+		return 0;
+	}
+	else if (pEvent->is_statechange == CBTS_EXITCOMBAT)
+	{
+		LOG("ExitCombat agent %s %llu %hu %u",
+			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self);
+
+		if (pSourceAgent->self != 0)
+		{
+			PersonalStats::GlobalState.ExitedCombat(pEvent->time);
+		}
+
 		return 0;
 	}
 
