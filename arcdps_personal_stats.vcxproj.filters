@@ -62,9 +62,6 @@
     <ClInclude Include="Log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ArcDPS.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PersonalStats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -114,6 +111,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="json\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Exports.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

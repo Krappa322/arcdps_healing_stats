@@ -1,8 +1,5 @@
-/*
-* arcdps combat api example
-*/
-
-#include "ArcDPS.h"
+#include "arcdps_structs.h"
+#include "Exports.h"
 #include "GUI.h"
 #include "Log.h"
 #include "PersonalStats.h"
@@ -74,7 +71,7 @@ static void FreeWrapper(void* pPointer, void* pUserData)
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
-extern "C" __declspec(dllexport) void* get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
+extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
 	ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(ARC_E3 != nullptr);
@@ -92,7 +89,7 @@ extern "C" __declspec(dllexport) void* get_init_addr(const char* pArcdpsVersionS
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client exit */
-extern "C" __declspec(dllexport) void* get_release_addr()
+extern "C" __declspec(dllexport) ModReleaseSignature get_release_addr()
 {
 	ARCDPS_VERSION = nullptr;
 	return mod_release;

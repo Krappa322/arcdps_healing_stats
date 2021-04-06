@@ -1,6 +1,7 @@
 #include "Log.h"
 
-#include "ArcDPS.h"
+#include "arcdps_structs.h"
+#include "Exports.h"
 
 #include <assert.h>
 #include <stdarg.h>

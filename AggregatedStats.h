@@ -30,6 +30,11 @@ struct AggregatedStatsEntry
 	std::optional<uint64_t> Casts;
 
 	AggregatedStatsEntry(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts);
+
+	auto GetTie() const
+	{
+		return std::tie(Id, Name, Healing, Hits, Casts);
+	}
 };
 
 struct AggregatedVector

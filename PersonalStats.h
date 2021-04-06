@@ -1,5 +1,5 @@
 #pragma once
-#include "ArcDPS.h"
+#include "arcdps_structs.h"
 
 #include <stdint.h>
 
