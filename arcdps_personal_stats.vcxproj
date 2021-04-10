@@ -133,6 +133,7 @@
   <ItemGroup>
     <ClCompile Include="AggregatedStats.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="EventHandler.cpp" />
     <ClCompile Include="GUI.cpp" />
     <ClCompile Include="ImGuiEx.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx9.cpp" />
@@ -148,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AggregatedStats.h" />
+    <ClInclude Include="EventHandler.h" />
     <ClInclude Include="Exports.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="ImGuiEx.h" />

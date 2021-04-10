@@ -44,7 +44,7 @@ void LogImplementation_(const char* pFunctionName, const char* pFormatString, ..
 
 void LogImplementationArc_(const char* pFunctionName, const char* pFormatString, ...)
 {
-	if (ARC_E3 == nullptr)
+	if (GlobalObjects::ARC_E3 == nullptr)
 	{
 		return;
 	}
@@ -72,5 +72,5 @@ void LogImplementationArc_(const char* pFunctionName, const char* pFormatString,
 
 	va_end(args);
 
-	ARC_E3(buffer);
+	GlobalObjects::ARC_E3(buffer);
 }

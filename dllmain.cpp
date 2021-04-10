@@ -27,6 +27,8 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL);
 
+uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
+
 static MallocSignature ARCDPS_MALLOC = nullptr;
 static FreeSignature ARCDPS_FREE = nullptr;
 static arcdps_exports ARC_EXPORTS;
@@ -73,10 +75,10 @@ static void FreeWrapper(void* pPointer, void* pUserData)
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
 extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
-	ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
-	assert(ARC_E3 != nullptr);
-	ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(pArcModule, "e7"));
-	assert(ARC_E7 != nullptr);
+	GlobalObjects::ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
+	assert(GlobalObjects::ARC_E3 != nullptr);
+	GlobalObjects::ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(pArcModule, "e7"));
+	assert(GlobalObjects::ARC_E7 != nullptr);
 
 	ARCDPS_VERSION = pArcdpsVersionString;
 	SetContext(pImguiContext);
@@ -85,6 +87,7 @@ extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArc
 	ARCDPS_FREE = pArcdpsFree;
 	ImGui::SetAllocatorFunctions(MallocWrapper, FreeWrapper);
 
+	GlobalObjects::EVENT_HANDLER = new EventHandler(ProcessLocalEvent);//std::make_unique<EventHandler>(ProcessLocalEvent);
 	return mod_init;
 }
 
@@ -266,8 +269,105 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
+	GlobalObjects::EVENT_HANDLER->ProcessEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
+	return 0;
+}
+
+#pragma pack(push, 1)
+struct ArcModifiers
+{
+	uint16_t _1;
+	uint16_t _2;
+	uint16_t Multi;
+};
+#pragma pack(pop)
+
+/* window callback -- return is assigned to umsg (return zero to not be processed by arcdps or game) */
+uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL)
+{
+	ImGui_ProcessKeyEvent(pWindowHandle, pMessage, pAdditionalW, pAdditionalL);
+
+	const ImGuiIO& io = ImGui::GetIO();
+
+	if (pMessage == WM_KEYDOWN || pMessage == WM_SYSKEYDOWN)
+	{
+		int virtualKey = static_cast<int>(pAdditionalW);
+
+		uint64_t e7_rawResult = GlobalObjects::ARC_E7();
+		ArcModifiers modifiers;
+		memcpy(&modifiers, &e7_rawResult, sizeof(modifiers));
+
+		if ((modifiers._1 == 0 || io.KeysDown[modifiers._1] == true) &&
+			(modifiers._2 == 0 || io.KeysDown[modifiers._2] == true))
+		{
+			std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+
+			bool triggeredKey = false;
+			for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
+			{
+				if (HEAL_TABLE_OPTIONS.Windows[i].Hotkey > 0 &&
+					HEAL_TABLE_OPTIONS.Windows[i].Hotkey < sizeof(io.KeysDown) &&
+					virtualKey == HEAL_TABLE_OPTIONS.Windows[i].Hotkey)
+				{
+					assert(io.KeysDown[HEAL_TABLE_OPTIONS.Windows[i].Hotkey] == true);
+
+					HEAL_TABLE_OPTIONS.Windows[i].Shown = !HEAL_TABLE_OPTIONS.Windows[i].Shown;
+					triggeredKey = true;
+
+					LOG("Key %i '%s' toggled window %u - new heal window state is %s", HEAL_TABLE_OPTIONS.Windows[i].Hotkey, VirtualKeyToString(HEAL_TABLE_OPTIONS.Windows[i].Hotkey).c_str(), i, BOOL_STR(HEAL_TABLE_OPTIONS.Windows[i].Shown));
+				}
+			}
+
+			if (triggeredKey == true)
+			{
+				return 0; // Don't process message by arcdps or game
+			}
+		}
+	}
+
+	return pMessage;
+}
+
+uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
+{
 	if (pEvent == nullptr)
 	{
+		if (pSourceAgent->elite != 0)
+		{
+			// Not agent adding event, uninteresting
+			return 0;
+		}
+
+		if (pSourceAgent->prof != 0)
+		{
+			LOG("Register agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
+				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
+				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
+
+			// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
+			PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
+
+			if (pDestinationAgent->self != 0)
+			{
+				assert(pDestinationAgent->id <= UINT16_MAX);
+
+				LOG("Storing self instance id %llu", pDestinationAgent->id);
+				SELF_INSTANCE_ID.store(static_cast<uint16_t>(pDestinationAgent->id), std::memory_order_relaxed);
+			}
+		}
+		else
+		{
+			LOG("Deregister agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
+				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
+				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
+
+			if (pDestinationAgent->id == SELF_INSTANCE_ID.load(std::memory_order_relaxed))
+			{
+				LOG("Exiting combat since self agent was deregistered");
+				PersonalStats::GlobalState.ExitedCombat(timeGetTime());
+				return 0;
+			}
+		}
 		// Agent notification - not interesting
 		return 0;
 	}
@@ -340,59 +440,4 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 	LOG("Registered heal event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
 
 	return 0;
-}
-
-#pragma pack(push, 1)
-struct ArcModifiers
-{
-	uint16_t _1;
-	uint16_t _2;
-	uint16_t Multi;
-};
-#pragma pack(pop)
-
-/* window callback -- return is assigned to umsg (return zero to not be processed by arcdps or game) */
-uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL)
-{
-	ImGui_ProcessKeyEvent(pWindowHandle, pMessage, pAdditionalW, pAdditionalL);
-
-	const ImGuiIO& io = ImGui::GetIO();
-
-	if (pMessage == WM_KEYDOWN || pMessage == WM_SYSKEYDOWN)
-	{
-		int virtualKey = static_cast<int>(pAdditionalW);
-
-		uint64_t e7_rawResult = ARC_E7();
-		ArcModifiers modifiers;
-		memcpy(&modifiers, &e7_rawResult, sizeof(modifiers));
-
-		if ((modifiers._1 == 0 || io.KeysDown[modifiers._1] == true) &&
-			(modifiers._2 == 0 || io.KeysDown[modifiers._2] == true))
-		{
-			std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
-
-			bool triggeredKey = false;
-			for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
-			{
-				if (HEAL_TABLE_OPTIONS.Windows[i].Hotkey > 0 &&
-					HEAL_TABLE_OPTIONS.Windows[i].Hotkey < sizeof(io.KeysDown) &&
-					virtualKey == HEAL_TABLE_OPTIONS.Windows[i].Hotkey)
-				{
-					assert(io.KeysDown[HEAL_TABLE_OPTIONS.Windows[i].Hotkey] == true);
-
-					HEAL_TABLE_OPTIONS.Windows[i].Shown = !HEAL_TABLE_OPTIONS.Windows[i].Shown;
-					triggeredKey = true;
-
-					LOG("Key %i '%s' toggled window %u - new heal window state is %s", HEAL_TABLE_OPTIONS.Windows[i].Hotkey, VirtualKeyToString(HEAL_TABLE_OPTIONS.Windows[i].Hotkey).c_str(), i, BOOL_STR(HEAL_TABLE_OPTIONS.Windows[i].Shown));
-				}
-			}
-
-			if (triggeredKey == true)
-			{
-				return 0; // Don't process message by arcdps or game
-			}
-		}
-	}
-
-	return pMessage;
 }

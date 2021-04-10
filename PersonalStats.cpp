@@ -129,6 +129,7 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId
 
 		if (myStats.EnteredCombatTime == 0 || myStats.ExitedCombatTime != 0)
 		{
+			LOG("Event before combat enter %llu", pEvent->time);
 			return;
 		}
 

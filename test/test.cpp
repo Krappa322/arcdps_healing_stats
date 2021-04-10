@@ -5,6 +5,8 @@
 #include "Exports.h"
 #include "Options.h"
 
+#include <utility>
+
 extern "C" __declspec(dllexport) void e3(const char* pString);
 extern "C" __declspec(dllexport) uint64_t e6();
 extern "C" __declspec(dllexport) uint64_t e7();
@@ -38,19 +40,31 @@ uint64_t e7()
 	return *reinterpret_cast<uint64_t*>(&mods);
 }
 
-TEST(all, druid_solo)
+// parameters are <max parallel callbacks, max fuzz width>
+class XevtcLogTestFixture : public ::testing::TestWithParam<std::pair<uint32_t, uint32_t>>
 {
-	ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
+protected:
+	arcdps_exports Exports;
+	CombatMock Mock{&Exports};
 
-	arcdps_exports exports;
+	void SetUp() override
 	{
-		arcdps_exports* temp_exports = mod_init();
-		memcpy(&exports, temp_exports, sizeof(exports)); // Maybe do some deep copy at some point but we're not using the strings in there anyways
-	}
+		ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
 
-	CombatMock mock{&exports};
-	uint32_t result = mock.ExecuteFromXevtc("logs\\druid_solo.xevtc");
+		{
+			arcdps_exports* temp_exports = mod_init();
+			memcpy(&Exports, temp_exports, sizeof(Exports)); // Maybe do some deep copy at some point but we're not using the strings in there anyways
+		}
+	}
+};
+
+TEST_P(XevtcLogTestFixture, druid_solo)
+{
+	auto [parallelCallbacks, fuzzWidth] = GetParam();
+
+	uint32_t result = Mock.ExecuteFromXevtc("logs\\druid_solo.xevtc", parallelCallbacks, fuzzWidth);
 	ASSERT_EQ(result, 0);
+	ASSERT_TRUE(GlobalObjects::EVENT_HANDLER->QueueIsEmpty());
 
 	HealWindowOptions options; // Use all defaults
 	HealingStats rawStats = PersonalStats::GetGlobalState();
@@ -82,7 +96,7 @@ TEST(all, druid_solo)
 	expectedSkills.Add(12825, "Water Blast Combo", 1579, 1, std::nullopt);
 
 	const AggregatedVector& skillStats = stats.GetStats(DataSource::Skills);
-	EXPECT_EQ(skillStats.Entries.size(), expectedSkills.Entries.size());
+	ASSERT_EQ(skillStats.Entries.size(), expectedSkills.Entries.size());
 	EXPECT_EQ(skillStats.HighestHealing, expectedSkills.HighestHealing);
 	for (uint32_t i = 0; i < expectedSkills.Entries.size(); i++)
 	{
@@ -90,7 +104,7 @@ TEST(all, druid_solo)
 	}
 
 	const AggregatedVector& agentDetails = stats.GetDetails(DataSource::Agents, 2000);
-	EXPECT_EQ(agentDetails.Entries.size(), expectedSkills.Entries.size());
+	ASSERT_EQ(agentDetails.Entries.size(), expectedSkills.Entries.size());
 	EXPECT_EQ(agentDetails.HighestHealing, expectedSkills.HighestHealing);
 	for (uint32_t i = 0; i < expectedSkills.Entries.size(); i++)
 	{
@@ -101,26 +115,19 @@ TEST(all, druid_solo)
 	{
 		const AggregatedVector& skillDetails = stats.GetDetails(DataSource::Skills, expectedSkills.Entries[i].Id);
 		AggregatedStatsEntry expected{2000, "Zarwae", expectedSkills.Entries[i].Healing, expectedSkills.Entries[i].Hits, std::nullopt};
-		EXPECT_EQ(skillDetails.Entries.size(), 1);
+		ASSERT_EQ(skillDetails.Entries.size(), 1);
 		EXPECT_EQ(skillDetails.HighestHealing, expectedSkills.Entries[i].Healing);
 		EXPECT_EQ(skillDetails.Entries[0].GetTie(), expected.GetTie());
 	}
 }
 
-
-TEST(all, druid_MO)
+TEST_P(XevtcLogTestFixture, druid_MO)
 {
-	ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
+	auto [parallelCallbacks, fuzzWidth] = GetParam();
 
-	arcdps_exports exports;
-	{
-		arcdps_exports* temp_exports = mod_init();
-		memcpy(&exports, temp_exports, sizeof(exports)); // Maybe do some deep copy at some point but we're not using the strings in there anyways
-	}
-
-	CombatMock mock{ &exports };
-	uint32_t result = mock.ExecuteFromXevtc("logs\\druid_MO.xevtc");
+	uint32_t result = Mock.ExecuteFromXevtc("logs\\druid_MO.xevtc", parallelCallbacks, fuzzWidth);
 	ASSERT_EQ(result, 0);
+	ASSERT_TRUE(GlobalObjects::EVENT_HANDLER->QueueIsEmpty());
 
 	HealTableOptions options;
 
@@ -141,7 +148,7 @@ TEST(all, druid_MO)
 	expectedTotals.Add(0, "All (Including Summons)", 409220, 1186, std::nullopt);
 
 	const AggregatedVector& totals = stats.GetStats(DataSource::Totals);
-	EXPECT_EQ(totals.Entries.size(), expectedTotals.Entries.size());
+	ASSERT_EQ(totals.Entries.size(), expectedTotals.Entries.size());
 	EXPECT_EQ(totals.HighestHealing, expectedTotals.HighestHealing);
 	for (uint32_t i = 0; i < expectedTotals.Entries.size(); i++)
 	{
@@ -161,10 +168,25 @@ TEST(all, druid_MO)
 	expectedAgents.Add(3147, u8"Moa Fhómhair", 8220, 29, std::nullopt);
 
 	const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
-	EXPECT_EQ(agents.Entries.size(), expectedAgents.Entries.size());
+	ASSERT_EQ(agents.Entries.size(), expectedAgents.Entries.size());
 	EXPECT_EQ(agents.HighestHealing, expectedAgents.HighestHealing);
 	for (uint32_t i = 0; i < expectedAgents.Entries.size(); i++)
 	{
 		EXPECT_EQ(agents.Entries[i].GetTie(), expectedAgents.Entries[i].GetTie());
 	}
 }
+
+INSTANTIATE_TEST_CASE_P(
+	Normal,
+	XevtcLogTestFixture,
+	::testing::Values(std::make_pair(0, 0)));
+
+INSTANTIATE_TEST_CASE_P(
+	Fuzz,
+	XevtcLogTestFixture,
+	::testing::Values(std::make_pair(0, 16), std::make_pair(0, 64)));
+
+INSTANTIATE_TEST_CASE_P(
+	MultiThreaded,
+	XevtcLogTestFixture,
+	::testing::Values(std::make_pair(16, 0), std::make_pair(16, 16), std::make_pair(128, 16)));

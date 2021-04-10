@@ -1,11 +1,19 @@
 #pragma once
 #include "arcdps_structs.h"
+#include "EventHandler.h"
+
+#include <memory>
 
 typedef uint64_t(*E7Signature)();
-static inline E7Signature ARC_E7 = nullptr;
-
 typedef void (*E3Signature)(const char* pString);
-static inline E3Signature ARC_E3 = nullptr;
+
+class GlobalObjects
+{
+public:
+	static inline E7Signature ARC_E7 = nullptr;
+	static inline E3Signature ARC_E3 = nullptr;
+	static inline EventHandler* EVENT_HANDLER = nullptr;
+};
 
 typedef void* (*MallocSignature)(size_t);
 typedef void (*FreeSignature)(void*);
