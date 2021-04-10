@@ -13,7 +13,21 @@ SkillTable::SkillTable()
 {
 #define ENTRY(pId) myHybridSkills[pId / 64] |= (1ULL << (pId % 64))
 	ENTRY(2654);  // Crashing Waves
+	ENTRY(5549);  // Water Blast (Elementalist)
 	ENTRY(5570);  // Signet of Water
+	ENTRY(5595);  // Water Arrow
+	ENTRY(9080);  // Leap of Faith
+	ENTRY(9090);  // Symbol of Punishment (Writ of Persistence)
+	ENTRY(9095);  // Symbol of Judgement (Writ of Persistence)
+	ENTRY(9097);  // Symbol of Blades (Writ of Persistence)
+	ENTRY(9108);  // Holy Strike
+	ENTRY(9111);  // Symbol of Faith (Writ of Persistence)
+	ENTRY(9140);  // Faithful Strike
+	ENTRY(9143);  // Symbol of Swiftness (Writ of Persistence)
+	ENTRY(9146);  // Symbol of Wrath (Writ of Persistence)
+	ENTRY(9161);  // Symbol of Protection (Writ of Persistence)
+	ENTRY(9192);  // Symbol of Spears (Writ of Persistence)
+	ENTRY(9208);  // Symbol of Light (Writ of Persistence)
 	ENTRY(9950);  // Nourishment (Blueberry Pie AND Slice of Rainbow Cake)
 	ENTRY(9952);  // Nourishment (Strawberry Pie AND Cupcake)
 	ENTRY(9954);  // Nourishment (Cherry Pie)
@@ -32,15 +46,18 @@ SkillTable::SkillTable()
 	ENTRY(26557); // Vengeful Hammers
 	ENTRY(26646); // Battle Scars
 	ENTRY(29145); // Mender's Rebuke
+	ENTRY(29789); // Symbol of Energy (Writ of Persistence)
 	ENTRY(29856); // Well of Recall (All's Well That Ends Well)
 	ENTRY(30359); // Gravity Well (All's Well That Ends Well)
 	ENTRY(30285); // Vampiric Aura
 	ENTRY(30488); // "Your Soul is Mine!"
 	ENTRY(30525); // Well of Calamity (All's Well That Ends Well)
 	ENTRY(30814); // Well of Action (All's Well That Ends Well)
+	ENTRY(30864); // Tidal Surge
 	ENTRY(33792); // Slice of Allspice Cake
 	ENTRY(34207); // Nourishment (Scoop of Mintberry Swirl Ice Cream)
 	ENTRY(37475); // Nourishment (Winterberry Pie)
+	ENTRY(40624); // Symbol of Vengeance (Writ of Persistence)
 	ENTRY(41052); // Sieche
 	ENTRY(43199); // Breaking Wave
 	ENTRY(44405); // Riptide
@@ -68,6 +85,7 @@ SkillTable::SkillTable()
 	mySkillNameOverrides.emplace(21750, "Signet of the Ether (Active)");
 	mySkillNameOverrides.emplace(21775, "Aqua Surge (Self)");
 	mySkillNameOverrides.emplace(21776, "Aqua Surge (Area)");
+	mySkillNameOverrides.emplace(26558, "Energy Expulsion");
 	mySkillNameOverrides.emplace(26937, "Enchanted Daggers (Initial)");
 	mySkillNameOverrides.emplace(28313, "Enchanted Daggers (Siphon)");
 	mySkillNameOverrides.emplace(30313, "Escapist's Fortitude"); // The game maps this to the wrong skill
