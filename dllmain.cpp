@@ -17,8 +17,6 @@
 #include <Windows.h>
 
 /* proto/globals */
-void dll_init(HANDLE pModule);
-void dll_exit();
 arcdps_exports* mod_init();
 uintptr_t mod_release();
 uintptr_t mod_imgui(uint32_t pNotCharselOrLoading);
@@ -36,31 +34,6 @@ static const char* ARCDPS_VERSION;
 
 std::mutex HEAL_TABLE_OPTIONS_MUTEX;
 static HealTableOptions HEAL_TABLE_OPTIONS;
-
-/* dll main -- winapi */
-BOOL APIENTRY DllMain(HANDLE pModule, DWORD pReasonForCall, LPVOID pReserved)
-{
-	switch (pReasonForCall) {
-	case DLL_PROCESS_ATTACH: dll_init(pModule); break;
-	case DLL_PROCESS_DETACH: dll_exit(); break;
-
-	case DLL_THREAD_ATTACH:  break;
-	case DLL_THREAD_DETACH:  break;
-	}
-	return 1;
-}
-
-/* dll attach -- from winapi */
-void dll_init(HANDLE pModule)
-{
-	return;
-}
-
-/* dll detach -- from winapi */
-void dll_exit()
-{
-	return;
-}
 
 static void* MallocWrapper(size_t pSize, void* pUserData)
 {

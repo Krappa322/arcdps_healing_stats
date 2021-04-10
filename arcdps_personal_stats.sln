@@ -9,7 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "arcdps_mock", "arcdps_mock\arcdps_mock\arcdps_mock.vcxproj", "{20B650FF-5B57-461B-B862-CCCCA4F665EB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "arcdps_healing_stats", "arcdps_healing_stats\arcdps_healing_stats.vcxproj", "{90760B39-0125-4541-A5F3-1F42F4FF8DD8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "arcdps_healing_stats", "arcdps_healing_stats\arcdps_healing_stats.vcxproj", "{967D7743-D77B-466A-8645-94F9812AECAD}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3AE52975-FC4E-4804-8838-F230A5F1E79C} = {3AE52975-FC4E-4804-8838-F230A5F1E79C}
 	EndProjectSection
@@ -38,12 +38,12 @@ Global
 		{20B650FF-5B57-461B-B862-CCCCA4F665EB}.Mock Debug|x64.Build.0 = Debug|x64
 		{20B650FF-5B57-461B-B862-CCCCA4F665EB}.Release|x64.ActiveCfg = Release|x64
 		{20B650FF-5B57-461B-B862-CCCCA4F665EB}.Release|x64.Build.0 = Release|x64
-		{90760B39-0125-4541-A5F3-1F42F4FF8DD8}.Debug|x64.ActiveCfg = Debug|x64
-		{90760B39-0125-4541-A5F3-1F42F4FF8DD8}.Debug|x64.Build.0 = Debug|x64
-		{90760B39-0125-4541-A5F3-1F42F4FF8DD8}.Mock Debug|x64.ActiveCfg = Debug|x64
-		{90760B39-0125-4541-A5F3-1F42F4FF8DD8}.Mock Debug|x64.Build.0 = Debug|x64
-		{90760B39-0125-4541-A5F3-1F42F4FF8DD8}.Release|x64.ActiveCfg = Release|x64
-		{90760B39-0125-4541-A5F3-1F42F4FF8DD8}.Release|x64.Build.0 = Release|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Debug|x64.ActiveCfg = Debug|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Debug|x64.Build.0 = Debug|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Mock Debug|x64.ActiveCfg = Debug|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Mock Debug|x64.Build.0 = Debug|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Release|x64.ActiveCfg = Release|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
