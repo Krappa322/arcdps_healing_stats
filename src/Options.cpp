@@ -3,7 +3,7 @@
 #include "AggregatedStats.h"
 #include "Log.h"
 
-#include "simpleini/SimpleIni.h"
+#include "SimpleIni.h"
 
 static CSimpleIniA healtable_ini(true /* isUtf8 */);
 

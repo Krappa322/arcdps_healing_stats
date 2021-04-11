@@ -79,7 +79,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;imgui;json;simpleini</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -98,7 +98,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;imgui;json;simpleini</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -119,7 +119,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;imgui;json;simpleini</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -131,28 +131,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AggregatedStats.cpp" />
-    <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="EventHandler.cpp" />
-    <ClCompile Include="GUI.cpp" />
-    <ClCompile Include="ImGuiEx.cpp" />
+    <ClCompile Include="src\AggregatedStats.cpp" />
+    <ClCompile Include="src\dllmain.cpp" />
+    <ClCompile Include="src\EventHandler.cpp" />
+    <ClCompile Include="src\GUI.cpp" />
+    <ClCompile Include="src\ImGuiEx.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx9.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
     <ClCompile Include="imgui\imgui_tables.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
-    <ClCompile Include="Options.cpp" />
-    <ClCompile Include="Log.cpp" />
-    <ClCompile Include="PlayerStats.cpp" />
-    <ClCompile Include="Skills.cpp" />
+    <ClCompile Include="src\Options.cpp" />
+    <ClCompile Include="src\Log.cpp" />
+    <ClCompile Include="src\PlayerStats.cpp" />
+    <ClCompile Include="src\Skills.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AggregatedStats.h" />
-    <ClInclude Include="EventHandler.h" />
-    <ClInclude Include="Exports.h" />
-    <ClInclude Include="GUI.h" />
-    <ClInclude Include="ImGuiEx.h" />
+    <ClInclude Include="src\AggregatedStats.h" />
+    <ClInclude Include="src\EventHandler.h" />
+    <ClInclude Include="src\Exports.h" />
+    <ClInclude Include="src\GUI.h" />
+    <ClInclude Include="src\ImGuiEx.h" />
     <ClInclude Include="imgui\backends\imgui_impl_dx9.h" />
     <ClInclude Include="imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="imgui\imconfig.h" />
@@ -162,12 +162,12 @@
     <ClInclude Include="imgui\stb_textedit.h" />
     <ClInclude Include="imgui\stb_truetype.h" />
     <ClInclude Include="json\json.hpp" />
-    <ClInclude Include="Options.h" />
-    <ClInclude Include="Log.h" />
-    <ClInclude Include="PlayerStats.h" />
-    <ClInclude Include="Skills.h" />
-    <ClInclude Include="State.h" />
-    <ClInclude Include="Utilities.h" />
+    <ClInclude Include="src\Options.h" />
+    <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\PlayerStats.h" />
+    <ClInclude Include="src\Skills.h" />
+    <ClInclude Include="src\State.h" />
+    <ClInclude Include="src\Utilities.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
