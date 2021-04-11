@@ -49,7 +49,7 @@ protected:
 
 	void SetUp() override
 	{
-		PersonalStats::GlobalState.Clear(); // Make sure agents etc. aren't leaked between test runs
+		PlayerStats::GlobalState.Clear(); // Make sure agents etc. aren't leaked between test runs
 
 		ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
 
@@ -69,7 +69,7 @@ TEST_P(XevtcLogTestFixture, druid_solo)
 	ASSERT_TRUE(GlobalObjects::EVENT_HANDLER->QueueIsEmpty());
 
 	HealWindowOptions options; // Use all defaults
-	HealingStats rawStats = PersonalStats::GetGlobalState();
+	HealingStats rawStats = PlayerStats::GetGlobalState();
 	AggregatedStats stats{std::move(rawStats), options, false};
 	
 	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 47.0f);
@@ -134,7 +134,7 @@ TEST_P(XevtcLogTestFixture, druid_MO)
 	HealTableOptions options;
 
 	// Use the "Combined" window
-	HealingStats rawStats = PersonalStats::GetGlobalState();
+	HealingStats rawStats = PlayerStats::GetGlobalState();
 	AggregatedStats stats{std::move(rawStats), options.Windows[9], false};
 
 	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 95.0f);
@@ -191,7 +191,7 @@ TEST_P(XevtcLogTestFixture, null_names)
 	options.ExcludeOffSquad = false;
 	options.ExcludeUnmapped = false;
 
-	HealingStats rawStats = PersonalStats::GetGlobalState();
+	HealingStats rawStats = PlayerStats::GetGlobalState();
 	AggregatedStats stats{ std::move(rawStats), options, false };
 
 	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 47.0f);

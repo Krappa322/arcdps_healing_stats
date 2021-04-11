@@ -1,4 +1,4 @@
-#include "PersonalStats.h"
+#include "PlayerStats.h"
 
 #include "Log.h"
 #include "Utilities.h"
@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <Windows.h>
 
-PersonalStats PersonalStats::GlobalState;
+PlayerStats PlayerStats::GlobalState;
 
 HealedAgent::HealedAgent(const char* pAgentName, uint16_t pSubGroup, bool pIsMinion)
 	: Name(pAgentName)
@@ -30,7 +30,7 @@ HealEvent::HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_
 
 
 // We can't just implicitly add all agents because agent subgroup is only known through this event
-void PersonalStats::AddAgent(uintptr_t pAgentId, const char* pAgentName, uint16_t pAgentSubGroup, bool pIsMinion)
+void PlayerStats::AddAgent(uintptr_t pAgentId, const char* pAgentName, uint16_t pAgentSubGroup, bool pIsMinion)
 {
 	assert(pAgentName != nullptr);
 
@@ -57,7 +57,7 @@ void PersonalStats::AddAgent(uintptr_t pAgentId, const char* pAgentName, uint16_
 	}
 }
 
-void PersonalStats::EnteredCombat(uint64_t pTime, uint16_t pSubGroup)
+void PlayerStats::EnteredCombat(uint64_t pTime, uint16_t pSubGroup)
 {
 	std::lock_guard<std::mutex> lock(myLock);
 
@@ -80,7 +80,7 @@ void PersonalStats::EnteredCombat(uint64_t pTime, uint16_t pSubGroup)
 	}
 }
 
-void PersonalStats::ExitedCombat(uint64_t pTime)
+void PlayerStats::ExitedCombat(uint64_t pTime)
 {
 	std::lock_guard<std::mutex> lock(myLock);
 
@@ -101,7 +101,7 @@ void PersonalStats::ExitedCombat(uint64_t pTime)
 	LOG("Spent %llu ms in combat", myStats.ExitedCombatTime - myStats.EnteredCombatTime);
 }
 
-void PersonalStats::DamageEvent(cbtevent* pEvent)
+void PlayerStats::DamageEvent(cbtevent* pEvent)
 {
 	{
 		std::lock_guard<std::mutex> lock(myLock);
@@ -115,7 +115,7 @@ void PersonalStats::DamageEvent(cbtevent* pEvent)
 	}
 }
 
-void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, bool pDestinationAgentIsMinion, const char* pSkillname)
+void PlayerStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, bool pDestinationAgentIsMinion, const char* pSkillname)
 {
 	uint32_t healedAmount = pEvent->value;
 	if (healedAmount == 0)
@@ -164,7 +164,8 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId
 	//LOG("Registered heal event size %i from %s:%u to %s:%llu", healedAmount, pSkillname, pEvent->skillid, pDestinationAgentName, pDestinationAgentId);
 }
 
-void PersonalStats::Clear()
+
+void PlayerStats::Clear()
 {
 	LOG("Clearing");
 	std::lock_guard<std::mutex> lock(myLock);
@@ -179,11 +180,11 @@ void PersonalStats::Clear()
 	myStats.SubGroup = 0;
 }
 
-HealingStats PersonalStats::GetGlobalState()
+HealingStats PlayerStats::GetGlobalState()
 {
-	std::lock_guard<std::mutex> lock(PersonalStats::GlobalState.myLock);
+	std::lock_guard<std::mutex> lock(PlayerStats::GlobalState.myLock);
 
-	HealingStats result{PersonalStats::GlobalState.myStats};
+	HealingStats result{PlayerStats::GlobalState.myStats};
 	result.CollectionTime = timeGetTime();
 	return result;
 }

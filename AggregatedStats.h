@@ -1,7 +1,7 @@
 #pragma once
 
 #include "State.h"
-#include "PersonalStats.h"
+#include "PlayerStats.h"
 
 #include <stdint.h>
 

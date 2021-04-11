@@ -3,7 +3,7 @@
 #include "AggregatedStats.h"
 #include "ImGuiEx.h"
 #include "Log.h"
-#include "PersonalStats.h"
+#include "PlayerStats.h"
 #include "Utilities.h"
 
 #include <array>
@@ -193,7 +193,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		{
 			//LOG("Fetching new aggregated stats");
 
-			HealingStats stats = PersonalStats::GetGlobalState();
+			HealingStats stats = PlayerStats::GetGlobalState();
 			curWindow.CurrentAggregatedStats = std::make_unique<AggregatedStats>(std::move(stats), curWindow, pHealingOptions.DebugMode);
 			curWindow.LastAggregatedTime = curTime;
 		}

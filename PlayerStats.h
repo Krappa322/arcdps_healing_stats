@@ -47,10 +47,10 @@ struct HealingStats
 	std::vector<HealEvent> Events; // Really this should be some segmented vector, will probably write one if it becomes a pain point
 };
 
-class PersonalStats
+class PlayerStats
 {
 public:
-	PersonalStats() = default;
+	PlayerStats() = default;
 
 	void AddAgent(uintptr_t pAgentId, const char* pAgentName, uint16_t pAgentSubGroup, bool pIsMinion);
 
@@ -62,7 +62,7 @@ public:
 
 	void Clear();
 
-	static PersonalStats GlobalState;
+	static PlayerStats GlobalState;
 
 	static HealingStats GetGlobalState();
 

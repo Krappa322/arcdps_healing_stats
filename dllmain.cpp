@@ -2,7 +2,7 @@
 #include "Exports.h"
 #include "GUI.h"
 #include "Log.h"
-#include "PersonalStats.h"
+#include "PlayerStats.h"
 #include "Skills.h"
 #include "Utilities.h"
 
@@ -172,7 +172,7 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 			if (pSourceAgent->name != nullptr)
 			{
 				// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
-				PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
+				PlayerStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
 			}
 
 			if (pDestinationAgent->self != 0)
@@ -192,7 +192,7 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 			if (pDestinationAgent->id == SELF_INSTANCE_ID.load(std::memory_order_relaxed))
 			{
 				LOG("Exiting combat since self agent was deregistered");
-				PersonalStats::GlobalState.ExitedCombat(timeGetTime());
+				PlayerStats::GlobalState.ExitedCombat(timeGetTime());
 				return 0;
 			}
 		}
@@ -214,7 +214,7 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 		// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
 		if (pSourceAgent->name != nullptr)
 		{
-			PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, static_cast<uint16_t>(pEvent->dst_agent), isMinion);
+			PlayerStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, static_cast<uint16_t>(pEvent->dst_agent), isMinion);
 		}
 
 		return 0;
@@ -330,7 +330,7 @@ uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestination
 			if (pSourceAgent->name != nullptr)
 			{
 				// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
-				PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
+				PlayerStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
 			}
 
 			if (pDestinationAgent->self != 0)
@@ -350,7 +350,7 @@ uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestination
 			if (pDestinationAgent->id == SELF_INSTANCE_ID.load(std::memory_order_relaxed))
 			{
 				LOG("Exiting combat since self agent was deregistered");
-				PersonalStats::GlobalState.ExitedCombat(timeGetTime());
+				PlayerStats::GlobalState.ExitedCombat(timeGetTime());
 				return 0;
 			}
 		}
@@ -365,7 +365,7 @@ uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestination
 
 		if (pSourceAgent->self != 0)
 		{
-			PersonalStats::GlobalState.EnteredCombat(pEvent->time, static_cast<uint16_t>(pEvent->dst_agent));
+			PlayerStats::GlobalState.EnteredCombat(pEvent->time, static_cast<uint16_t>(pEvent->dst_agent));
 		}
 
 		return 0;
@@ -377,7 +377,7 @@ uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestination
 
 		if (pSourceAgent->self != 0)
 		{
-			PersonalStats::GlobalState.ExitedCombat(pEvent->time);
+			PlayerStats::GlobalState.ExitedCombat(pEvent->time);
 		}
 
 		return 0;
@@ -395,7 +395,7 @@ uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestination
 
 		if ((pSourceAgent->self != 0 || pDestinationAgent->self != 0) && pEvent->iff == IFF_FOE)
 		{
-			PersonalStats::GlobalState.DamageEvent(pEvent);
+			PlayerStats::GlobalState.DamageEvent(pEvent);
 		}
 
 		return 0;
@@ -415,7 +415,7 @@ uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestination
 	}
 
 	bool isMinion = (pEvent->dst_master_instid != 0);
-	PersonalStats::GlobalState.HealingEvent(pEvent, pDestinationAgent->id, pDestinationAgent->name, isMinion, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname));
+	PlayerStats::GlobalState.HealingEvent(pEvent, pDestinationAgent->id, pDestinationAgent->name, isMinion, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname));
 
 	uint32_t healedAmount = pEvent->value;
 	if (healedAmount == 0)

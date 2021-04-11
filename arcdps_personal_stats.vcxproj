@@ -144,7 +144,7 @@
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="Log.cpp" />
-    <ClCompile Include="PersonalStats.cpp" />
+    <ClCompile Include="PlayerStats.cpp" />
     <ClCompile Include="Skills.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,7 +164,7 @@
     <ClInclude Include="json\json.hpp" />
     <ClInclude Include="Options.h" />
     <ClInclude Include="Log.h" />
-    <ClInclude Include="PersonalStats.h" />
+    <ClInclude Include="PlayerStats.h" />
     <ClInclude Include="Skills.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="Utilities.h" />
