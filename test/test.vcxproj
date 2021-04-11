@@ -50,7 +50,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>..\;..\arcdps_mock\arcdps-extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src;..\arcdps_mock\arcdps-extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -68,7 +68,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\;..\arcdps_mock\arcdps-extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src;..\arcdps_mock\arcdps-extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
