@@ -164,6 +164,21 @@ void PersonalStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId
 	//LOG("Registered heal event size %i from %s:%u to %s:%llu", healedAmount, pSkillname, pEvent->skillid, pDestinationAgentName, pDestinationAgentId);
 }
 
+void PersonalStats::Clear()
+{
+	LOG("Clearing");
+	std::lock_guard<std::mutex> lock(myLock);
+
+	myStats.EnteredCombatTime = 0;
+	myStats.ExitedCombatTime = 0;
+	myStats.LastDamageEvent = 0;
+
+	myStats.Agents.clear();
+	myStats.Skills.clear();
+	myStats.Events.clear();
+	myStats.SubGroup = 0;
+}
+
 HealingStats PersonalStats::GetGlobalState()
 {
 	std::lock_guard<std::mutex> lock(PersonalStats::GlobalState.myLock);

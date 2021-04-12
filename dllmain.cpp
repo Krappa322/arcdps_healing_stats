@@ -168,8 +168,12 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
 				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
 
-			// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
-			PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
+			// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
+			if (pSourceAgent->name != nullptr)
+			{
+				// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
+				PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
+			}
 
 			if (pDestinationAgent->self != 0)
 			{
@@ -206,7 +210,12 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 		{
 			isMinion = true;
 		}
-		PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, static_cast<uint16_t>(pEvent->dst_agent), isMinion);
+
+		// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
+		if (pSourceAgent->name != nullptr)
+		{
+			PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, static_cast<uint16_t>(pEvent->dst_agent), isMinion);
+		}
 
 		return 0;
 	}
@@ -317,8 +326,12 @@ uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestination
 				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
 				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
 
-			// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
-			PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
+			// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
+			if (pSourceAgent->name != nullptr)
+			{
+				// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
+				PersonalStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
+			}
 
 			if (pDestinationAgent->self != 0)
 			{

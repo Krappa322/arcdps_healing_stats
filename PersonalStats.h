@@ -60,6 +60,7 @@ public:
 	void DamageEvent(cbtevent* pEvent);
 	void HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId, const char* pDestinationAgentName, bool pDestinationAgentIsMinion, const char* pSkillname); // pDestinationAgentName can be nullptr
 
+	void Clear();
 
 	static PersonalStats GlobalState;
 

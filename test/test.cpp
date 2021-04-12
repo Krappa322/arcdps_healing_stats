@@ -49,6 +49,8 @@ protected:
 
 	void SetUp() override
 	{
+		PersonalStats::GlobalState.Clear(); // Make sure agents etc. aren't leaked between test runs
+
 		ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
 
 		{
@@ -173,6 +175,73 @@ TEST_P(XevtcLogTestFixture, druid_MO)
 	for (uint32_t i = 0; i < expectedAgents.Entries.size(); i++)
 	{
 		EXPECT_EQ(agents.Entries[i].GetTie(), expectedAgents.Entries[i].GetTie());
+	}
+}
+
+// This is the same as druid_solo above except druid name is replaced by null everywhere
+TEST_P(XevtcLogTestFixture, null_names)
+{
+	auto [parallelCallbacks, fuzzWidth] = GetParam();
+
+	uint32_t result = Mock.ExecuteFromXevtc("logs\\null_names.xevtc", parallelCallbacks, fuzzWidth);
+	ASSERT_EQ(result, 0);
+	ASSERT_TRUE(GlobalObjects::EVENT_HANDLER->QueueIsEmpty());
+
+	HealWindowOptions options;
+	options.ExcludeOffSquad = false;
+	options.ExcludeUnmapped = false;
+
+	HealingStats rawStats = PersonalStats::GetGlobalState();
+	AggregatedStats stats{ std::move(rawStats), options, false };
+
+	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 47.0f);
+
+	const AggregatedStatsEntry& totalEntry = stats.GetTotal();
+	EXPECT_EQ(totalEntry.Healing, 121095);
+	EXPECT_EQ(totalEntry.Hits, 204);
+
+	const AggregatedVector& agentStats = stats.GetStats(DataSource::Agents);
+	ASSERT_EQ(agentStats.Entries.size(), 1);
+	EXPECT_EQ(agentStats.Entries[0].GetTie(),
+		AggregatedStatsEntry(2000, "2000", 121095, 204, std::nullopt).GetTie());
+
+	AggregatedVector expectedSkills;
+	expectedSkills.Add(31796, "Cosmic Ray", 25140, 30, std::nullopt);
+	expectedSkills.Add(31894, "Rejuvenating Tides", 15362, 20, std::nullopt);
+	expectedSkills.Add(718, "Regeneration", 14016, 48, std::nullopt);
+	expectedSkills.Add(21775, "Aqua Surge (Self)", 12954, 3, std::nullopt);
+	expectedSkills.Add(31318, "Lunar Impact", 12090, 4, std::nullopt);
+	expectedSkills.Add(31535, "Ancestral Grace", 10976, 4, std::nullopt);
+	expectedSkills.Add(29863, "Vigorous Recovery", 8432, 31, std::nullopt);
+	expectedSkills.Add(12567, "Nature's Renewal Aura", 6862, 47, std::nullopt);
+	expectedSkills.Add(21776, "Aqua Surge (Area)", 6597, 3, std::nullopt);
+	expectedSkills.Add(12836, "Water Blast Combo", 4737, 3, std::nullopt);
+	expectedSkills.Add(13980, "Windborne Notes", 2350, 10, std::nullopt);
+	expectedSkills.Add(12825, "Water Blast Combo", 1579, 1, std::nullopt);
+
+	const AggregatedVector& skillStats = stats.GetStats(DataSource::Skills);
+	ASSERT_EQ(skillStats.Entries.size(), expectedSkills.Entries.size());
+	EXPECT_EQ(skillStats.HighestHealing, expectedSkills.HighestHealing);
+	for (uint32_t i = 0; i < expectedSkills.Entries.size(); i++)
+	{
+		EXPECT_EQ(skillStats.Entries[i].GetTie(), expectedSkills.Entries[i].GetTie());
+	}
+
+	const AggregatedVector& agentDetails = stats.GetDetails(DataSource::Agents, 2000);
+	ASSERT_EQ(agentDetails.Entries.size(), expectedSkills.Entries.size());
+	EXPECT_EQ(agentDetails.HighestHealing, expectedSkills.HighestHealing);
+	for (uint32_t i = 0; i < expectedSkills.Entries.size(); i++)
+	{
+		EXPECT_EQ(agentDetails.Entries[i].GetTie(), expectedSkills.Entries[i].GetTie());
+	}
+
+	for (uint32_t i = 0; i < expectedSkills.Entries.size(); i++)
+	{
+		const AggregatedVector& skillDetails = stats.GetDetails(DataSource::Skills, expectedSkills.Entries[i].Id);
+		AggregatedStatsEntry expected{ 2000, "2000", expectedSkills.Entries[i].Healing, expectedSkills.Entries[i].Hits, std::nullopt };
+		ASSERT_EQ(skillDetails.Entries.size(), 1);
+		EXPECT_EQ(skillDetails.HighestHealing, expectedSkills.Entries[i].Healing);
+		EXPECT_EQ(skillDetails.Entries[0].GetTie(), expected.GetTie());
 	}
 }
 

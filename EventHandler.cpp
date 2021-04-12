@@ -124,8 +124,17 @@ uintptr_t EventHandler::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDe
 				mQueuedEvents[index].source_ag.prof = pSourceAgent->prof;
 				mQueuedEvents[index].source_ag.elite = pSourceAgent->elite;
 				mQueuedEvents[index].source_ag.self = pSourceAgent->self;
-				mQueuedEvents[index].source_ag.name = pSourceAgent->name;
 				mQueuedEvents[index].source_ag.team = pSourceAgent->team;
+
+				if (pSourceAgent->name != nullptr)
+				{
+					mQueuedEvents[index].source_ag.name_storage = pSourceAgent->name;
+					mQueuedEvents[index].source_ag.name = mQueuedEvents[index].source_ag.name_storage.c_str();
+				}
+				else
+				{
+					mQueuedEvents[index].source_ag.name = nullptr;
+				}
 
 				mQueuedEvents[index].source_ag.present = true;
 			}
@@ -140,8 +149,17 @@ uintptr_t EventHandler::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDe
 				mQueuedEvents[index].destination_ag.prof = pDestinationAgent->prof;
 				mQueuedEvents[index].destination_ag.elite = pDestinationAgent->elite;
 				mQueuedEvents[index].destination_ag.self = pDestinationAgent->self;
-				mQueuedEvents[index].destination_ag.name = pDestinationAgent->name;
 				mQueuedEvents[index].destination_ag.team = pDestinationAgent->team;
+
+				if (pDestinationAgent->name != nullptr)
+				{
+					mQueuedEvents[index].destination_ag.name_storage = pDestinationAgent->name;
+					mQueuedEvents[index].destination_ag.name = mQueuedEvents[index].destination_ag.name_storage.c_str();
+				}
+				else
+				{
+					mQueuedEvents[index].destination_ag.name = nullptr;
+				}
 
 				mQueuedEvents[index].destination_ag.present = true;
 			}
@@ -218,25 +236,13 @@ void EventHandler::TryFlushEvents()
 			if (mQueuedEvents[i].source_ag.present == true)
 			{
 				source_arg = &source;
-
-				source.id = mQueuedEvents[i].source_ag.id;
-				source.prof = mQueuedEvents[i].source_ag.prof;
-				source.elite = mQueuedEvents[i].source_ag.elite;
-				source.self = mQueuedEvents[i].source_ag.self;
-				source.name = mQueuedEvents[i].source_ag.name.c_str();
-				source.team = mQueuedEvents[i].source_ag.team;
+				source = *static_cast<ag*>(&mQueuedEvents[i].source_ag);
 			}
 
 			if (mQueuedEvents[i].destination_ag.present == true)
 			{
 				destination_arg = &destination;
-
-				destination.id = mQueuedEvents[i].destination_ag.id;
-				destination.prof = mQueuedEvents[i].destination_ag.prof;
-				destination.elite = mQueuedEvents[i].destination_ag.elite;
-				destination.self = mQueuedEvents[i].destination_ag.self;
-				destination.name = mQueuedEvents[i].destination_ag.name.c_str();
-				destination.team = mQueuedEvents[i].destination_ag.team;
+				destination = *static_cast<ag*>(&mQueuedEvents[i].destination_ag);
 			}
 
 			if (mQueuedEvents[i].ev.present == true)

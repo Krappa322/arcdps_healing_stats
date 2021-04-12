@@ -17,31 +17,19 @@ private:
 			bool present;
 		} ev;
 
-		struct
+		struct : ag
 		{
-			uintptr_t id;
-			Prof prof;
-			uint32_t elite;
-			uint32_t self;
-			std::string name;
-			uint16_t team;
-
+			std::string name_storage;
 			bool present;
 		} source_ag;
 
-		struct
+		struct : ag
 		{
-			uintptr_t id;
-			Prof prof;
-			uint32_t elite;
-			uint32_t self;
-			std::string name;
-			uint16_t team;
-
+			std::string name_storage;
 			bool present;
 		} destination_ag;
 
-		const char* skillname;
+		const char* skillname; // Skill names are guaranteed to be valid for the lifetime of the process so copying pointer is fine
 		uint64_t id;
 		uint64_t revision;
 	};
