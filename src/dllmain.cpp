@@ -3,7 +3,6 @@
 #include "GUI.h"
 #include "Log.h"
 #include "PlayerStats.h"
-#include "Skills.h"
 #include "Utilities.h"
 
 #include "imgui.h"
@@ -26,6 +25,7 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL);
 
 uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
+void ProcessPeerEvent(cbtevent* pEvent, uint16_t pPeerInstanceId);
 
 static MallocSignature ARCDPS_MALLOC = nullptr;
 static FreeSignature ARCDPS_FREE = nullptr;
@@ -60,7 +60,9 @@ extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArc
 	ARCDPS_FREE = pArcdpsFree;
 	ImGui::SetAllocatorFunctions(MallocWrapper, FreeWrapper);
 
-	GlobalObjects::EVENT_HANDLER = new EventHandler(ProcessLocalEvent);//std::make_unique<EventHandler>(ProcessLocalEvent);
+	GlobalObjects::EVENT_SEQUENCER = std::make_unique<EventSequencer>(ProcessLocalEvent);
+	GlobalObjects::EVENT_PROCESSOR = std::make_unique<EventProcessor>();
+	GlobalObjects::EVTC_RPC_CLIENT = std::make_unique<evtc_rpc_client>("", ProcessPeerEvent);
 	return mod_init;
 }
 
@@ -154,96 +156,7 @@ static std::atomic<uint32_t> SELF_INSTANCE_ID = UINT32_MAX;
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
-	if (pEvent == nullptr)
-	{
-		if (pSourceAgent->elite != 0)
-		{
-			// Not agent adding event, uninteresting
-			return 0;
-		}
-
-		if (pSourceAgent->prof != 0)
-		{
-			LOG("Register agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
-				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
-				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
-
-			// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
-			if (pSourceAgent->name != nullptr)
-			{
-				// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
-				PlayerStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
-			}
-
-			if (pDestinationAgent->self != 0)
-			{
-				assert(pDestinationAgent->id <= UINT16_MAX);
-
-				LOG("Storing self instance id %llu", pDestinationAgent->id);
-				SELF_INSTANCE_ID.store(static_cast<uint16_t>(pDestinationAgent->id), std::memory_order_relaxed);
-			}
-		}
-		else
-		{
-			LOG("Deregister agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
-				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
-				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
-
-			if (pDestinationAgent->id == SELF_INSTANCE_ID.load(std::memory_order_relaxed))
-			{
-				LOG("Exiting combat since self agent was deregistered");
-				PlayerStats::GlobalState.ExitedCombat(timeGetTime());
-				return 0;
-			}
-		}
-
-		return 0;
-	}
-
-	if (pEvent->is_statechange == CBTS_ENTERCOMBAT)
-	{
-		LOG("EnterCombat agent %s %llu %hu %u %llu",
-			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self, pEvent->dst_agent);
-
-		bool isMinion = false;
-		if (pEvent->src_master_instid != 0)
-		{
-			isMinion = true;
-		}
-
-		// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
-		if (pSourceAgent->name != nullptr)
-		{
-			PlayerStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, static_cast<uint16_t>(pEvent->dst_agent), isMinion);
-		}
-
-		return 0;
-	}
-	else if (pEvent->is_statechange == CBTS_EXITCOMBAT)
-	{
-		LOG("ExitCombat agent %s %llu %hu %u",
-			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self);
-	}
-
-	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
-	{
-		return 0;
-	}
-
-	if (pEvent->buff != 0 && pEvent->buff_dmg == 0)
-	{
-		// Buff application - not interesting
-		return 0;
-	}
-
-	// Event actually did something
-	if (pEvent->buff_dmg > 0 || pEvent->value > 0)
-	{
-		SkillTable::GlobalState.RegisterDamagingSkill(pEvent->skillid, pSkillname);
-
-		return 0;
-	}
-
+	GlobalObjects::EVENT_PROCESSOR->AreaCombat(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 	return 0;
 }
 
@@ -251,8 +164,20 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
-	GlobalObjects::EVENT_HANDLER->ProcessEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
+	GlobalObjects::EVENT_SEQUENCER->ProcessEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 	return 0;
+}
+
+uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
+{
+	GlobalObjects::EVENT_PROCESSOR->LocalCombat(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
+	// Send to client
+	return 0;
+}
+
+void ProcessPeerEvent(cbtevent* pEvent, uint16_t pPeerInstanceId)
+{
+	GlobalObjects::EVENT_PROCESSOR->PeerCombat(pEvent, pPeerInstanceId);
 }
 
 #pragma pack(push, 1)
@@ -308,122 +233,4 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 	}
 
 	return pMessage;
-}
-
-uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
-{
-	if (pEvent == nullptr)
-	{
-		if (pSourceAgent->elite != 0)
-		{
-			// Not agent adding event, uninteresting
-			return 0;
-		}
-
-		if (pSourceAgent->prof != 0)
-		{
-			LOG("Register agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
-				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
-				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
-
-			// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
-			if (pSourceAgent->name != nullptr)
-			{
-				// Assume that the agent is not a minion. If it is a minion then we will find out once it enters combat
-				PlayerStats::GlobalState.AddAgent(pSourceAgent->id, pSourceAgent->name, pDestinationAgent->team, false);
-			}
-
-			if (pDestinationAgent->self != 0)
-			{
-				assert(pDestinationAgent->id <= UINT16_MAX);
-
-				LOG("Storing self instance id %llu", pDestinationAgent->id);
-				SELF_INSTANCE_ID.store(static_cast<uint16_t>(pDestinationAgent->id), std::memory_order_relaxed);
-			}
-		}
-		else
-		{
-			LOG("Deregister agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
-				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
-				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
-
-			if (pDestinationAgent->id == SELF_INSTANCE_ID.load(std::memory_order_relaxed))
-			{
-				LOG("Exiting combat since self agent was deregistered");
-				PlayerStats::GlobalState.ExitedCombat(timeGetTime());
-				return 0;
-			}
-		}
-		// Agent notification - not interesting
-		return 0;
-	}
-
-	if (pEvent->is_statechange == CBTS_ENTERCOMBAT)
-	{
-		LOG("EnterCombat agent %s %llu %hu %u %llu",
-			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self, pEvent->dst_agent);
-
-		if (pSourceAgent->self != 0)
-		{
-			PlayerStats::GlobalState.EnteredCombat(pEvent->time, static_cast<uint16_t>(pEvent->dst_agent));
-		}
-
-		return 0;
-	}
-	else if (pEvent->is_statechange == CBTS_EXITCOMBAT)
-	{
-		LOG("ExitCombat agent %s %llu %hu %u",
-			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self);
-
-		if (pSourceAgent->self != 0)
-		{
-			PlayerStats::GlobalState.ExitedCombat(pEvent->time);
-		}
-
-		return 0;
-	}
-
-	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
-	{
-		// Not a HP modifying event - not interesting
-		return 0;
-	}
-
-	if (pEvent->value <= 0 && pEvent->buff_dmg <= 0)
-	{
-		LOG("Damage event %s %u %u (%llu %s %s)->(%llu %s %s) iff=%hhu", pSkillname, pEvent->value, pEvent->buff_dmg, pSourceAgent->id, pSourceAgent->name, BOOL_STR(pSourceAgent->self), pDestinationAgent->id, pDestinationAgent->name, BOOL_STR(pDestinationAgent->self), pEvent->iff);
-
-		if ((pSourceAgent->self != 0 || pDestinationAgent->self != 0) && pEvent->iff == IFF_FOE)
-		{
-			PlayerStats::GlobalState.DamageEvent(pEvent);
-		}
-
-		return 0;
-	}
-
-	if (pSourceAgent->self == 0 &&
-		pEvent->src_master_instid != SELF_INSTANCE_ID.load(std::memory_order_relaxed))
-	{
-		// Source is someone else - not interesting
-		return 0;
-	}
-
-	if (pEvent->is_shields != 0)
-	{
-		// Shield application - not tracking for now
-		return 0;
-	}
-
-	bool isMinion = (pEvent->dst_master_instid != 0);
-	PlayerStats::GlobalState.HealingEvent(pEvent, pDestinationAgent->id, pDestinationAgent->name, isMinion, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname));
-
-	uint32_t healedAmount = pEvent->value;
-	if (healedAmount == 0)
-	{
-		healedAmount = pEvent->buff_dmg;
-		assert(healedAmount != 0);
-	}
-	LOG("Registered heal event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, SkillTable::GlobalState.GetSkillName(pEvent->skillid, pSkillname), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
-
-	return 0;
 }

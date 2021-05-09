@@ -1,6 +1,8 @@
 #pragma once
 #include "arcdps_structs.h"
-#include "EventHandler.h"
+#include "EventProcessor.h"
+#include "EventSequencer.h"
+#include "../networking/Client.h"
 
 #include <memory>
 
@@ -12,7 +14,9 @@ class GlobalObjects
 public:
 	static inline E7Signature ARC_E7 = nullptr;
 	static inline E3Signature ARC_E3 = nullptr;
-	static inline EventHandler* EVENT_HANDLER = nullptr;
+	static inline std::unique_ptr<EventSequencer> EVENT_SEQUENCER = nullptr;
+	static inline std::unique_ptr<EventProcessor> EVENT_PROCESSOR = nullptr;
+	static inline std::unique_ptr<evtc_rpc_client> EVTC_RPC_CLIENT = nullptr;
 };
 
 typedef void* (*MallocSignature)(size_t);

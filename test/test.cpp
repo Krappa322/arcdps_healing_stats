@@ -49,7 +49,7 @@ protected:
 
 	void SetUp() override
 	{
-		PlayerStats::GlobalState.Clear(); // Make sure agents etc. aren't leaked between test runs
+		//PlayerStats::GlobalState.Clear(); // Make sure agents etc. aren't leaked between test runs
 
 		ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
 
@@ -66,10 +66,10 @@ TEST_P(XevtcLogTestFixture, druid_solo)
 
 	uint32_t result = Mock.ExecuteFromXevtc("logs\\druid_solo.xevtc", parallelCallbacks, fuzzWidth);
 	ASSERT_EQ(result, 0);
-	ASSERT_TRUE(GlobalObjects::EVENT_HANDLER->QueueIsEmpty());
+	ASSERT_TRUE(GlobalObjects::EVENT_SEQUENCER->QueueIsEmpty());
 
 	HealWindowOptions options; // Use all defaults
-	HealingStats rawStats = PlayerStats::GetGlobalState();
+	HealingStats rawStats = GlobalObjects::EVENT_PROCESSOR->GetLocalState();
 	AggregatedStats stats{std::move(rawStats), options, false};
 	
 	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 47.0f);
@@ -129,12 +129,12 @@ TEST_P(XevtcLogTestFixture, druid_MO)
 
 	uint32_t result = Mock.ExecuteFromXevtc("logs\\druid_MO.xevtc", parallelCallbacks, fuzzWidth);
 	ASSERT_EQ(result, 0);
-	ASSERT_TRUE(GlobalObjects::EVENT_HANDLER->QueueIsEmpty());
+	ASSERT_TRUE(GlobalObjects::EVENT_SEQUENCER->QueueIsEmpty());
 
 	HealTableOptions options;
 
 	// Use the "Combined" window
-	HealingStats rawStats = PlayerStats::GetGlobalState();
+	HealingStats rawStats = GlobalObjects::EVENT_PROCESSOR->GetLocalState();
 	AggregatedStats stats{std::move(rawStats), options.Windows[9], false};
 
 	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 95.0f);
@@ -185,13 +185,13 @@ TEST_P(XevtcLogTestFixture, null_names)
 
 	uint32_t result = Mock.ExecuteFromXevtc("logs\\null_names.xevtc", parallelCallbacks, fuzzWidth);
 	ASSERT_EQ(result, 0);
-	ASSERT_TRUE(GlobalObjects::EVENT_HANDLER->QueueIsEmpty());
+	ASSERT_TRUE(GlobalObjects::EVENT_SEQUENCER->QueueIsEmpty());
 
 	HealWindowOptions options;
 	options.ExcludeOffSquad = false;
 	options.ExcludeUnmapped = false;
 
-	HealingStats rawStats = PlayerStats::GetGlobalState();
+	HealingStats rawStats = GlobalObjects::EVENT_PROCESSOR->GetLocalState();
 	AggregatedStats stats{ std::move(rawStats), options, false };
 
 	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 47.0f);

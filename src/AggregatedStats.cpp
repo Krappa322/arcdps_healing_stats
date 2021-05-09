@@ -416,14 +416,8 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 		char buffer[1024];
 		char buffer2[1024];
 
-		const char* skillName = nullptr;
-
-		auto mapSkill = std::as_const(mySourceData.Skills).find(skillId);
-		if (mapSkill != mySourceData.Skills.end())
-		{
-			skillName = mapSkill->second.Name;
-		}
-		else
+		const char* skillName = mySourceData.Skills->GetSkillName(skillId);
+		if (skillName == nullptr)
 		{
 			LOG("Couldn't map skill %u", skillId);
 			snprintf(buffer2, sizeof(buffer2), "%u", skillId);
@@ -431,7 +425,7 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 		}
 
 		bool isIndirectHealing = false;
-		if (SkillTable::GlobalState.IsSkillIndirectHealing(skillId, skillName) == true)
+		if (mySourceData.Skills->IsSkillIndirectHealing(skillId, skillName) == true)
 		{
 			LOG("Translating skill %hu %s to indirect healing", skillId, skillName);
 
@@ -521,7 +515,7 @@ bool AggregatedStats::Filter(std::map<uintptr_t, HealedAgent>::const_iterator& p
 
 bool AggregatedStats::FilterInternal(std::map<uintptr_t, HealedAgent>::const_iterator& pAgent, const HealWindowOptions& pFilter) const
 {
-	if (pAgent == mySourceData.Agents.end())
+	if (pAgent == mySourceData.Agents.end() || pAgent->second.Name.size() == 0)
 	{
 		if (pFilter.ExcludeUnmapped == true)
 		{

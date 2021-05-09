@@ -5,8 +5,6 @@
 #include <assert.h>
 #include <Windows.h>
 
-SkillTable SkillTable::GlobalState;
-
 SkillTable::SkillTable()
 	: myDamagingSkills{}
 	, myHybridSkills{}
@@ -80,18 +78,20 @@ SkillTable::SkillTable()
 	ENTRY(57409); // Nourishment (Cilantro and Cured Meat Flatbread)
 #undef ENTRY
 
-	mySkillNameOverrides.emplace(1066, "Revive"); // Pressing "f" on a downed person
-	mySkillNameOverrides.emplace(14024, "Natural Healing"); // The game does not map this one at all
-	mySkillNameOverrides.emplace(21750, "Signet of the Ether (Active)");
-	mySkillNameOverrides.emplace(21775, "Aqua Surge (Self)");
-	mySkillNameOverrides.emplace(21776, "Aqua Surge (Area)");
-	mySkillNameOverrides.emplace(26558, "Energy Expulsion");
-	mySkillNameOverrides.emplace(26937, "Enchanted Daggers (Initial)");
-	mySkillNameOverrides.emplace(28313, "Enchanted Daggers (Siphon)");
-	mySkillNameOverrides.emplace(30313, "Escapist's Fortitude"); // The game maps this to the wrong skill
-	mySkillNameOverrides.emplace(45686, "Breakrazor's Bastion (Self)");
-	mySkillNameOverrides.emplace(46232, "Breakrazor's Bastion (Area)");
-	mySkillNameOverrides.emplace(49103, "Signet of the Ether (Passive)");
+	std::lock_guard lock(mLock);
+
+	mSkillNames.emplace(1066, "Revive"); // Pressing "f" on a downed person
+	mSkillNames.emplace(14024, "Natural Healing"); // The game does not map this one at all
+	mSkillNames.emplace(21750, "Signet of the Ether (Active)");
+	mSkillNames.emplace(21775, "Aqua Surge (Self)");
+	mSkillNames.emplace(21776, "Aqua Surge (Area)");
+	mSkillNames.emplace(26558, "Energy Expulsion");
+	mSkillNames.emplace(26937, "Enchanted Daggers (Initial)");
+	mSkillNames.emplace(28313, "Enchanted Daggers (Siphon)");
+	mSkillNames.emplace(30313, "Escapist's Fortitude"); // The game maps this to the wrong skill
+	mSkillNames.emplace(45686, "Breakrazor's Bastion (Self)");
+	mSkillNames.emplace(46232, "Breakrazor's Bastion (Area)");
+	mSkillNames.emplace(49103, "Signet of the Ether (Passive)");
 }
 
 
@@ -108,6 +108,17 @@ void SkillTable::RegisterDamagingSkill(uint32_t pSkillId, const char* pSkillName
 	if ((prevVal & (1ULL << (pSkillId % 64))) == 0)
 	{
 		LOG("Registered %u %s as damaging", pSkillId, pSkillName);
+	}
+}
+
+void SkillTable::RegisterSkillName(uint32_t pSkillId, const char* pSkillName)
+{
+	std::lock_guard lock(mLock);
+
+	auto [iter, inserted] = mSkillNames.try_emplace(pSkillId, pSkillName);
+	if (inserted == true)
+	{
+		LOG("Registered skillname %u %s", pSkillId, pSkillName);
 	}
 }
 
@@ -139,13 +150,26 @@ bool SkillTable::IsSkillIndirectHealing(uint32_t pSkillId, const char* pSkillNam
 	return false;
 }
 
-const char* SkillTable::GetSkillName(uint32_t pSkillId, const char* pDefaultSkillName)
+const char* SkillTable::GetSkillName(uint32_t pSkillId)
 {
-	const auto iter = mySkillNameOverrides.find(pSkillId);
-	if (iter != mySkillNameOverrides.end())
+	std::lock_guard lock(mLock);
+
+	auto iter = mSkillNames.find(pSkillId);
+	if (iter != mSkillNames.end())
 	{
 		return iter->second;
 	}
 
-	return pDefaultSkillName;
+	return nullptr;
+}
+
+std::map<uint32_t, const char*> SkillTable::GetState()
+{
+	std::map<uint32_t, const char*> result;
+	{
+		std::lock_guard lock(mLock);
+		result = mSkillNames;
+	}
+
+	return result;
 }

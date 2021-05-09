@@ -1,9 +1,9 @@
 #include "GUI.h"
 
 #include "AggregatedStats.h"
+#include "Exports.h"
 #include "ImGuiEx.h"
 #include "Log.h"
-#include "PlayerStats.h"
 #include "Utilities.h"
 
 #include <array>
@@ -193,7 +193,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		{
 			//LOG("Fetching new aggregated stats");
 
-			HealingStats stats = PlayerStats::GetGlobalState();
+			HealingStats stats = GlobalObjects::EVENT_PROCESSOR->GetLocalState();
 			curWindow.CurrentAggregatedStats = std::make_unique<AggregatedStats>(std::move(stats), curWindow, pHealingOptions.DebugMode);
 			curWindow.LastAggregatedTime = curTime;
 		}

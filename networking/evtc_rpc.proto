@@ -1,0 +1,16 @@
+
+syntax = "proto3";
+package evtc_rpc;
+
+// Interface exported by the server.
+service evtc_rpc
+{
+	// Called once at the start of the connection. Returns a client id which should be attached in
+	// the initial metadata of all subsequent requests.
+	rpc Connect(stream Message) returns (stream Message) {}
+}
+
+message Message
+{
+	bytes blob = 1;
+}

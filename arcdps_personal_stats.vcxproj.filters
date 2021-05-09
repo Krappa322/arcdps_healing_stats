@@ -57,7 +57,13 @@
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\EventHandler.cpp">
+    <ClCompile Include="src\EventSequencer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EventProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AgentTable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -119,7 +125,13 @@
     <ClInclude Include="src\Exports.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\EventHandler.h">
+    <ClInclude Include="src\EventSequencer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EventProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AgentTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

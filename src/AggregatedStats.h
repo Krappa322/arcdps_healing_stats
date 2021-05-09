@@ -1,7 +1,7 @@
 #pragma once
 
 #include "State.h"
-#include "PlayerStats.h"
+#include "EventProcessor.h"
 
 #include <stdint.h>
 
