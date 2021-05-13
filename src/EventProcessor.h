@@ -22,12 +22,15 @@ public:
 	void LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 	void PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId);
 
-	HealingStats GetLocalState();
-	std::map<uintptr_t, HealingStats> GetPeerStates();
+	// Returns <local unique id, map<unique id, <name, agent state>>
+	std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> GetState();
 
+#ifndef TEST
 private:
+#endif
 	PlayerStats mLocalState;
 	std::atomic<uint32_t> mSelfInstanceId = UINT32_MAX;
+	std::atomic<uintptr_t> mSelfUniqueId = UINT64_MAX;
 
 	AgentTable mAgentTable;
 	std::shared_ptr<SkillTable> mSkillTable;

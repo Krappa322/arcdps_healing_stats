@@ -71,6 +71,21 @@ std::optional<uintptr_t> AgentTable::GetUniqueId(uint16_t pInstanceId, bool pAll
 	return iter->second->first;
 }
 
+std::optional<std::string> AgentTable::GetName(uintptr_t pUniqueId)
+{
+	std::lock_guard lock(mLock);
+
+	auto iter = mAgents.find(pUniqueId);
+	if (iter == mAgents.end())
+	{
+		LOG("Couldn't find unique id %llu", pUniqueId);
+		return std::nullopt;
+	}
+
+	LOG("Mapping %llu to %s", pUniqueId, iter->second.Name.c_str());
+	return iter->second.Name;
+}
+
 std::map<uintptr_t, HealedAgent> AgentTable::GetState()
 {
 	std::map<uintptr_t, HealedAgent> result;

@@ -13,6 +13,7 @@ enum class DataSource
 	Skills = 1,
 	Totals = 2,
 	Combined = 3,
+	PeersOutgoing = 4,
 	Max
 };
 

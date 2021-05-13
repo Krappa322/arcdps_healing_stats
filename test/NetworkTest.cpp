@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "AggregatedStats.h"
+#include "AggregatedStatsCollection.h"
 #include "arcdps_mock/CombatMock.h"
 #include "Exports.h"
 #include "Log.h"
@@ -444,27 +444,31 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 	Sleep(1000); // TODO: Fix ugly sleep :(
 
 	HealTableOptions options;
-	HealingStats localStats = Processor.GetLocalState();
-	std::map<uintptr_t, HealingStats> peerStats = Processor.GetPeerStates();
-	ASSERT_EQ(peerStats.size(), 1);
-	ASSERT_EQ(localStats.Events.size(), peerStats[2000].Events.size());
-	for (size_t i = 0; i < localStats.Events.size(); i++)
+	Processor.mSelfUniqueId.store(100000); // Fake self having a different id
+	Processor.mAgentTable.AddAgent(100000, UINT16_MAX - 1, "Local Zarwae", 1, false, true);
+	auto [localId, states] = Processor.GetState();
+
+	HealingStats* localState = &states[localId].second;
+	HealingStats* peerState = &states[2000].second;
+
+	ASSERT_EQ(states.size(), 2);
+	ASSERT_EQ(localState->Events.size(), peerState->Events.size());
+	for (size_t i = 0; i < localState->Events.size(); i++)
 	{
-		if (localStats.Events[i] != peerStats[2000].Events[i])
+		if (localState->Events[i] != peerState->Events[i])
 		{
 			LOG("Event %zu does not match - %llu %llu %llu %u vs %llu %llu %llu %u", i,
-				localStats.Events[i].Time, localStats.Events[i].Size, localStats.Events[i].AgentId, localStats.Events[i].SkillId,
-				peerStats[2000].Events[i].Time, peerStats[2000].Events[i].Size, peerStats[2000].Events[i].AgentId, peerStats[2000].Events[i].SkillId);
+				localState->Events[i].Time, localState->Events[i].Size, localState->Events[i].AgentId, localState->Events[i].SkillId,
+				peerState->Events[i].Time, peerState->Events[i].Size, peerState->Events[i].AgentId, peerState->Events[i].SkillId);
 			GTEST_FAIL();
 		}
 	}
 
-	for (HealingStats* rawStats : {&localStats, &peerStats[2000]})
+	for (HealingStats* rawStats : {localState, peerState})
 	{
-		LOG("Verifying %p (localStats=%p peerStats=%p)", rawStats, &localStats, &peerStats[2000]);
+		LOG("Verifying %p (localStats=%p peerStats=%p)", rawStats, localState, peerState);
 
 		// Use the "Combined" window
-		//HealingStats rawStats = Processor.GetLocalState();
 		AggregatedStats stats{std::move(*rawStats), options.Windows[9], false};
 
 		EXPECT_FLOAT_EQ(stats.GetCombatTime(), 95.0f);
@@ -506,6 +510,26 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 		{
 			EXPECT_EQ(agents.Entries[i].GetTie(), expectedAgents.Entries[i].GetTie());
 		}
+	}
+
+	// This is not really realistic - peer and local has same name, id, etc. But everything can handle it fine.
+	auto [localId2, states2] = Processor.GetState();
+
+	AggregatedStatsCollection stats{std::move(states2), localId2, options.Windows[9], false};
+	const AggregatedStatsEntry& totalEntry = stats.GetTotal(DataSource::PeersOutgoing);
+	EXPECT_EQ(totalEntry.Healing, 304967*2);
+	EXPECT_EQ(totalEntry.Hits, 727*2);
+
+	AggregatedVector expectedStats;
+	expectedStats.Add(2000, "Zarwae", 304967, 727, std::nullopt);
+	expectedStats.Add(100000, "Local Zarwae", 304967, 727, std::nullopt);
+	
+	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
+	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());
+	EXPECT_EQ(actualStats.HighestHealing, expectedStats.HighestHealing);
+	for (uint32_t i = 0; i < expectedStats.Entries.size(); i++)
+	{
+		EXPECT_EQ(actualStats.Entries[i].GetTie(), expectedStats.Entries[i].GetTie());
 	}
 }
 

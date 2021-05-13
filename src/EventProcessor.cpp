@@ -34,7 +34,7 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 			// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
 			if (pSourceAgent->name != nullptr)
 			{
-				mAgentTable.AddAgent(pSourceAgent->id, pDestinationAgent->id, pSourceAgent->name, pDestinationAgent->team, std::nullopt, isPlayer);
+				mAgentTable.AddAgent(pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pSourceAgent->name, pDestinationAgent->team, std::nullopt, isPlayer);
 			}
 		}
 		else
@@ -121,15 +121,16 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 			// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
 			if (pSourceAgent->name != nullptr)
 			{
-				mAgentTable.AddAgent(pSourceAgent->id, pDestinationAgent->id, pSourceAgent->name, pDestinationAgent->team, std::nullopt, isPlayer);
+				mAgentTable.AddAgent(pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pSourceAgent->name, pDestinationAgent->team, std::nullopt, isPlayer);
 			}
 
 			if (pDestinationAgent->self != 0)
 			{
 				assert(pDestinationAgent->id <= UINT16_MAX);
 
-				LOG("Storing self instance id %llu", pDestinationAgent->id);
+				LOG("Storing self instid=%llu uniqueid=%llu", pDestinationAgent->id, pSourceAgent->id);
 				mSelfInstanceId.store(static_cast<uint16_t>(pDestinationAgent->id), std::memory_order_relaxed);
+				mSelfUniqueId.store(pSourceAgent->id, std::memory_order_relaxed);
 			}
 		}
 		else
@@ -309,7 +310,6 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		return;
 	}
 
-	bool isMinion = (pEvent->dst_master_instid != 0);
 	state->HealingEvent(pEvent, *dstUniqueId);
 
 	uint32_t healedAmount = pEvent->value;
@@ -321,21 +321,31 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 	LOG("Registered heal event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
 }
 
-HealingStats EventProcessor::GetLocalState()
+std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState()
 {
-	HealingStats result;
-	*static_cast<HealingStatsSlim*>(&result) = mLocalState.GetState();
+	std::map<uintptr_t, std::pair<std::string, HealingStats>> result;
+	uint64_t collectionTime = timeGetTime();
+	uintptr_t selfUniqueId = mSelfUniqueId.load(std::memory_order_relaxed);
 
-	result.CollectionTime = timeGetTime();
-	result.Agents = mAgentTable.GetState();
-	result.Skills = std::shared_ptr(mSkillTable);
+	auto [localEntry, localInserted] = result.try_emplace(selfUniqueId);
+	assert(localInserted == true);
 
-	return result;
-}
 
-std::map<uintptr_t, HealingStats> EventProcessor::GetPeerStates()
-{
-	std::map<uintptr_t, HealingStats> result;
+	*static_cast<HealingStatsSlim*>(&localEntry->second.second) = mLocalState.GetState();
+	localEntry->second.second.CollectionTime = collectionTime;
+	localEntry->second.second.Agents = mAgentTable.GetState();
+	localEntry->second.second.Skills = std::shared_ptr(mSkillTable);
+
+	std::optional<std::string> localName = mAgentTable.GetName(selfUniqueId);
+	if (localName.has_value())
+	{
+		localEntry->second.first = std::move(*localName);
+	}
+	else
+	{
+		localEntry->second.first = "local (unmapped)";
+	}
+
 
 	std::map<uintptr_t, std::shared_ptr<PlayerStats>> peerStates;
 	{
@@ -343,19 +353,34 @@ std::map<uintptr_t, HealingStats> EventProcessor::GetPeerStates()
 		peerStates = mPeerStates;
 	}
 
-	uint64_t collectionTime = timeGetTime();
 	for (const auto& [uniqueId, state] : peerStates)
 	{
 		auto [entry, inserted] = result.try_emplace(uniqueId);
+		if (inserted == false)
+		{
+			LOG("Skipping agent %llu - emplacing failed", uniqueId);
+			continue; // Only happens in unit tests when using the same agent twice
+		}
 
-		*static_cast<HealingStatsSlim*>(&entry->second) = state->GetState();
+		*static_cast<HealingStatsSlim*>(&entry->second.second) = state->GetState();
 
-		entry->second.CollectionTime = collectionTime;
-		entry->second.Agents = mAgentTable.GetState();
-		entry->second.Skills = std::shared_ptr(mSkillTable);
+		entry->second.second.CollectionTime = collectionTime;
+		entry->second.second.Agents = mAgentTable.GetState();
+		entry->second.second.Skills = std::shared_ptr(mSkillTable);
+		
+		std::optional<std::string> name = mAgentTable.GetName(uniqueId);
+		if (name.has_value())
+		{
+			entry->second.first = std::move(*name);
+		}
+		else
+		{
+			entry->second.first = "peer (unmapped)";
+		}
 
-		LOG("peer %llu, %zu events", uniqueId, entry->second.Events.size());
+		LOG("peer %llu %s, %zu events", uniqueId, entry->second.first.c_str(), entry->second.second.Events.size());
 	}
 
-	return result;
+	LOG("self %llu, %zu entries", selfUniqueId, result.size());
+	return {selfUniqueId, result};
 }

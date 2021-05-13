@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AggregatedStats.h"
+#include "AggregatedStatsCollection.h"
 #include "State.h"
 
 #include <stdint.h>
@@ -20,7 +20,7 @@ struct DetailsWindowState : AggregatedStatsEntry
 
 struct HealWindowContext : HealWindowOptions
 {
-	std::unique_ptr<AggregatedStats> CurrentAggregatedStats; // In-Memory only
+	std::unique_ptr<AggregatedStatsCollection> CurrentAggregatedStats; // In-Memory only
 	time_t LastAggregatedTime = 0; // In-Memory only
 
 	std::vector<DetailsWindowState> OpenSkillWindows; // In-Memory only

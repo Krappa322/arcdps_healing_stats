@@ -50,8 +50,10 @@ using TotalHealingStats = std::array<uint64_t, static_cast<size_t>(GroupFilter::
 
 constexpr static uint32_t IndirectHealingSkillId = 0;
 
+class AggregatedStatsCollection;
 class AggregatedStats
 {
+	friend AggregatedStatsCollection;
 public:
 	AggregatedStats(HealingStats&& pSourceData, const HealWindowOptions& pOptions, bool pDebugMode);
 
@@ -69,8 +71,7 @@ private:
 	const AggregatedVector& GetAgents(std::optional<uint32_t> pSkillId);
 	const AggregatedVector& GetSkills(std::optional<uintptr_t> pAgentId);
 
-	template<typename VectorType>
-	void Sort(VectorType& pVector);
+	static void Sort(std::vector<AggregatedStatsEntry>& pVector, SortOrder pSortOrder);
 
 	bool Filter(uintptr_t pAgentId) const; // Returns true if agent should be filtered out
 	bool Filter(std::map<uintptr_t, HealedAgent>::const_iterator& pAgent) const; // Returns true if agent should be filtered out

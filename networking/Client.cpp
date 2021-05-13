@@ -119,11 +119,13 @@ uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent,
 			if (pDestinationAgent->self != 0)
 			{
 				assert(pDestinationAgent->id <= UINT16_MAX);
+				assert(pDestinationAgent->id > 0);
 				assert(pDestinationAgent->name != nullptr && pDestinationAgent->name[0] != '\0');
 
-				std::lock_guard lock(mQueuedEventsLock);
+				std::lock_guard lock(mSelfInfoLock);
 
-				mQueuedEvents.push_back(new RegisterSelfCallData(static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name));
+				mAccountName = pDestinationAgent->name;
+				mInstanceId = pDestinationAgent->id;
 			}
 		}
 		else
@@ -237,12 +239,14 @@ void evtc_rpc_client::Serve()
 					{
 						assert(mShutdown == true);
 
-						FinishCallData* queuedData = new FinishCallData;
-						mStream->Finish(&queuedData->ReturnedStatus, queuedData);
+						FinishCallData* queuedData = new FinishCallData{std::shared_ptr(base->Context)};
+						queuedData->Context->Stream->Finish(&queuedData->ReturnedStatus, queuedData);
 						break;
 					}
 					case CallDataType::Finish:
 					{
+						assert(mShutdown == true);
+
 						FinishCallData* message = static_cast<FinishCallData*>(base);
 						LOG("(tag %p) Finish returned status %d message='%s' details='%s'",
 							tag, message->ReturnedStatus.error_code(), message->ReturnedStatus.error_message().c_str(), message->ReturnedStatus.error_details().c_str());
@@ -258,81 +262,105 @@ void evtc_rpc_client::Serve()
 			else
 			{
 				LOG("(tag %p) Got not-ok", tag);
+
+				switch (base->Type)
+				{
+					case CallDataType::Connect:
+					{
+						LOG("(tag %p) Connection to remote %s failed", tag, mEndpoint.c_str());
+						if (base->Context == mConnectionContext)
+						{
+							mConnectionContext = nullptr;
+						}
+						break;
+					}
+					default:
+						break;
+				}
 			}
 
 			if (base->IsWrite() == true)
 			{
 				LOG("(tag %p) Was write, setting mWritePending to false", tag);
 
-				assert(mWritePending == true);
-				mWritePending = false;
+				assert(base->Context->WritePending == true);
+				base->Context->WritePending = false;
 			}
 
 			base->Destruct();
 		}
 
-		if (mShouldShutdown == true)
+		if (mShutdown == true)
 		{
-			WritesDoneCallData* queuedData = new WritesDoneCallData;
-			mStream->WritesDone(queuedData);
-
-			LOG("Finishing connection tag=%p", queuedData);
+			// Nothing
+		}
+		else if (mShouldShutdown == true)
+		{
 			mShouldShutdown = false;
 			mShutdown = true;
-		}
 
-		if (mWritePending == false && mShutdown == false)
-		{
-			if (mStream == nullptr)
+			if (mConnectionContext != nullptr)
 			{
-				if (mStub == nullptr)
-				{
-					LOG("Opening new connection to %s", mEndpoint.c_str());
-					mStub = evtc_rpc::evtc_rpc::NewStub(grpc::CreateChannel(mEndpoint.c_str(), grpc::InsecureChannelCredentials()));
-				}
+				WritesDoneCallData* queuedData = new WritesDoneCallData{std::shared_ptr(mConnectionContext)};
+				queuedData->Context->Stream->WritesDone(queuedData);
 
-				mClientContext = std::make_unique<grpc::ClientContext>();
-				ConnectCallData* queuedData1 = new ConnectCallData;
-				mStream = mStub->AsyncConnect(mClientContext.get(), &mCompletionQueue, queuedData1);
-				mWritePending = true;
-
-				ReadMessageCallData* queuedData2 = new ReadMessageCallData;
-				mStream->Read(&queuedData2->Message, queuedData2);
-
-				LOG("Established connection connect_tag=%p, read_tag=%p", queuedData1, queuedData2);
+				LOG("ShouldShutdown==true - queued WritesDone tag=%p", queuedData);
 			}
 			else
 			{
-				CallDataBase* queuedData = nullptr;
+				LOG("ShouldShutdown==true - shutting down since there are no connections");
+				mCompletionQueue.Shutdown();
+			}
+		}
+		else if (mConnectionContext == nullptr)
+		{
+			mConnectionContext = std::make_shared<ConnectionContext>();
+			mConnectionContext->Stub = evtc_rpc::evtc_rpc::NewStub(grpc::CreateChannel(mEndpoint.c_str(), grpc::InsecureChannelCredentials()));
+
+			ConnectCallData* queuedData1 = new ConnectCallData{std::shared_ptr(mConnectionContext)};
+			mConnectionContext->Stream = mConnectionContext->Stub->AsyncConnect(&mConnectionContext->ClientContext, &mCompletionQueue, queuedData1);
+			mConnectionContext->WritePending = true;
+
+			ReadMessageCallData* queuedData2 = new ReadMessageCallData{std::shared_ptr(mConnectionContext)};
+			queuedData2->Context->Stream->Read(&queuedData2->Message, queuedData2);
+
+			LOG("Opening new connection to %s connect_tag=%p, read_tag=%p", mEndpoint.c_str(), queuedData1, queuedData2);
+		}
+		else if (mConnectionContext->WritePending == false)
+		{
+			CallDataBase* queuedData = nullptr;
+			{
+				std::lock_guard lock(mSelfInfoLock);
+
+				// Either RegisteredInstanceId is 0 (meaning we aren't registered yet), or mInstanceId has changed because we changed instances
+				if (mConnectionContext->RegisteredInstanceId != mInstanceId)
 				{
-					std::lock_guard lock(mQueuedEventsLock);
+					assert(mInstanceId != 0); // mInstanceId should never go back to zero after being set
+					assert(mAccountName.size() > 0);
+					queuedData = new RegisterSelfCallData{std::shared_ptr(mConnectionContext), mInstanceId, std::string(mAccountName)};
 
-					if (mRegistered == false)
-					{
-						for (auto iter = mQueuedEvents.begin(); iter != mQueuedEvents.end(); iter++)
-						{
-							if ((*iter)->Type == CallDataType::RegisterSelf)
-							{
-								queuedData = *iter;
-								mQueuedEvents.erase(iter);
-								break;
-							}
-						}
-					}
-					else if (mQueuedEvents.size() > 0)
-					{
-						queuedData = mQueuedEvents.front();
-						mQueuedEvents.pop_front();
-					}
+					LOG("(tag %p) Registering self %hu %s", queuedData, mInstanceId, mAccountName.c_str());
 				}
+			}
 
-				if (queuedData != nullptr)
+			if (queuedData == nullptr && mConnectionContext->RegisteredInstanceId != 0)
+			{
+				std::lock_guard lock(mQueuedEventsLock);
+
+				if (mQueuedEvents.size() > 0)
 				{
-					QueueEvent(queuedData);
-
-					assert(queuedData->IsWrite() == true);
-					mWritePending = true;
+					queuedData = mQueuedEvents.front();
+					mQueuedEvents.pop_front();
+					queuedData->Context = std::shared_ptr(mConnectionContext);
 				}
+			}
+
+			if (queuedData != nullptr)
+			{
+				QueueEvent(queuedData);
+
+				assert(queuedData->IsWrite() == true);
+				mConnectionContext->WritePending = true;
 			}
 		}
 	}
@@ -359,32 +387,25 @@ void evtc_rpc_client::FlushEvents()
 	}
 }
 
-void evtc_rpc_client::EnsureConnected()
+void evtc_rpc_client::ForceDisconnect(const std::shared_ptr<ConnectionContext>& pContext, const char* pErrorMessage)
 {
-	if (mStream != nullptr)
-	{
-		return;
-	}
-
-	mClientContext = std::make_unique<grpc::ClientContext>();
-	mStream = mStub->PrepareAsyncConnect(mClientContext.get(), &mCompletionQueue);
-
-	ReadMessageCallData* queuedData = new ReadMessageCallData;
-	mStream->Read(&queuedData->Message, queuedData);
-
-	LOG("Established connection");
-}
-
-void evtc_rpc_client::ForceDisconnect(const char* pErrorMessage)
-{
-	if (mForceDisconnected == true)
+	if (pContext->ForceDisconnected == true)
 	{
 		LOG("Ignoring ForceDisconnect since client is already disconnected");
 		return;
 	}
 
-	mStub = nullptr;
-	mStub = evtc_rpc::evtc_rpc::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+	if (mConnectionContext == pContext)
+	{
+		// Queue finish...
+
+		mConnectionContext = nullptr;
+		LOG("Cleared existing connection");
+	}
+	else
+	{
+		LOG("Existing connection is not same as the one being disconnected");
+	}
 }
 
 void evtc_rpc_client::HandleReadMessage(ReadMessageCallData* pCallData)
@@ -393,8 +414,8 @@ void evtc_rpc_client::HandleReadMessage(ReadMessageCallData* pCallData)
 
 	// Add a new ReadMessageCallData so we can read the next message
 	{
-		ReadMessageCallData* queuedData = new ReadMessageCallData;
-		mStream->Read(&queuedData->Message, queuedData);
+		ReadMessageCallData* queuedData = new ReadMessageCallData{std::shared_ptr(pCallData->Context)};
+		pCallData->Context->Stream->Read(&queuedData->Message, queuedData);
 	}
 
 	const std::string& blob = pCallData->Message.blob();
@@ -405,7 +426,7 @@ void evtc_rpc_client::HandleReadMessage(ReadMessageCallData* pCallData)
 	{
 		LOG("(tag %p) data too short for header (%zu vs %zu)",
 			pCallData, dataSize, sizeof(Header));
-		ForceDisconnect("short message header");
+		ForceDisconnect(pCallData->Context, "short message header");
 		return;
 	}
 
@@ -417,7 +438,7 @@ void evtc_rpc_client::HandleReadMessage(ReadMessageCallData* pCallData)
 	if (header.MessageVersion != 1)
 	{
 		LOG("(tag %p) incorrect version %u", pCallData, header.MessageVersion);
-		ForceDisconnect("incorrect version");
+		ForceDisconnect(pCallData->Context, "incorrect version");
 		return;
 	}
 
@@ -428,7 +449,7 @@ void evtc_rpc_client::HandleReadMessage(ReadMessageCallData* pCallData)
 		{
 			LOG("(tag %p) incorrect length for CombatEvent message (%zu vs %zu)",
 				pCallData, dataSize, sizeof(CombatEvent));
-			ForceDisconnect("short SetSelfAccountName content");
+			ForceDisconnect(pCallData->Context, "short SetSelfAccountName content");
 			return;
 		}
 
@@ -467,7 +488,7 @@ void evtc_rpc_client::QueueEvent(CallDataBase* pCallData)
 		{
 			RegisterSelfCallData* calldata = static_cast<RegisterSelfCallData*>(pCallData);
 
-			if (mRegistered == false)
+			if (pCallData->Context->RegisteredInstanceId == 0)
 			{
 				header.MessageType = Type::RegisterSelf;
 
@@ -481,7 +502,7 @@ void evtc_rpc_client::QueueEvent(CallDataBase* pCallData)
 				memcpy(bufferpos, calldata->SelfAccountName.data(), calldata->SelfAccountName.size());
 				bufferpos += calldata->SelfAccountName.size();
 
-				mRegistered = true;
+				pCallData->Context->RegisteredInstanceId = message.SelfId;
 
 				LOG("(tag %p) Sending RegisterSelf %hu %s", pCallData, message.SelfId, calldata->SelfAccountName.c_str());
 			}
@@ -494,6 +515,8 @@ void evtc_rpc_client::QueueEvent(CallDataBase* pCallData)
 
 				memcpy(bufferpos, &message, sizeof(message));
 				bufferpos += sizeof(message);
+
+				pCallData->Context->RegisteredInstanceId = message.SelfId;
 
 				LOG("(tag %p) Sending SetSelfId %hu", pCallData, message.SelfId);
 			}
@@ -561,7 +584,7 @@ void evtc_rpc_client::QueueEvent(CallDataBase* pCallData)
 
 	evtc_rpc::Message rpc_message;
 	rpc_message.set_blob(buffer, bufferpos - buffer);
-	mStream->Write(rpc_message, pCallData);
+	pCallData->Context->Stream->Write(rpc_message, pCallData);
 }
 
 void evtc_rpc_client::HandleCombatEvent(cbtevent* pEvent)

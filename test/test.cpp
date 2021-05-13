@@ -58,6 +58,14 @@ protected:
 			memcpy(&Exports, temp_exports, sizeof(Exports)); // Maybe do some deep copy at some point but we're not using the strings in there anyways
 		}
 	}
+
+	HealingStats GetLocalState()
+	{
+		auto [localId, states] = GlobalObjects::EVENT_PROCESSOR->GetState();
+		auto iter = states.find(localId);
+		assert(iter != states.end());
+		return iter->second.second;
+	}
 };
 
 TEST_P(XevtcLogTestFixture, druid_solo)
@@ -69,7 +77,7 @@ TEST_P(XevtcLogTestFixture, druid_solo)
 	ASSERT_TRUE(GlobalObjects::EVENT_SEQUENCER->QueueIsEmpty());
 
 	HealWindowOptions options; // Use all defaults
-	HealingStats rawStats = GlobalObjects::EVENT_PROCESSOR->GetLocalState();
+	HealingStats rawStats = GetLocalState();
 	AggregatedStats stats{std::move(rawStats), options, false};
 	
 	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 47.0f);
@@ -134,7 +142,7 @@ TEST_P(XevtcLogTestFixture, druid_MO)
 	HealTableOptions options;
 
 	// Use the "Combined" window
-	HealingStats rawStats = GlobalObjects::EVENT_PROCESSOR->GetLocalState();
+	HealingStats rawStats = GetLocalState();
 	AggregatedStats stats{std::move(rawStats), options.Windows[9], false};
 
 	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 95.0f);
@@ -191,7 +199,7 @@ TEST_P(XevtcLogTestFixture, null_names)
 	options.ExcludeOffSquad = false;
 	options.ExcludeUnmapped = false;
 
-	HealingStats rawStats = GlobalObjects::EVENT_PROCESSOR->GetLocalState();
+	HealingStats rawStats = GetLocalState();
 	AggregatedStats stats{ std::move(rawStats), options, false };
 
 	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 47.0f);

@@ -21,6 +21,7 @@ public:
 	void AddAgent(uintptr_t pUniqueId, uint16_t pInstanceId, const char* pAgentName, std::optional<uint16_t> pSubgroup, std::optional<bool> pIsMinion, std::optional<bool> pIsPlayer);
 
 	std::optional<uintptr_t> GetUniqueId(uint16_t pInstanceId, bool pAllowNonPlayer);
+	std::optional<std::string> GetName(uintptr_t pUniqueId);
 
 	std::map<uintptr_t, HealedAgent> GetState();
 

@@ -11,12 +11,24 @@
 #include <grpcpp/security/credentials.h>
 #pragma warning(pop)
 
-#include <deque>
 #include <cassert>
+#include <deque>
+#include <memory>
 
 class evtc_rpc_client
 {
 	typedef void(*PeerCombatCallbackSignature)(cbtevent* pEvent);
+
+	struct ConnectionContext
+	{
+		bool ForceDisconnected = false;
+		bool WritePending = false;
+		uint16_t RegisteredInstanceId = 0;
+
+		grpc::ClientContext ClientContext;
+		std::unique_ptr<grpc::ClientAsyncReaderWriter<evtc_rpc::Message, evtc_rpc::Message>> Stream;
+		std::unique_ptr<evtc_rpc::evtc_rpc::Stub> Stub;
+	};
 
 	enum class CallDataType
 	{
@@ -35,7 +47,14 @@ class evtc_rpc_client
 
 	struct CallDataBase
 	{
-		CallDataType Type = CallDataType::Invalid;
+		CallDataBase(CallDataType pType, std::shared_ptr<ConnectionContext>&& pContext)
+			: Type{pType}
+			, Context{std::move(pContext)}
+		{
+		}
+
+		const CallDataType Type;
+		std::shared_ptr<ConnectionContext> Context;
 
 		bool IsWrite();
 		void Destruct();
@@ -43,17 +62,17 @@ class evtc_rpc_client
 
 	struct ConnectCallData : public CallDataBase
 	{
-		ConnectCallData()
+		ConnectCallData(std::shared_ptr<ConnectionContext>&& pContext)
+			: CallDataBase{CallDataType::Connect, std::move(pContext)}
 		{
-			Type = CallDataType::Connect;
 		}
 	};
 
 	struct FinishCallData : public CallDataBase
 	{
-		FinishCallData()
+		FinishCallData(std::shared_ptr<ConnectionContext>&& pContext)
+			: CallDataBase{CallDataType::Finish, std::move(pContext)}
 		{
-			Type = CallDataType::Finish;
 		}
 
 		grpc::Status ReturnedStatus;
@@ -61,17 +80,17 @@ class evtc_rpc_client
 
 	struct WritesDoneCallData : public CallDataBase
 	{
-		WritesDoneCallData()
+		WritesDoneCallData(std::shared_ptr<ConnectionContext>&& pContext)
+			: CallDataBase{CallDataType::WritesDone, std::move(pContext)}
 		{
-			Type = CallDataType::WritesDone;
 		}
 	};
 
 	struct ReadMessageCallData : public CallDataBase
 	{
-		ReadMessageCallData()
+		ReadMessageCallData(std::shared_ptr<ConnectionContext>&& pContext)
+			: CallDataBase{CallDataType::ReadMessage, std::move(pContext)}
 		{
-			Type = CallDataType::ReadMessage;
 		}
 
 		evtc_rpc::Message Message;
@@ -79,11 +98,11 @@ class evtc_rpc_client
 
 	struct RegisterSelfCallData : public CallDataBase
 	{
-		RegisterSelfCallData(uint16_t pSelfInstanceId, std::string&& pSelfAccountName)
-			: SelfInstanceId{pSelfInstanceId}
+		RegisterSelfCallData(std::shared_ptr<ConnectionContext>&& pContext, uint16_t pSelfInstanceId, std::string&& pSelfAccountName)
+			: CallDataBase{CallDataType::RegisterSelf, std::move(pContext)}
+			, SelfInstanceId{pSelfInstanceId}
 			, SelfAccountName{std::move(pSelfAccountName)}
 		{
-			Type = CallDataType::RegisterSelf;
 		}
 
 		const uint16_t SelfInstanceId;
@@ -93,10 +112,10 @@ class evtc_rpc_client
 	struct AddPeerCallData : public CallDataBase
 	{
 		AddPeerCallData(uint16_t pPeerInstanceId, std::string&& pPeerAccountName)
-			: PeerInstanceId{pPeerInstanceId}
+			: CallDataBase{CallDataType::AddPeer, nullptr}
+			, PeerInstanceId{pPeerInstanceId}
 			, PeerAccountName{std::move(pPeerAccountName)}
 		{
-			Type = CallDataType::AddPeer;
 		}
 
 		const uint16_t PeerInstanceId;
@@ -106,9 +125,9 @@ class evtc_rpc_client
 	struct RemovePeerCallData : public CallDataBase
 	{
 		RemovePeerCallData(uint16_t pPeerInstanceId)
-			: PeerInstanceId{pPeerInstanceId}
+			: CallDataBase{CallDataType::RemovePeer, nullptr}
+			, PeerInstanceId{pPeerInstanceId}
 		{
-			Type = CallDataType::RemovePeer;
 		}
 
 		const uint16_t PeerInstanceId;
@@ -118,9 +137,9 @@ class evtc_rpc_client
 	struct CombatEventCallData : public CallDataBase
 	{
 		CombatEventCallData(const cbtevent& pEvent)
-			: Event{pEvent}
+			: CallDataBase{CallDataType::CombatEvent, nullptr}
+			, Event{pEvent}
 		{
-			Type = CallDataType::CombatEvent;
 		}
 
 		const cbtevent Event;
@@ -128,9 +147,9 @@ class evtc_rpc_client
 
 	struct DisconnectCallData : public CallDataBase
 	{
-		DisconnectCallData()
+		DisconnectCallData(std::shared_ptr<ConnectionContext>&& pContext)
+			: CallDataBase{CallDataType::Disconnect, std::move(pContext)}
 		{
-			Type = CallDataType::Disconnect;
 		}
 	};
 
@@ -149,8 +168,7 @@ public:
 #ifndef TEST
 private:
 #endif
-	void EnsureConnected();
-	void ForceDisconnect(const char* pErrorMessage);
+	void ForceDisconnect(const std::shared_ptr<ConnectionContext>& pContext, const char* pErrorMessage);
 	void HandleReadMessage(ReadMessageCallData* pCallData);
 	void QueueEvent(CallDataBase* pCallData);
 
@@ -161,16 +179,14 @@ private:
 	std::mutex mQueuedEventsLock;
 	std::deque<CallDataBase*> mQueuedEvents;
 
-	bool mForceDisconnected = false;
-	bool mRegistered = false;
 	std::atomic_bool mShouldShutdown = false;
 	bool mShutdown = false;
-	bool mWritePending = false;
 
-	std::unique_ptr<grpc::ClientContext> mClientContext;
-	std::unique_ptr<grpc::ClientAsyncReaderWriter<evtc_rpc::Message, evtc_rpc::Message>> mStream;
-
+	std::shared_ptr<ConnectionContext> mConnectionContext;
 	grpc::CompletionQueue mCompletionQueue;
-	std::unique_ptr<evtc_rpc::evtc_rpc::Stub> mStub;
 	std::string mEndpoint;
+
+	std::mutex mSelfInfoLock;
+	std::string mAccountName;
+	uint16_t mInstanceId = 0;
 };

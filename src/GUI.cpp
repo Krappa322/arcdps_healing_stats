@@ -1,6 +1,6 @@
 #include "GUI.h"
 
-#include "AggregatedStats.h"
+#include "AggregatedStatsCollection.h"
 #include "Exports.h"
 #include "ImGuiEx.h"
 #include "Log.h"
@@ -17,7 +17,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	}
 
 	float timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
-	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal();
+	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal(pDataSource);
 
 	char buffer[1024];
 	// Using "###" means the id of the window is calculated only from the part after the hashes (which
@@ -104,7 +104,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	char buffer[1024];
 
 	float timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
-	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal();
+	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal(pDataSource);
 
 	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetStats(pDataSource);
 	for (int i = 0; i < stats.Entries.size(); i++)
@@ -193,13 +193,13 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		{
 			//LOG("Fetching new aggregated stats");
 
-			HealingStats stats = GlobalObjects::EVENT_PROCESSOR->GetLocalState();
-			curWindow.CurrentAggregatedStats = std::make_unique<AggregatedStats>(std::move(stats), curWindow, pHealingOptions.DebugMode);
+			auto [localId, states] = GlobalObjects::EVENT_PROCESSOR->GetState();
+			curWindow.CurrentAggregatedStats = std::make_unique<AggregatedStatsCollection>(std::move(states), localId, curWindow, pHealingOptions.DebugMode);
 			curWindow.LastAggregatedTime = curTime;
 		}
 
 		float timeInCombat = curWindow.CurrentAggregatedStats->GetCombatTime();
-		const AggregatedStatsEntry& aggregatedTotal = curWindow.CurrentAggregatedStats->GetTotal();
+		const AggregatedStatsEntry& aggregatedTotal = curWindow.CurrentAggregatedStats->GetTotal(static_cast<DataSource>(curWindow.DataSourceChoice));
 
 		if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
 		{
@@ -227,7 +227,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 		{
-			const char* const dataSourceItems[] = {"targets", "skills", "totals", "combined"};
+			const char* const dataSourceItems[] = {"targets", "skills", "totals", "combined", "peers outgoing"};
 			static_assert((sizeof(dataSourceItems) / sizeof(dataSourceItems[0])) == static_cast<uint64_t>(DataSource::Max), "Added data source without updating gui?");
 			ImGui::Combo("data source", &curWindow.DataSourceChoice, dataSourceItems, static_cast<int>(DataSource::Max));
 			ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");

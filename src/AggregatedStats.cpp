@@ -333,7 +333,7 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 		entry->Add(agentId, std::move(agentName), agent.Healing, agent.Ticks, std::nullopt);
 	}
 
-	Sort(entry->Entries);
+	Sort(entry->Entries, static_cast<SortOrder>(myOptions.SortOrderChoice));
 
 	return *entry;
 }
@@ -455,15 +455,14 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 		entry->Add(IndirectHealingSkillId, std::move(skillName), totalIndirectHealing, totalIndirectTicks, std::nullopt);
 	}
 
-	Sort(entry->Entries);
+	Sort(entry->Entries, static_cast<SortOrder>(myOptions.SortOrderChoice));
 
 	return *entry;
 }
 
-template<typename VectorType>
-void AggregatedStats::Sort(VectorType& pVector)
+void AggregatedStats::Sort(std::vector<AggregatedStatsEntry>& pVector, SortOrder pSortOrder)
 {
-	switch (static_cast<SortOrder>(myOptions.SortOrderChoice))
+	switch (static_cast<SortOrder>(pSortOrder))
 	{
 	case SortOrder::AscendingAlphabetical:
 		std::sort(pVector.begin(), pVector.end(),
