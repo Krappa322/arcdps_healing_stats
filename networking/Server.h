@@ -119,6 +119,7 @@ private:
 	void HandleWriteEvent(WriteEventCallData* pCallData);
 
 	const char* HandleRegisterSelf(uint16_t pInstanceId, std::string_view pAccountName, std::shared_ptr<ConnectionContext>& pClient);
+	const char* HandleSetSelfId(uint16_t pInstanceId, std::shared_ptr<ConnectionContext>& pClient);
 	const char* HandleAddPeer(uint16_t pInstanceId, std::string_view pAccountName, std::shared_ptr<ConnectionContext>& pClient);
 	const char* HandleRemovePeer(uint16_t pInstanceId, std::shared_ptr<ConnectionContext>& pClient);
 	const char* HandleCombatEvent(const cbtevent& pEvent, std::shared_ptr<ConnectionContext>& pClient);

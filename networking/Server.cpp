@@ -215,8 +215,29 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 		break;
 	}
 	case Type::SetSelfId:
-		break;
+	{
+		if (dataSize != sizeof(SetSelfId))
+		{
+			LOG("(client %p tag %p) data length mismatch for SetSelfId message (%zu vs %zu)",
+				pCallData->Context.get(), pCallData, dataSize, sizeof(SetSelfId));
+			pCallData->Context->ForceDisconnect("short SetSelfId content", std::shared_ptr{pCallData->Context});
+			return;
+		}
 
+		SetSelfId message;
+		memcpy(&message, data, sizeof(SetSelfId));
+		data += sizeof(SetSelfId);
+		dataSize -= sizeof(SetSelfId);
+
+		const char* error = HandleSetSelfId(message.SelfId, pCallData->Context);
+		if (error != nullptr)
+		{
+			LOG("(client %p tag %p) HandleSetSelfId failed - %s", pCallData->Context.get(), pCallData, error);
+			pCallData->Context->ForceDisconnect(error, std::shared_ptr{pCallData->Context});
+			return;
+		}
+		break;
+	}
 	case Type::AddPeer:
 	{
 		if (dataSize < sizeof(AddPeer))
@@ -348,6 +369,23 @@ const char* evtc_rpc_server::HandleRegisterSelf(uint16_t pInstanceId, std::strin
 	pClient->InstanceId = pInstanceId;
 
 	LOG("(client %p) registered account %s %hu", pClient.get(), newEntry->first.c_str(), newEntry->second->InstanceId);
+	return nullptr;
+}
+
+const char* evtc_rpc_server::HandleSetSelfId(uint16_t pInstanceId, std::shared_ptr<ConnectionContext>& pClient)
+{
+	std::lock_guard lock(mRegisteredAgentsLock);
+
+	// Check this under lock, mRegisteredAgentsLock also guards the ReceivedAccountName flag
+	if (pClient->ReceivedAccountName == false)
+	{
+		LOG("(client %p) this connection is not registered yet", pClient.get());
+		return "not registered yet";
+	}
+
+	pClient->InstanceId = pInstanceId;
+
+	LOG("(client %p) set self id to %hu", pClient.get(), pInstanceId);
 	return nullptr;
 }
 

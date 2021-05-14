@@ -182,48 +182,56 @@ private:
 };
 
 
-TEST_F(SimpleNetworkTestFixture, Connect)
+TEST_F(SimpleNetworkTestFixture, RegisterSelf)
 {
 	ClientInstance& client1 = NewClient();
 
-	// Send a self agent registration event
-	ag ag1{};
-	ag ag2{};
-	ag1.elite = 0;
-	ag1.prof = static_cast<Prof>(1);
-	ag2.self = 1;
-	ag2.id = 10;
-	ag2.name = "testagent.1234";
-	client1->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
-
-	FlushEvents();
-
-	// Wait until the server sees the new agent and then verify the state
-	auto start = std::chrono::system_clock::now();
-	bool completed = false;
-	while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(200))
+	for (uint16_t instid : std::array<uint16_t, 2>({13, 17}))
 	{
+		// Send a self agent registration event
+		ag ag1{};
+		ag ag2{};
+		ag1.elite = 0;
+		ag1.prof = static_cast<Prof>(1);
+		ag2.self = 1;
+		ag2.id = instid;
+		ag2.name = "testagent.1234";
+		client1->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+
+		FlushEvents();
+
+		// Wait until the server sees the new agent and then verify the state
+		auto start = std::chrono::system_clock::now();
+		bool completed = false;
+		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(200))
+		{
+			{
+				std::lock_guard lock(Server.mRegisteredAgentsLock);
+				if (Server.mRegisteredAgents.size() >= 1)
+				{
+					auto iter = Server.mRegisteredAgents.find("testagent.1234");
+					if (iter != Server.mRegisteredAgents.end() && iter->second->InstanceId == instid)
+					{
+						completed = true;
+						break;
+					}
+				}
+			}
+
+			Sleep(1);
+		}
+		EXPECT_TRUE(completed);
 		{
 			std::lock_guard lock(Server.mRegisteredAgentsLock);
-			if (Server.mRegisteredAgents.size() >= 1)
-			{
-				completed = true;
-				break;
-			}
-		}
 
-		Sleep(1);
-	}
-	ASSERT_TRUE(completed);
-	{
-		std::lock_guard lock(Server.mRegisteredAgentsLock);
-		EXPECT_EQ(Server.mRegisteredAgents.size(), 1);
-		auto iter = Server.mRegisteredAgents.find("testagent.1234");
-		ASSERT_NE(iter, Server.mRegisteredAgents.end());
-		EXPECT_EQ(iter->first, "testagent.1234");
-		EXPECT_EQ(iter->second->ReceivedAccountName, true);
-		EXPECT_EQ(iter->second->InstanceId, 10);
-		EXPECT_EQ(iter->second->Peers.size(), 0);
+			EXPECT_EQ(Server.mRegisteredAgents.size(), 1);
+			auto iter = Server.mRegisteredAgents.find("testagent.1234");
+			ASSERT_NE(iter, Server.mRegisteredAgents.end());
+			EXPECT_EQ(iter->first, "testagent.1234");
+			EXPECT_EQ(iter->second->ReceivedAccountName, true);
+			EXPECT_EQ(iter->second->InstanceId, instid);
+			EXPECT_EQ(iter->second->Peers.size(), 0);
+		}
 	}
 }
 
@@ -473,7 +481,7 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 		// Use the "Combined" window
 		AggregatedStats stats{std::move(*rawStats), options.Windows[9], false};
 
-		EXPECT_FLOAT_EQ(stats.GetCombatTime(), 95.0f);
+		EXPECT_FLOAT_EQ(std::floor(stats.GetCombatTime()), 95.0f);
 
 		const AggregatedStatsEntry& totalEntry = stats.GetTotal();
 		EXPECT_EQ(totalEntry.Healing, 304967);

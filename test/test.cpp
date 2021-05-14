@@ -89,7 +89,7 @@ TEST_P(XevtcLogTestFixture, druid_solo)
 	HealingStats rawStats = GetLocalState();
 	AggregatedStats stats{std::move(rawStats), options, false};
 	
-	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 47.0f);
+	EXPECT_FLOAT_EQ(std::floor(stats.GetCombatTime()), 47.0f);
 	
 	const AggregatedStatsEntry& totalEntry = stats.GetTotal();
 	EXPECT_EQ(totalEntry.Healing, 121095);
@@ -154,7 +154,7 @@ TEST_P(XevtcLogTestFixture, druid_MO)
 	HealingStats rawStats = GetLocalState();
 	AggregatedStats stats{std::move(rawStats), options.Windows[9], false};
 
-	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 95.0f);
+	EXPECT_FLOAT_EQ(std::floor(stats.GetCombatTime()), 95.0f);
 
 	const AggregatedStatsEntry& totalEntry = stats.GetTotal();
 	EXPECT_EQ(totalEntry.Healing, 304967);
@@ -211,7 +211,7 @@ TEST_P(XevtcLogTestFixture, null_names)
 	HealingStats rawStats = GetLocalState();
 	AggregatedStats stats{ std::move(rawStats), options, false };
 
-	EXPECT_FLOAT_EQ(stats.GetCombatTime(), 47.0f);
+	EXPECT_FLOAT_EQ(std::floor(stats.GetCombatTime()), 47.0f);
 
 	const AggregatedStatsEntry& totalEntry = stats.GetTotal();
 	EXPECT_EQ(totalEntry.Healing, 121095);
