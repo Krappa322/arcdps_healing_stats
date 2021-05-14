@@ -228,7 +228,7 @@ TEST_F(SimpleNetworkTestFixture, RegisterSelf)
 			auto iter = Server.mRegisteredAgents.find("testagent.1234");
 			ASSERT_NE(iter, Server.mRegisteredAgents.end());
 			EXPECT_EQ(iter->first, "testagent.1234");
-			EXPECT_EQ(iter->second->ReceivedAccountName, true);
+			EXPECT_EQ(iter->second->Iterator, iter);
 			EXPECT_EQ(iter->second->InstanceId, instid);
 			EXPECT_EQ(iter->second->Peers.size(), 0);
 		}
@@ -284,7 +284,7 @@ TEST_F(SimpleNetworkTestFixture, RegisterPeer)
 		auto iter = Server.mRegisteredAgents.find("testagent.1234");
 		ASSERT_NE(iter, Server.mRegisteredAgents.end());
 		EXPECT_EQ(iter->first, "testagent.1234");
-		EXPECT_EQ(iter->second->ReceivedAccountName, true);
+		EXPECT_EQ(iter->second->Iterator, iter);
 		EXPECT_EQ(iter->second->InstanceId, 10);
 
 		auto expected_map = std::map<std::string, uint16_t>({{"testagent2.1234", static_cast<uint16_t>(11)}});
@@ -325,7 +325,7 @@ TEST_F(SimpleNetworkTestFixture, RegisterPeer)
 		auto iter = Server.mRegisteredAgents.find("testagent.1234");
 		ASSERT_NE(iter, Server.mRegisteredAgents.end());
 		EXPECT_EQ(iter->first, "testagent.1234");
-		EXPECT_EQ(iter->second->ReceivedAccountName, true);
+		EXPECT_EQ(iter->second->Iterator, iter);
 		EXPECT_EQ(iter->second->InstanceId, 10);
 
 		auto expected_map = std::map<std::string, uint16_t>({});

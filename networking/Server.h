@@ -19,9 +19,7 @@ class evtc_rpc_server
 {
 	struct ConnectionContext
 	{
-		void ForceDisconnect(const char* pErrorMessage, std::shared_ptr<ConnectionContext>&& pClientContext);
-
-		bool ReceivedAccountName = false; // Protected by mRegisteredAgentsLock on the server that owns this ConnectionContext
+		std::map<std::string, std::shared_ptr<ConnectionContext>>::iterator Iterator{}; // Protected by mRegisteredAgentsLock on the server that owns this ConnectionContext
 		uint16_t InstanceId = 0; // Protected by mRegisteredAgentsLock on the server that owns this ConnectionContext
 		std::map<std::string, uint16_t> Peers; // Protected by mRegisteredAgentsLock on the server that owns this ConnectionContext
 
@@ -106,6 +104,7 @@ class evtc_rpc_server
 
 public:
 	evtc_rpc_server(const char* pListeningEndpoint);
+	~evtc_rpc_server();
 
 	static void ThreadStartServe(void* pThis);
 	void Serve();
@@ -125,6 +124,7 @@ private:
 	const char* HandleCombatEvent(const cbtevent& pEvent, std::shared_ptr<ConnectionContext>& pClient);
 
 	void SendEvent(const evtc_rpc::messages::CombatEvent& pEvent, WriteEventCallData* pCallData, const std::shared_ptr<ConnectionContext>& pClient);
+	void ForceDisconnect(const char* pErrorMessage, const std::shared_ptr<ConnectionContext>& pClient);
 
 	std::mutex mRegisteredAgentsLock;
 	std::map<std::string, std::shared_ptr<ConnectionContext>> mRegisteredAgents;
