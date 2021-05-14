@@ -51,12 +51,19 @@ protected:
 	{
 		//PlayerStats::GlobalState.Clear(); // Make sure agents etc. aren't leaked between test runs
 
+		GlobalObjects::ALLOC_CONSOLE = false;
 		ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
 
 		{
 			arcdps_exports* temp_exports = mod_init();
 			memcpy(&Exports, temp_exports, sizeof(Exports)); // Maybe do some deep copy at some point but we're not using the strings in there anyways
 		}
+	}
+
+	void TearDown() override
+	{
+		ModReleaseSignature mod_release = get_release_addr();
+		mod_release();
 	}
 
 	HealingStats GetLocalState()

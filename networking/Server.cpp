@@ -20,10 +20,10 @@ void evtc_rpc_server::ConnectionContext::ForceDisconnect(const char* pErrorMessa
 	LOG("(client %p tag %p) force disconnected - '%s'", this, queuedData, pErrorMessage);
 }
 
-evtc_rpc_server::evtc_rpc_server()
+evtc_rpc_server::evtc_rpc_server(const char* pListeningEndpoint)
 {
 	grpc::ServerBuilder builder;
-	builder.AddListeningPort("localhost:50051", grpc::InsecureServerCredentials());
+	builder.AddListeningPort(pListeningEndpoint, grpc::InsecureServerCredentials());
 	builder.RegisterService(&mService);
 
 	mCompletionQueue = builder.AddCompletionQueue();
@@ -78,6 +78,12 @@ void evtc_rpc_server::Serve()
 			case CallDataType::WriteEvent:
 			{
 				WriteEventCallData* message = static_cast<WriteEventCallData*>(tag);
+				delete message;
+				break;
+			}
+			case CallDataType::Disconnect:
+			{
+				DisconnectCallData* message = static_cast<DisconnectCallData*>(tag);
 				delete message;
 				break;
 			}

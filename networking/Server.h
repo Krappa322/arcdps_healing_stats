@@ -103,7 +103,7 @@ class evtc_rpc_server
 	};
 
 public:
-	evtc_rpc_server();
+	evtc_rpc_server(const char* pListeningEndpoint);
 
 	static void ThreadStartServe(void* pThis);
 	void Serve();

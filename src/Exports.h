@@ -12,11 +12,18 @@ typedef void (*E3Signature)(const char* pString);
 class GlobalObjects
 {
 public:
+#ifdef DEBUG
+	static inline bool ALLOC_CONSOLE = true;
+#else
+	static inline bool ALLOC_CONSOLE = false;
+#endif
+
 	static inline E7Signature ARC_E7 = nullptr;
 	static inline E3Signature ARC_E3 = nullptr;
 	static inline std::unique_ptr<EventSequencer> EVENT_SEQUENCER = nullptr;
 	static inline std::unique_ptr<EventProcessor> EVENT_PROCESSOR = nullptr;
 	static inline std::unique_ptr<evtc_rpc_client> EVTC_RPC_CLIENT = nullptr;
+	static inline std::unique_ptr<std::thread> EVTC_RPC_CLIENT_THREAD = nullptr;
 };
 
 typedef void* (*MallocSignature)(size_t);

@@ -225,7 +225,7 @@ HealTableOptions::HealTableOptions()
 	snprintf(Windows[4].EntryFormat, sizeof(Windows[4].EntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
 	snprintf(Windows[4].DetailsEntryFormat, sizeof(Windows[4].DetailsEntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
 
-	Windows[5].DataSourceChoice = static_cast<int>(DataSource::Combined);
+	Windows[5].DataSourceChoice = static_cast<int>(DataSource::PeersOutgoing);
 	snprintf(Windows[5].Name, sizeof(Windows[5].Name), "%s", "Peers outgoing");
 	snprintf(Windows[5].TitleFormat, sizeof(Windows[5].TitleFormat), "%s", "Outgoing healing {1} ({4}/s, {7}s in combat)");
 

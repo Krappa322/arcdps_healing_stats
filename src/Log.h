@@ -70,6 +70,7 @@ namespace Log_
 #else
 #define LOG(pFormatString, ...)
 #endif
+#define DEBUGLOG(...)
 
 #define LOG_ARC(pFormatString, ...) Log_::LogImplementationArc_(Log_::GetFileName(__FILE__), __func__, pFormatString, __VA_ARGS__); if (false) { printf(pFormatString, __VA_ARGS__); }
 

@@ -97,6 +97,7 @@ void evtc_rpc_client::CallDataBase::Destruct()
 evtc_rpc_client::evtc_rpc_client(std::string&& pEndpoint, std::function<void(cbtevent*, uint16_t)>&& pCombatEventCallback)
 	: mCombatEventCallback{std::move(pCombatEventCallback)}
 	, mEndpoint{std::move(pEndpoint)}
+	, mLastConnectionAttempt{std::chrono::steady_clock::now() - std::chrono::hours{1}}
 {
 }
 
@@ -294,13 +295,36 @@ void evtc_rpc_client::Serve()
 		{
 			// Nothing
 		}
-		else if (mShouldShutdown == true)
+		else if (mConnectionContext == nullptr)
 		{
-			mShouldShutdown = false;
-			mShutdown = true;
-
-			if (mConnectionContext != nullptr)
+			if (mShouldShutdown == true)
 			{
+				LOG("ShouldShutdown==true - shutting down since there are no connections");
+				mCompletionQueue.Shutdown();
+			}
+			else if ((std::chrono::steady_clock::now() - mLastConnectionAttempt) > std::chrono::seconds{5})
+			{
+				mConnectionContext = std::make_shared<ConnectionContext>();
+				mConnectionContext->Stub = evtc_rpc::evtc_rpc::NewStub(grpc::CreateChannel(mEndpoint.c_str(), grpc::InsecureChannelCredentials()));
+
+				ConnectCallData* queuedData1 = new ConnectCallData{std::shared_ptr(mConnectionContext)};
+				mConnectionContext->Stream = mConnectionContext->Stub->AsyncConnect(&mConnectionContext->ClientContext, &mCompletionQueue, queuedData1);
+				mConnectionContext->WritePending = true;
+
+				ReadMessageCallData* queuedData2 = new ReadMessageCallData{std::shared_ptr(mConnectionContext)};
+				queuedData2->Context->Stream->Read(&queuedData2->Message, queuedData2);
+
+				mLastConnectionAttempt = std::chrono::steady_clock::now();
+				LOG("Opening new connection to %s connect_tag=%p, read_tag=%p", mEndpoint.c_str(), queuedData1, queuedData2);
+			}
+		}
+		else if (mConnectionContext->WritePending == false)
+		{
+			if (mShouldShutdown == true)
+			{
+				mShouldShutdown = false;
+				mShutdown = true;
+
 				WritesDoneCallData* queuedData = new WritesDoneCallData{std::shared_ptr(mConnectionContext)};
 				queuedData->Context->Stream->WritesDone(queuedData);
 
@@ -308,59 +332,40 @@ void evtc_rpc_client::Serve()
 			}
 			else
 			{
-				LOG("ShouldShutdown==true - shutting down since there are no connections");
-				mCompletionQueue.Shutdown();
-			}
-		}
-		else if (mConnectionContext == nullptr)
-		{
-			mConnectionContext = std::make_shared<ConnectionContext>();
-			mConnectionContext->Stub = evtc_rpc::evtc_rpc::NewStub(grpc::CreateChannel(mEndpoint.c_str(), grpc::InsecureChannelCredentials()));
-
-			ConnectCallData* queuedData1 = new ConnectCallData{std::shared_ptr(mConnectionContext)};
-			mConnectionContext->Stream = mConnectionContext->Stub->AsyncConnect(&mConnectionContext->ClientContext, &mCompletionQueue, queuedData1);
-			mConnectionContext->WritePending = true;
-
-			ReadMessageCallData* queuedData2 = new ReadMessageCallData{std::shared_ptr(mConnectionContext)};
-			queuedData2->Context->Stream->Read(&queuedData2->Message, queuedData2);
-
-			LOG("Opening new connection to %s connect_tag=%p, read_tag=%p", mEndpoint.c_str(), queuedData1, queuedData2);
-		}
-		else if (mConnectionContext->WritePending == false)
-		{
-			CallDataBase* queuedData = nullptr;
-			{
-				std::lock_guard lock(mSelfInfoLock);
-
-				// Either RegisteredInstanceId is 0 (meaning we aren't registered yet), or mInstanceId has changed because we changed instances
-				if (mConnectionContext->RegisteredInstanceId != mInstanceId)
+				CallDataBase* queuedData = nullptr;
 				{
-					assert(mInstanceId != 0); // mInstanceId should never go back to zero after being set
-					assert(mAccountName.size() > 0);
-					queuedData = new RegisterSelfCallData{std::shared_ptr(mConnectionContext), mInstanceId, std::string(mAccountName)};
+					std::lock_guard lock(mSelfInfoLock);
 
-					LOG("(tag %p) Registering self %hu %s", queuedData, mInstanceId, mAccountName.c_str());
+					// Either RegisteredInstanceId is 0 (meaning we aren't registered yet), or mInstanceId has changed because we changed instances
+					if (mConnectionContext->RegisteredInstanceId != mInstanceId)
+					{
+						assert(mInstanceId != 0); // mInstanceId should never go back to zero after being set
+						assert(mAccountName.size() > 0);
+						queuedData = new RegisterSelfCallData{std::shared_ptr(mConnectionContext), mInstanceId, std::string(mAccountName)};
+
+						LOG("(tag %p) Registering self %hu %s", queuedData, mInstanceId, mAccountName.c_str());
+					}
 				}
-			}
 
-			if (queuedData == nullptr && mConnectionContext->RegisteredInstanceId != 0)
-			{
-				std::lock_guard lock(mQueuedEventsLock);
-
-				if (mQueuedEvents.size() > 0)
+				if (queuedData == nullptr && mConnectionContext->RegisteredInstanceId != 0)
 				{
-					queuedData = mQueuedEvents.front();
-					mQueuedEvents.pop_front();
-					queuedData->Context = std::shared_ptr(mConnectionContext);
+					std::lock_guard lock(mQueuedEventsLock);
+
+					if (mQueuedEvents.size() > 0)
+					{
+						queuedData = mQueuedEvents.front();
+						mQueuedEvents.pop_front();
+						queuedData->Context = std::shared_ptr(mConnectionContext);
+					}
 				}
-			}
 
-			if (queuedData != nullptr)
-			{
-				QueueEvent(queuedData);
+				if (queuedData != nullptr)
+				{
+					QueueEvent(queuedData);
 
-				assert(queuedData->IsWrite() == true);
-				mConnectionContext->WritePending = true;
+					assert(queuedData->IsWrite() == true);
+					mConnectionContext->WritePending = true;
+				}
 			}
 		}
 	}

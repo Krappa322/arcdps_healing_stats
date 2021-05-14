@@ -3,9 +3,6 @@
 
 #include <cassert>
 
-#define DEBUGLOG
-//#define DEBUGLOG LOG
-
 EventSequencer::EventSequencer(const CombatCallbackSignature pCallback)
 	: mCallback(pCallback)
 {

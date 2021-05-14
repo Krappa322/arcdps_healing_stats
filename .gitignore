@@ -2,6 +2,7 @@
 x64
 x86
 ~AutoRecover*
-imgui.ini
+*.ini
 *.mock
+*.log
 packages

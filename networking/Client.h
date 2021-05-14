@@ -12,6 +12,7 @@
 #pragma warning(pop)
 
 #include <cassert>
+#include <chrono>
 #include <deque>
 #include <memory>
 
@@ -181,6 +182,7 @@ private:
 
 	std::atomic_bool mShouldShutdown = false;
 	bool mShutdown = false;
+	std::chrono::steady_clock::time_point mLastConnectionAttempt;
 
 	std::shared_ptr<ConnectionContext> mConnectionContext;
 	grpc::CompletionQueue mCompletionQueue;

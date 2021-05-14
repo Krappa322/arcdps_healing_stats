@@ -378,9 +378,9 @@ std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> 
 			entry->second.first = "peer (unmapped)";
 		}
 
-		LOG("peer %llu %s, %zu events", uniqueId, entry->second.first.c_str(), entry->second.second.Events.size());
+		DEBUGLOG("peer %llu %s, %zu events", uniqueId, entry->second.first.c_str(), entry->second.second.Events.size());
 	}
 
-	LOG("self %llu, %zu entries", selfUniqueId, result.size());
+	DEBUGLOG("self %llu, %zu entries", selfUniqueId, result.size());
 	return {selfUniqueId, result};
 }

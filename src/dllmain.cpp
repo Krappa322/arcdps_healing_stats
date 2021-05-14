@@ -60,9 +60,6 @@ extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArc
 	ARCDPS_FREE = pArcdpsFree;
 	ImGui::SetAllocatorFunctions(MallocWrapper, FreeWrapper);
 
-	GlobalObjects::EVENT_SEQUENCER = std::make_unique<EventSequencer>(ProcessLocalEvent);
-	GlobalObjects::EVENT_PROCESSOR = std::make_unique<EventProcessor>();
-	GlobalObjects::EVTC_RPC_CLIENT = std::make_unique<evtc_rpc_client>("", ProcessPeerEvent);
 	return mod_init;
 }
 
@@ -76,26 +73,32 @@ extern "C" __declspec(dllexport) ModReleaseSignature get_release_addr()
 /* initialize mod -- return table that arcdps will use for callbacks */
 arcdps_exports* mod_init()
 {
-#ifdef DEBUG
-	AllocConsole();
-	SetConsoleOutputCP(CP_UTF8);
+	if (GlobalObjects::ALLOC_CONSOLE == true)
+	{
+		AllocConsole();
+		SetConsoleOutputCP(CP_UTF8);
 
-	/* big buffer */
-	char buff[4096];
-	char* p = &buff[0];
-	p += _snprintf(p, 400, "==== mod_init ====\n");
-	p += _snprintf(p, 400, "arcdps: %s\n", ARCDPS_VERSION);
+		/* big buffer */
+		char buff[4096];
+		char* p = &buff[0];
+		p += _snprintf(p, 400, "==== mod_init ====\n");
+		p += _snprintf(p, 400, "arcdps: %s\n", ARCDPS_VERSION);
 
-	/* print */
-	DWORD written = 0;
-	HANDLE hnd = GetStdHandle(STD_OUTPUT_HANDLE);
-	WriteConsoleA(hnd, &buff[0], (DWORD)(p - &buff[0]), &written, 0);
-#endif // DEBUG
+		/* print */
+		DWORD written = 0;
+		HANDLE hnd = GetStdHandle(STD_OUTPUT_HANDLE);
+		WriteConsoleA(hnd, &buff[0], (DWORD)(p - &buff[0]), &written, 0);
+	}
 
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 		ReadIni(HEAL_TABLE_OPTIONS);
 	}
+
+	GlobalObjects::EVENT_SEQUENCER = std::make_unique<EventSequencer>(ProcessLocalEvent);
+	GlobalObjects::EVENT_PROCESSOR = std::make_unique<EventProcessor>();
+	GlobalObjects::EVTC_RPC_CLIENT = std::make_unique<evtc_rpc_client>("localhost:50052", ProcessPeerEvent);
+	GlobalObjects::EVTC_RPC_CLIENT_THREAD = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, GlobalObjects::EVTC_RPC_CLIENT.get());
 
 	memset(&ARC_EXPORTS, 0, sizeof(arcdps_exports));
 	ARC_EXPORTS.sig = 0x9c9b3c99;
@@ -119,9 +122,17 @@ uintptr_t mod_release()
 		WriteIni(HEAL_TABLE_OPTIONS);
 	}
 
-#ifdef DEBUG
-	FreeConsole();
-#endif
+	GlobalObjects::EVTC_RPC_CLIENT->Shutdown();
+	GlobalObjects::EVTC_RPC_CLIENT_THREAD->join();
+	GlobalObjects::EVTC_RPC_CLIENT_THREAD = nullptr;
+	GlobalObjects::EVTC_RPC_CLIENT = nullptr;
+	GlobalObjects::EVENT_PROCESSOR = nullptr;
+	GlobalObjects::EVENT_SEQUENCER = nullptr;
+
+	if (GlobalObjects::ALLOC_CONSOLE == true)
+	{
+		FreeConsole();
+	}
 
 	return 0;
 }
@@ -157,6 +168,7 @@ static std::atomic<uint32_t> SELF_INSTANCE_ID = UINT32_MAX;
 uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
 	GlobalObjects::EVENT_PROCESSOR->AreaCombat(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
+	GlobalObjects::EVTC_RPC_CLIENT->ProcessAreaEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 	return 0;
 }
 
@@ -171,7 +183,7 @@ uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationA
 uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
 	GlobalObjects::EVENT_PROCESSOR->LocalCombat(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
-	// Send to client
+	GlobalObjects::EVTC_RPC_CLIENT->ProcessLocalEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 	return 0;
 }
 

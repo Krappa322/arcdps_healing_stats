@@ -88,7 +88,7 @@ private:
 	std::vector<std::unique_ptr<ClientInstance>> mClients;
 
 public:
-	evtc_rpc_server Server;
+	evtc_rpc_server Server{"localhost:50051"};
 
 private:
 	std::unique_ptr<std::thread> mServerThread;
@@ -125,7 +125,7 @@ protected:
 		uint64_t seed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		srand(static_cast<uint32_t>(seed));
 
-		Server = std::make_unique<evtc_rpc_server>();
+		Server = std::make_unique<evtc_rpc_server>("localhost:50051");
 
 		auto eventhandler = [this](cbtevent* pEvent, uint16_t pInstanceId)
 		{
