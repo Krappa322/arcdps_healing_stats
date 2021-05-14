@@ -4,24 +4,35 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29609.76
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "arcdps_personal_stats_lib", "arcdps_personal_stats.vcxproj", "{3AE52975-FC4E-4804-8838-F230A5F1E79C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8E446279-F584-484B-AECB-9E98E51D4B6F} = {8E446279-F584-484B-AECB-9E98E51D4B6F}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj", "{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}"
 	ProjectSection(ProjectDependencies) = postProject
+		{8E446279-F584-484B-AECB-9E98E51D4B6F} = {8E446279-F584-484B-AECB-9E98E51D4B6F}
 		{68F4B081-08A4-4F37-A22B-035B738FBA15} = {68F4B081-08A4-4F37-A22B-035B738FBA15}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "arcdps_healing_stats", "arcdps_healing_stats\arcdps_healing_stats.vcxproj", "{967D7743-D77B-466A-8645-94F9812AECAD}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3AE52975-FC4E-4804-8838-F230A5F1E79C} = {3AE52975-FC4E-4804-8838-F230A5F1E79C}
+		{8E446279-F584-484B-AECB-9E98E51D4B6F} = {8E446279-F584-484B-AECB-9E98E51D4B6F}
 		{68F4B081-08A4-4F37-A22B-035B738FBA15} = {68F4B081-08A4-4F37-A22B-035B738FBA15}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "networking", "networking\networking.vcxproj", "{68F4B081-08A4-4F37-A22B-035B738FBA15}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8E446279-F584-484B-AECB-9E98E51D4B6F} = {8E446279-F584-484B-AECB-9E98E51D4B6F}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "evtc_rpc_server", "evtc_rpc_server\evtc_rpc_server.vcxproj", "{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}"
 	ProjectSection(ProjectDependencies) = postProject
+		{8E446279-F584-484B-AECB-9E98E51D4B6F} = {8E446279-F584-484B-AECB-9E98E51D4B6F}
 		{68F4B081-08A4-4F37-A22B-035B738FBA15} = {68F4B081-08A4-4F37-A22B-035B738FBA15}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vcpkg_install_dependencies", "vcpkg_install_dependencies\vcpkg_install_dependencies.vcxproj", "{8E446279-F584-484B-AECB-9E98E51D4B6F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,11 +55,12 @@ Global
 		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Release|x64.Build.0 = Release|x64
 		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Release|x86.ActiveCfg = Release|x64
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Debug|x64.ActiveCfg = Debug|x64
+		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Debug|x64.Build.0 = Debug|x64
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Debug|x86.ActiveCfg = Debug|x64
-		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Mock|x64.ActiveCfg = Debug|x64
+		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Mock|x64.ActiveCfg = Release|x64
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Mock|x86.ActiveCfg = Release|x64
-		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Mock|x86.Build.0 = Release|x64
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Release|x64.ActiveCfg = Release|x64
+		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Release|x64.Build.0 = Release|x64
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Release|x86.ActiveCfg = Release|x64
 		{967D7743-D77B-466A-8645-94F9812AECAD}.Debug|x64.ActiveCfg = Debug|x64
 		{967D7743-D77B-466A-8645-94F9812AECAD}.Debug|x64.Build.0 = Debug|x64
@@ -81,6 +93,18 @@ Global
 		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Release|x64.Build.0 = Release|x64
 		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Release|x86.ActiveCfg = Release|Win32
 		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Release|x86.Build.0 = Release|Win32
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Debug|x64.ActiveCfg = Debug|x64
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Debug|x64.Build.0 = Debug|x64
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Debug|x86.ActiveCfg = Debug|Win32
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Debug|x86.Build.0 = Debug|Win32
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Mock|x64.ActiveCfg = Debug|x64
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Mock|x64.Build.0 = Debug|x64
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Mock|x86.ActiveCfg = Debug|Win32
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Mock|x86.Build.0 = Debug|Win32
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Release|x64.ActiveCfg = Release|x64
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Release|x64.Build.0 = Release|x64
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Release|x86.ActiveCfg = Release|Win32
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

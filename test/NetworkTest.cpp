@@ -199,7 +199,7 @@ TEST_F(SimpleNetworkTestFixture, Connect)
 	// Wait until the server sees the new agent and then verify the state
 	auto start = std::chrono::system_clock::now();
 	bool completed = false;
-	while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(100))
+	while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(200))
 	{
 		{
 			std::lock_guard lock(Server.mRegisteredAgentsLock);

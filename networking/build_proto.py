@@ -3,11 +3,12 @@
 # the build output)
 import re, subprocess, sys
 
-protoc_path = r"Q:\Programming\vcpkg\installed\x64-windows\tools\protobuf\protoc"
-grpc_plugin_path = r"Q:\Programming\vcpkg\installed\x64-windows\tools\grpc\grpc_cpp_plugin.exe"
-filename = sys.argv[1]
+triplet = sys.argv[1]
+protoc_path = r"..\vcpkg_installed\{}\tools\protobuf\protoc.exe".format(triplet)
+grpc_plugin_path = r"..\vcpkg_installed\{}\tools\grpc\grpc_cpp_plugin.exe".format(triplet)
+filename = sys.argv[2]
 
-args = [protoc_path, "--cpp_out=.", "--grpc_out=generate_mock_code=true:.", "--plugin=protoc-gen-grpc={}".format(grpc_plugin_path), filename]
+args = [protoc_path, "--cpp_out=.", "--grpc_out=.", "--plugin=protoc-gen-grpc={}".format(grpc_plugin_path), filename]
 result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
 for line in result.stderr.splitlines():

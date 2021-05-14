@@ -80,7 +80,7 @@ TEST_P(XevtcLogTestFixture, druid_solo)
 	auto [parallelCallbacks, fuzzWidth] = GetParam();
 
 	uint32_t result = Mock.ExecuteFromXevtc("logs\\druid_solo.xevtc", parallelCallbacks, fuzzWidth);
-	ASSERT_EQ(result, 0);
+	ASSERT_EQ(result, 0U);
 	ASSERT_TRUE(GlobalObjects::EVENT_SEQUENCER->QueueIsEmpty());
 
 	HealWindowOptions options; // Use all defaults

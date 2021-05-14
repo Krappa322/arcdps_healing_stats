@@ -14,25 +14,22 @@
 #include <google/protobuf/wire_format.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
+
+PROTOBUF_PRAGMA_INIT_SEG
 namespace evtc_rpc {
-class MessageDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Message> _instance;
-} _Message_default_instance_;
+constexpr Message::Message(
+  ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized)
+  : blob_(&::PROTOBUF_NAMESPACE_ID::internal::fixed_address_empty_string){}
+struct MessageDefaultTypeInternal {
+  constexpr MessageDefaultTypeInternal()
+    : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
+  ~MessageDefaultTypeInternal() {}
+  union {
+    Message _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT MessageDefaultTypeInternal _Message_default_instance_;
 }  // namespace evtc_rpc
-static void InitDefaultsscc_info_Message_evtc_5frpc_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::evtc_rpc::_Message_default_instance_;
-    new (ptr) ::evtc_rpc::Message();
-    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
-  }
-}
-
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Message_evtc_5frpc_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_Message_evtc_5frpc_2eproto}, {}};
-
 static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_evtc_5frpc_2eproto[1];
 static constexpr ::PROTOBUF_NAMESPACE_ID::EnumDescriptor const** file_level_enum_descriptors_evtc_5frpc_2eproto = nullptr;
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_evtc_5frpc_2eproto = nullptr;
@@ -59,21 +56,21 @@ const char descriptor_table_protodef_evtc_5frpc_2eproto[] PROTOBUF_SECTION_VARIA
   "c_rpc.Message\032\021.evtc_rpc.Message\"\000(\0010\001b\006"
   "proto3"
   ;
-static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_evtc_5frpc_2eproto_deps[1] = {
-};
-static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_evtc_5frpc_2eproto_sccs[1] = {
-  &scc_info_Message_evtc_5frpc_2eproto.base,
-};
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_evtc_5frpc_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_evtc_5frpc_2eproto = {
-  false, false, descriptor_table_protodef_evtc_5frpc_2eproto, "evtc_rpc.proto", 126,
-  &descriptor_table_evtc_5frpc_2eproto_once, descriptor_table_evtc_5frpc_2eproto_sccs, descriptor_table_evtc_5frpc_2eproto_deps, 1, 0,
+  false, false, 126, descriptor_table_protodef_evtc_5frpc_2eproto, "evtc_rpc.proto", 
+  &descriptor_table_evtc_5frpc_2eproto_once, nullptr, 0, 1,
   schemas, file_default_instances, TableStruct_evtc_5frpc_2eproto::offsets,
-  file_level_metadata_evtc_5frpc_2eproto, 1, file_level_enum_descriptors_evtc_5frpc_2eproto, file_level_service_descriptors_evtc_5frpc_2eproto,
+  file_level_metadata_evtc_5frpc_2eproto, file_level_enum_descriptors_evtc_5frpc_2eproto, file_level_service_descriptors_evtc_5frpc_2eproto,
 };
+PROTOBUF_ATTRIBUTE_WEAK ::PROTOBUF_NAMESPACE_ID::Metadata
+descriptor_table_evtc_5frpc_2eproto_metadata_getter(int index) {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_evtc_5frpc_2eproto);
+  return descriptor_table_evtc_5frpc_2eproto.file_level_metadata[index];
+}
 
 // Force running AddDescriptors() at dynamic initialization time.
-static bool dynamic_init_dummy_evtc_5frpc_2eproto = (static_cast<void>(::PROTOBUF_NAMESPACE_ID::internal::AddDescriptors(&descriptor_table_evtc_5frpc_2eproto)), true);
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY static ::PROTOBUF_NAMESPACE_ID::internal::AddDescriptorsRunner dynamic_init_dummy_evtc_5frpc_2eproto(&descriptor_table_evtc_5frpc_2eproto);
 namespace evtc_rpc {
 
 // ===================================================================
@@ -100,8 +97,7 @@ Message::Message(const Message& from)
 }
 
 void Message::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Message_evtc_5frpc_2eproto.base);
-  blob_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+blob_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 }
 
 Message::~Message() {
@@ -124,11 +120,6 @@ void Message::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
 void Message::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const Message& Message::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Message_evtc_5frpc_2eproto.base);
-  return *internal_default_instance();
-}
-
 
 void Message::Clear() {
 // @@protoc_insertion_point(message_clear_start:evtc_rpc.Message)

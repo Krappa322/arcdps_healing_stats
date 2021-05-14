@@ -27,6 +27,7 @@ class evtc_rpc_client
 		uint16_t RegisteredInstanceId = 0;
 
 		grpc::ClientContext ClientContext;
+		std::shared_ptr<grpc::Channel> Channel;
 		std::unique_ptr<grpc::ClientAsyncReaderWriter<evtc_rpc::Message, evtc_rpc::Message>> Stream;
 		std::unique_ptr<evtc_rpc::evtc_rpc::Stub> Stub;
 	};
