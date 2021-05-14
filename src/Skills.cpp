@@ -97,6 +97,7 @@ SkillTable::SkillTable()
 
 void SkillTable::RegisterDamagingSkill(uint32_t pSkillId, const char* pSkillName)
 {
+	UNREFERENCED_PARAMETER(pSkillName);
 	if (pSkillId > UINT16_MAX)
 	{
 		LOG("Too high skill id %u %s!", pSkillId, pSkillName);
@@ -124,6 +125,7 @@ void SkillTable::RegisterSkillName(uint32_t pSkillId, const char* pSkillName)
 
 bool SkillTable::IsSkillIndirectHealing(uint32_t pSkillId, const char* pSkillName)
 {
+	UNREFERENCED_PARAMETER(pSkillName);
 	if (pSkillId > UINT16_MAX)
 	{
 		LOG("Too high skill id %u %s!", pSkillId, pSkillName);

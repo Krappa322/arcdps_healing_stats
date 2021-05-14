@@ -1,4 +1,6 @@
+#pragma warning(push, 0)
 #include <gtest/gtest.h>
+#pragma warning(pop)
 
 #include "AggregatedStatsCollection.h"
 #include "arcdps_mock/CombatMock.h"
@@ -71,7 +73,7 @@ protected:
 	ClientInstance& NewClient()
 	{
 		std::unique_ptr<ClientInstance>& newClient = mClients.emplace_back(std::make_unique<ClientInstance>());
-		auto eventhandler = [client = newClient.get()](cbtevent* pEvent, uint16_t pInstanceId)
+		auto eventhandler = [client = newClient.get()](cbtevent* pEvent, uint16_t /*pInstanceId*/)
 			{
 				client->ReceivedEvents.push_back(*pEvent);
 			};
@@ -127,7 +129,7 @@ protected:
 
 		Server = std::make_unique<evtc_rpc_server>("localhost:50051");
 
-		auto eventhandler = [this](cbtevent* pEvent, uint16_t pInstanceId)
+		auto eventhandler = [this](cbtevent* /*pEvent*/, uint16_t /*pInstanceId*/)
 		{
 			// Do nothing
 		};
@@ -277,7 +279,7 @@ TEST_F(SimpleNetworkTestFixture, RegisterPeer)
 		EXPECT_EQ(iter->second->ReceivedAccountName, true);
 		EXPECT_EQ(iter->second->InstanceId, 10);
 
-		auto expected_map = std::map<std::string, uint16_t>({{"testagent2.1234", 11}});
+		auto expected_map = std::map<std::string, uint16_t>({{"testagent2.1234", static_cast<uint16_t>(11)}});
 		EXPECT_EQ(iter->second->Peers, expected_map);
 	}
 
@@ -445,7 +447,7 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 
 	HealTableOptions options;
 	Processor.mSelfUniqueId.store(100000); // Fake self having a different id
-	Processor.mAgentTable.AddAgent(100000, UINT16_MAX - 1, "Local Zarwae", 1, false, true);
+	Processor.mAgentTable.AddAgent(100000, static_cast<uint16_t>(UINT16_MAX - 1), "Local Zarwae", static_cast<uint16_t>(1), false, true);
 	auto [localId, states] = Processor.GetState();
 
 	HealingStats* localState = &states[localId].second;
@@ -533,7 +535,7 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 	}
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
 	Normal,
 	NetworkXevtcTestFixture,
-	::testing::Values(0));
+	::testing::Values(0u));

@@ -264,7 +264,7 @@ void CombatMock::FillAgent(const Agent* pAgent, uint64_t pSelfId, ag& pResult)
 	pResult.id = pAgent->UniqueId;
 	pResult.prof = pAgent->Profession;
 	pResult.elite = pAgent->Elite;
-	pResult.self = (pAgent->UniqueId == mySelfId) ? 1 : 0;
+	pResult.self = (pAgent->UniqueId == pSelfId) ? 1 : 0;
 	pResult.team = 189; // What does this value even mean?
 }
 
@@ -279,7 +279,7 @@ void CombatMock::FillAgentEvent(const Agent& pAgent, uint64_t pSelfId, ag& pSour
 	pDestination.id = pAgent.InstanceId;
 	pDestination.prof = pAgent.Profession;
 	pDestination.elite = pAgent.Elite;
-	pDestination.self = (pAgent.UniqueId == mySelfId) ? 1 : 0;
+	pDestination.self = (pAgent.UniqueId == pSelfId) ? 1 : 0;
 	pDestination.team = pAgent.Subgroup;
 }
 

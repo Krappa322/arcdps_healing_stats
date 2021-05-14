@@ -35,18 +35,18 @@ static const char* ARCDPS_VERSION;
 std::mutex HEAL_TABLE_OPTIONS_MUTEX;
 static HealTableOptions HEAL_TABLE_OPTIONS;
 
-static void* MallocWrapper(size_t pSize, void* pUserData)
+static void* MallocWrapper(size_t pSize, void* /*pUserData*/)
 {
 	return ARCDPS_MALLOC(pSize);
 }
 
-static void FreeWrapper(void* pPointer, void* pUserData)
+static void FreeWrapper(void* pPointer, void* /*pUserData*/)
 {
 	ARCDPS_FREE(pPointer);
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
-extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9* pUnused, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
+extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9*, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
 	GlobalObjects::ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(GlobalObjects::ARC_E3 != nullptr);

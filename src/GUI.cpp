@@ -90,7 +90,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 			divide_safe(entry.Healing * 100, aggregatedTotal.Healing)};
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.DetailsEntryFormat, entryValues);
 
-		float fillRatio = divide_safe(entry.Healing, stats.HighestHealing);
+		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
 		ImGuiEx::StatsEntry(entry.Name.c_str(), buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
 	}
 	ImGui::EndChild();
@@ -101,6 +101,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 
 static void Display_Content(HealWindowContext& pContext, DataSource pDataSource, uint32_t pWindowIndex)
 {
+	UNREFERENCED_PARAMETER(pWindowIndex);
 	char buffer[1024];
 
 	float timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
@@ -121,7 +122,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			static_cast<DataSource>(pContext.DataSourceChoice) != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
 
-		float fillRatio = divide_safe(entry.Healing, stats.HighestHealing);
+		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
 		ImGuiEx::StatsEntry(entry.Name.c_str(), buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
 
 		DetailsWindowState* state = nullptr;
@@ -404,7 +405,7 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 	}
 }
 
-void ImGui_ProcessKeyEvent(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL)
+void ImGui_ProcessKeyEvent(HWND /*pWindowHandle*/, UINT pMessage, WPARAM pAdditionalW, LPARAM /*pAdditionalL*/)
 {
 	ImGuiIO& io = ImGui::GetIO();
 

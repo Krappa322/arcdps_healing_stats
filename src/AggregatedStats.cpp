@@ -176,7 +176,7 @@ float AggregatedStats::GetCombatTime()
 
 	uint64_t end = GetCombatEnd();
 	assert(end >= mySourceData.EnteredCombatTime);
-	return (end - mySourceData.EnteredCombatTime) / 1000;
+	return (end - mySourceData.EnteredCombatTime) / 1000.0f;
 }
 
 uint64_t AggregatedStats::GetCombatEnd()

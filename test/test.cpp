@@ -1,4 +1,6 @@
+#pragma warning(push, 0)
 #include <gtest/gtest.h>
+#pragma warning(pop)
 
 #include "AggregatedStats.h"
 #include "arcdps_mock/CombatMock.h"
@@ -24,7 +26,7 @@ namespace
 #pragma pack(pop)
 }
 
-void e3(const char* pString)
+void e3(const char* /*pString*/)
 {
 	return; // Logging, ignored
 }
@@ -260,17 +262,17 @@ TEST_P(XevtcLogTestFixture, null_names)
 	}
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
 	Normal,
 	XevtcLogTestFixture,
 	::testing::Values(std::make_pair(0, 0)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
 	Fuzz,
 	XevtcLogTestFixture,
 	::testing::Values(std::make_pair(0, 16), std::make_pair(0, 64)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
 	MultiThreaded,
 	XevtcLogTestFixture,
 	::testing::Values(std::make_pair(16, 0), std::make_pair(16, 16), std::make_pair(128, 16)));

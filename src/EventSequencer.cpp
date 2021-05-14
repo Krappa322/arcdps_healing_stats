@@ -31,6 +31,7 @@ uintptr_t EventSequencer::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* p
 		if (current == UINT64_MAX)
 		{
 			bool result = mHighestId.compare_exchange_weak(current, pId - 1, std::memory_order_acq_rel);
+			DBG_UNREFERENCED_LOCAL_VARIABLE(result);
 
 			LOG("Registered first event (%llu) - result %s", pId, BOOL_STR(result));
 

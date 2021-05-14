@@ -9,7 +9,7 @@ EventProcessor::EventProcessor()
 {
 }
 
-void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
+void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t /*pId*/, uint64_t /*pRevision*/)
 {
 	if (pEvent == nullptr)
 	{
@@ -96,8 +96,9 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 	}
 }
 
-void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
+void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t /*pRevision*/)
 {
+	UNREFERENCED_PARAMETER(pId);
 	if (pEvent == nullptr)
 	{
 		if (pSourceAgent->elite != 0)
@@ -183,7 +184,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 
 	if (pEvent->value <= 0 && pEvent->buff_dmg <= 0)
 	{
-		LOG("Damage event %s %u %u (%llu %s %s)->(%llu %s %s) iff=%hhu", pSkillname, pEvent->value, pEvent->buff_dmg, pSourceAgent->id, pSourceAgent->name, BOOL_STR(pSourceAgent->self), pDestinationAgent->id, pDestinationAgent->name, BOOL_STR(pDestinationAgent->self), pEvent->iff);
+		LOG("Damage event %s %u %u (%llu %s %u)->(%llu %s %u) iff=%hhu", pSkillname, pEvent->value, pEvent->buff_dmg, pSourceAgent->id, pSourceAgent->name, pSourceAgent->self, pDestinationAgent->id, pDestinationAgent->name, pDestinationAgent->self, pEvent->iff);
 
 		if ((pSourceAgent->self != 0 || pDestinationAgent->self != 0) && pEvent->iff == IFF_FOE)
 		{

@@ -1,6 +1,7 @@
 #pragma once
 #include "../arcdps_mock/arcdps-extension/arcdps_structs.h"
 
+#pragma warning(disable : 4702)
 #pragma warning(push, 0)
 #include "evtc_rpc.grpc.pb.h"
 
@@ -10,6 +11,7 @@
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 #pragma warning(pop)
+#pragma warning(default : 4702)
 
 #include <cassert>
 #include <chrono>

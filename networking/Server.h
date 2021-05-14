@@ -1,4 +1,5 @@
 #pragma once
+#pragma warning(disable : 4702)
 #pragma warning(push, 0)
 #include "evtc_rpc.grpc.pb.h"
 
@@ -8,6 +9,7 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/security/server_credentials.h>
 #pragma warning(pop)
+#pragma warning(default : 4702)
 
 #include "evtc_rpc_messages.h"
 

@@ -126,7 +126,7 @@ uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent,
 				std::lock_guard lock(mSelfInfoLock);
 
 				mAccountName = pDestinationAgent->name;
-				mInstanceId = pDestinationAgent->id;
+				mInstanceId = static_cast<uint16_t>(pDestinationAgent->id);
 			}
 		}
 		else
@@ -474,6 +474,7 @@ void evtc_rpc_client::QueueEvent(CallDataBase* pCallData)
 		case CallDataType::RegisterSelf:
 		{
 			RegisterSelfCallData* calldata = static_cast<RegisterSelfCallData*>(pCallData);
+			assert(calldata->SelfAccountName.size() < UINT8_MAX);
 
 			if (pCallData->Context->RegisteredInstanceId == 0)
 			{
@@ -481,7 +482,7 @@ void evtc_rpc_client::QueueEvent(CallDataBase* pCallData)
 
 				RegisterSelf message;
 				message.SelfId = calldata->SelfInstanceId;
-				message.SelfAccountNameLength = calldata->SelfAccountName.size();
+				message.SelfAccountNameLength = static_cast<uint8_t>(calldata->SelfAccountName.size());
 
 				memcpy(bufferpos, &message, sizeof(message));
 				bufferpos += sizeof(message);
@@ -512,12 +513,13 @@ void evtc_rpc_client::QueueEvent(CallDataBase* pCallData)
 		case CallDataType::AddPeer:
 		{
 			AddPeerCallData* calldata = static_cast<AddPeerCallData*>(pCallData);
+			assert(calldata->PeerAccountName.size() < UINT8_MAX);
 
 			header.MessageType = Type::AddPeer;
 
 			AddPeer message;
 			message.PeerId = calldata->PeerInstanceId;
-			message.PeerAccountNameLength = calldata->PeerAccountName.size();
+			message.PeerAccountNameLength = static_cast<uint8_t>(calldata->PeerAccountName.size());
 
 			memcpy(bufferpos, &message, sizeof(message));
 			bufferpos += sizeof(message);
