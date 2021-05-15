@@ -95,9 +95,16 @@ arcdps_exports* mod_init()
 		ReadIni(HEAL_TABLE_OPTIONS);
 	}
 
+	auto getEndpoint = []() -> std::string
+		{
+			std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+
+			return std::string{HEAL_TABLE_OPTIONS.EvtcRpcEndpoint};
+		};
+
 	GlobalObjects::EVENT_SEQUENCER = std::make_unique<EventSequencer>(ProcessLocalEvent);
 	GlobalObjects::EVENT_PROCESSOR = std::make_unique<EventProcessor>();
-	GlobalObjects::EVTC_RPC_CLIENT = std::make_unique<evtc_rpc_client>("localhost:50052", ProcessPeerEvent);
+	GlobalObjects::EVTC_RPC_CLIENT = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), ProcessPeerEvent);
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, GlobalObjects::EVTC_RPC_CLIENT.get());
 
 	memset(&ARC_EXPORTS, 0, sizeof(arcdps_exports));

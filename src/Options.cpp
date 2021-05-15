@@ -21,6 +21,11 @@ void WriteIni(const HealTableOptions& pOptions)
 	{
 		LOG("SetValue debug_mode failed with %i", error);
 	}
+	error = healtable_ini.SetValue("settings", "evtc_rpc_endpoint", pOptions.EvtcRpcEndpoint);
+	if (error < 0)
+	{
+		LOG("SetValue evtc_rpc_endpoint failed with %i", error);
+	}
 
 	for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
 	{
@@ -141,6 +146,11 @@ void ReadIni(HealTableOptions& pOptions)
 	}
 
 	pOptions.DebugMode = healtable_ini.GetBoolValue("settings", "debug_mode", pOptions.DebugMode);
+	const char* val = healtable_ini.GetValue("settings", "evtc_rpc_endpoint", nullptr);
+	if (val != nullptr)
+	{
+		snprintf(pOptions.EvtcRpcEndpoint, sizeof(pOptions.EvtcRpcEndpoint), "%s", val);
+	}
 
 	for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
 	{
@@ -162,7 +172,7 @@ void ReadIni(HealTableOptions& pOptions)
 
 		pOptions.Windows[i].ShowProgressBars = healtable_ini.GetBoolValue(section, "show_progress_bars", pOptions.Windows[i].ShowProgressBars);
 
-		const char* val = healtable_ini.GetValue(section, "name", nullptr);
+		val = healtable_ini.GetValue(section, "name", nullptr);
 		if (val != nullptr)
 		{
 			snprintf(pOptions.Windows[i].Name, sizeof(pOptions.Windows[i].Name), "%s", val);

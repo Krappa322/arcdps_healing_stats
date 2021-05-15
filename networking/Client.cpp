@@ -98,10 +98,10 @@ void evtc_rpc_client::CallDataBase::Destruct()
 }
 
 
-evtc_rpc_client::evtc_rpc_client(std::string&& pEndpoint, std::function<void(cbtevent*, uint16_t)>&& pCombatEventCallback)
-	: mCombatEventCallback{std::move(pCombatEventCallback)}
+evtc_rpc_client::evtc_rpc_client(std::function<std::string()>&& pEndpointCallback, std::function<void(cbtevent*, uint16_t)>&& pCombatEventCallback)
+	: mEndpointCallback(pEndpointCallback)
+	, mCombatEventCallback{std::move(pCombatEventCallback)}
 	, mLastConnectionAttempt{std::chrono::steady_clock::now() - std::chrono::hours{1}}
-	, mEndpoint{std::move(pEndpoint)}
 {
 }
 
@@ -264,7 +264,16 @@ void evtc_rpc_client::Serve()
 				{
 					case CallDataType::Connect:
 					{
-						LOG("(tag %p) Connection to remote %s failed", tag, mEndpoint.c_str());
+						LOG("(tag %p) Connection to remote failed", tag);
+						if (base->Context == mConnectionContext)
+						{
+							mConnectionContext = nullptr;
+						}
+						break;
+					}
+					case CallDataType::ReadMessage:
+					{
+						LOG("(tag %p) Remote broke connection", tag);
 						if (base->Context == mConnectionContext)
 						{
 							mConnectionContext = nullptr;
@@ -312,8 +321,10 @@ void evtc_rpc_client::Serve()
 		{
 			if ((std::chrono::steady_clock::now() - mLastConnectionAttempt) > std::chrono::seconds{5})
 			{
+				std::string endpoint = mEndpointCallback();
+
 				mConnectionContext = std::make_shared<ConnectionContext>();
-				mConnectionContext->Channel = grpc::CreateChannel(mEndpoint.c_str(), grpc::InsecureChannelCredentials());
+				mConnectionContext->Channel = grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials());
 				mConnectionContext->Stub = evtc_rpc::evtc_rpc::NewStub(std::shared_ptr(mConnectionContext->Channel));
 
 				ConnectCallData* queuedData1 = new ConnectCallData{std::shared_ptr(mConnectionContext)};
@@ -324,7 +335,7 @@ void evtc_rpc_client::Serve()
 				queuedData2->Context->Stream->Read(&queuedData2->Message, queuedData2);
 
 				mLastConnectionAttempt = std::chrono::steady_clock::now();
-				LOG("Opening new connection to %s connect_tag=%p, read_tag=%p", mEndpoint.c_str(), queuedData1, queuedData2);
+				LOG("Opening new connection to %s connect_tag=%p, read_tag=%p", endpoint.c_str(), queuedData1, queuedData2);
 			}
 		}
 		else if (mConnectionContext->WritePending == false)

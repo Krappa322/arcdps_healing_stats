@@ -401,6 +401,20 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 			"Includes debug data in target and skill names.\n"
 			"Turn this on before taking screenshots of potential calculation issues.");
 
+		ImGui::InputText("evtc rpc server", pHealingOptions.EvtcRpcEndpoint, sizeof(pHealingOptions.EvtcRpcEndpoint));
+		ImGuiEx::AddTooltipToLastItem(
+			"The server to communicate with for evtc_rpc communication\n"
+			"(allowing other squad members to see your healing stats).\n"
+			"All local combat events will be sent to this server. Make\n"
+			"sure you trust it.");
+
+		if (ImGui::Button("reset all settings") == true)
+		{
+			pHealingOptions = HealTableOptions{};
+			LOG("Reset settings");
+		}
+		ImGuiEx::AddTooltipToLastItem("Resets all global and window specific settings to their default values.");
+
 		ImGui::EndMenu();
 	}
 }

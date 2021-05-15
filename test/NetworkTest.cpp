@@ -77,7 +77,11 @@ protected:
 			{
 				client->ReceivedEvents.push_back(*pEvent);
 			};
-		newClient->Client = std::make_unique<evtc_rpc_client>("localhost:50051", std::move(eventhandler));
+		auto getEndpoint = []() -> std::string
+			{
+				return std::string{"localhost:50051"};
+			};
+		newClient->Client = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), std::move(eventhandler));
 
 		mClientThreads.emplace_back(evtc_rpc_client::ThreadStartServe, mClients.back()->Client.get());
 		return *newClient.get();
@@ -133,13 +137,17 @@ protected:
 		{
 			// Do nothing
 		};
-		Client = std::make_unique<evtc_rpc_client>("localhost:50051", std::move(eventhandler));
+		auto getEndpoint = []() -> std::string
+		{
+			return std::string{"localhost:50051"};
+		};
+		Client = std::make_unique<evtc_rpc_client>(std::function{getEndpoint}, std::move(eventhandler));
 
 		auto eventhandler2 = [this](cbtevent* pEvent, uint16_t pInstanceId)
 		{
 			Processor.PeerCombat(pEvent, pInstanceId);
 		};
-		PeerClient = std::make_unique<evtc_rpc_client>("localhost:50051", std::move(eventhandler2));
+		PeerClient = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), std::move(eventhandler2));
 
 		ACTIVE_PROCESSOR = &Processor;
 		ACTIVE_CLIENT = Client.get();
