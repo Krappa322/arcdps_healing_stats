@@ -19,7 +19,7 @@
 
 #include <cassert>
 #include <chrono>
-#include <deque>
+#include <queue>
 #include <memory>
 
 class evtc_rpc_client
@@ -176,16 +176,16 @@ public:
 #ifndef TEST
 private:
 #endif
+	bool QueueEvent(CallDataBase* pCallData, bool pIsImportant);
+
 	void ForceDisconnect(const std::shared_ptr<ConnectionContext>& pContext, const char* pErrorMessage);
 	void HandleReadMessage(ReadMessageCallData* pCallData);
-	void QueueEvent(CallDataBase* pCallData);
-
-	void HandleCombatEvent(cbtevent* pEvent);
+	void SendEvent(CallDataBase* pCallData);
 
 	const std::function<void(cbtevent*, uint16_t)> mCombatEventCallback;
 
 	std::mutex mQueuedEventsLock;
-	std::deque<CallDataBase*> mQueuedEvents;
+	std::queue<CallDataBase*> mQueuedEvents;
 
 	std::atomic_bool mShouldShutdown{false};
 	bool mShutdown = false;

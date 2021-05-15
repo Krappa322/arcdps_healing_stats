@@ -14,4 +14,3 @@ message Message
 {
 	bytes blob = 1;
 }
-

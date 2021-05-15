@@ -105,7 +105,7 @@ evtc_rpc_client::evtc_rpc_client(std::string&& pEndpoint, std::function<void(cbt
 {
 }
 
-uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* /*pSkillname*/, uint64_t /*pId*/, uint64_t /*pRevision*/)
+uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* /*pSkillname*/, uint64_t pId, uint64_t /*pRevision*/)
 {
 	if (pEvent == nullptr)
 	{
@@ -143,9 +143,12 @@ uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent,
 		return 0;
 	}
 
-	std::lock_guard lock(mQueuedEventsLock);
-
-	mQueuedEvents.push_back(new CombatEventCallData(*pEvent));
+	CombatEventCallData* newEvent = new CombatEventCallData(*pEvent);
+	if (QueueEvent(newEvent, false) == false)
+	{
+		DEBUGLOG("Dropping CombatEvent event %llu since queue is full", pId);
+		delete newEvent;
+	}
 	return 0;
 }
 
@@ -172,9 +175,12 @@ uintptr_t evtc_rpc_client::ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, 
 				assert(pDestinationAgent->id <= UINT16_MAX);
 				assert(pDestinationAgent->name != nullptr && pDestinationAgent->name[0] != '\0');
 
-				std::lock_guard lock(mQueuedEventsLock);
-
-				mQueuedEvents.push_back(new AddPeerCallData(static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name));
+				AddPeerCallData* newEvent = new AddPeerCallData(static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name);
+				if (QueueEvent(newEvent, true) == false)
+				{
+					DEBUGLOG("Dropping AddPeer event %hu %s since queue is full", newEvent->PeerInstanceId, newEvent->PeerAccountName.c_str());
+					delete newEvent;
+				}
 			}
 		}
 		else
@@ -187,9 +193,13 @@ uintptr_t evtc_rpc_client::ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, 
 			if (pDestinationAgent->self == 0 &&
 				(pDestinationAgent->name != nullptr && pDestinationAgent->name[0] != '\0'))
 			{
-				std::lock_guard lock(mQueuedEventsLock);
 
-				mQueuedEvents.push_back(new RemovePeerCallData(static_cast<uint16_t>(pDestinationAgent->id)));
+				RemovePeerCallData* newEvent = new RemovePeerCallData(static_cast<uint16_t>(pDestinationAgent->id));
+				if (QueueEvent(newEvent, true) == false)
+				{
+					DEBUGLOG("Dropping RemovePeer event %hu since queue is full", newEvent->PeerInstanceId);
+					delete newEvent;
+				}
 			}
 		}
 
@@ -341,14 +351,14 @@ void evtc_rpc_client::Serve()
 				if (mQueuedEvents.size() > 0)
 				{
 					queuedData = mQueuedEvents.front();
-					mQueuedEvents.pop_front();
+					mQueuedEvents.pop();
 					queuedData->Context = std::shared_ptr(mConnectionContext);
 				}
 			}
 
 			if (queuedData != nullptr)
 			{
-				QueueEvent(queuedData);
+				SendEvent(queuedData);
 
 				assert(queuedData->IsWrite() == true);
 				mConnectionContext->WritePending = true;
@@ -380,6 +390,19 @@ void evtc_rpc_client::FlushEvents()
 		usleep(1000);
 #endif
 	}
+}
+
+bool evtc_rpc_client::QueueEvent(CallDataBase* pCallData, bool pIsImportant)
+{
+	std::lock_guard lock(mQueuedEventsLock);
+
+	if ((pIsImportant == false && mQueuedEvents.size() > 5000) || mQueuedEvents.size() > 10000)
+	{
+		return false;
+	}
+
+	mQueuedEvents.push(pCallData);
+	return true;
 }
 
 void evtc_rpc_client::ForceDisconnect(const std::shared_ptr<ConnectionContext>& pContext, const char* /*pErrorMessage*/)
@@ -466,7 +489,7 @@ void evtc_rpc_client::HandleReadMessage(ReadMessageCallData* pCallData)
 	LOG("(tag %p) <<", pCallData);
 }
 
-void evtc_rpc_client::QueueEvent(CallDataBase* pCallData)
+void evtc_rpc_client::SendEvent(CallDataBase* pCallData)
 {
 	using namespace evtc_rpc::messages;
 
@@ -582,9 +605,4 @@ void evtc_rpc_client::QueueEvent(CallDataBase* pCallData)
 	evtc_rpc::Message rpc_message;
 	rpc_message.set_blob(buffer, bufferpos - buffer);
 	pCallData->Context->Stream->Write(rpc_message, pCallData);
-}
-
-void evtc_rpc_client::HandleCombatEvent(cbtevent* pEvent)
-{
-	LOG("Received CombatEvent source %hu target %hu skill %u value %i", pEvent->src_instid, pEvent->dst_instid, pEvent->skillid, pEvent->value);
 }
