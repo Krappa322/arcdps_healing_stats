@@ -3,6 +3,10 @@
 #include "evtc_rpc_messages.h"
 #include "../src/Log.h"
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 bool evtc_rpc_client::CallDataBase::IsWrite()
 {
 	switch (Type)
@@ -96,12 +100,12 @@ void evtc_rpc_client::CallDataBase::Destruct()
 
 evtc_rpc_client::evtc_rpc_client(std::string&& pEndpoint, std::function<void(cbtevent*, uint16_t)>&& pCombatEventCallback)
 	: mCombatEventCallback{std::move(pCombatEventCallback)}
-	, mEndpoint{std::move(pEndpoint)}
 	, mLastConnectionAttempt{std::chrono::steady_clock::now() - std::chrono::hours{1}}
+	, mEndpoint{std::move(pEndpoint)}
 {
 }
 
-uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
+uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* /*pSkillname*/, uint64_t /*pId*/, uint64_t /*pRevision*/)
 {
 	if (pEvent == nullptr)
 	{
@@ -145,7 +149,7 @@ uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent,
 	return 0;
 }
 
-uintptr_t evtc_rpc_client::ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
+uintptr_t evtc_rpc_client::ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* /*pSkillname*/, uint64_t /*pId*/, uint64_t /*pRevision*/)
 {
 	if (pEvent == nullptr)
 	{
@@ -370,11 +374,15 @@ void evtc_rpc_client::FlushEvents()
 			}
 		}
 
+#ifdef _WIN32
 		Sleep(1);
+#else
+		usleep(1000);
+#endif
 	}
 }
 
-void evtc_rpc_client::ForceDisconnect(const std::shared_ptr<ConnectionContext>& pContext, const char* pErrorMessage)
+void evtc_rpc_client::ForceDisconnect(const std::shared_ptr<ConnectionContext>& pContext, const char* /*pErrorMessage*/)
 {
 	if (pContext->ForceDisconnected == true)
 	{

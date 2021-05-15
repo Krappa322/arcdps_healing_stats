@@ -71,7 +71,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;imgui;json;simpleini</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;imgui;json;simpleini;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -94,7 +94,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;imgui;json;simpleini</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;imgui;json;simpleini;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>

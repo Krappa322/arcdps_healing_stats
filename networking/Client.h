@@ -1,17 +1,21 @@
 #pragma once
-#include "../arcdps_mock/arcdps-extension/arcdps_structs.h"
+#include "arcdps_structs_slim.h"
 
+#ifdef _WIN32
 #pragma warning(disable : 4702)
 #pragma warning(push, 0)
-#include "evtc_rpc.grpc.pb.h"
+#endif
+#include <evtc_rpc.grpc.pb.h>
 
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
+#ifdef _WIN32
 #pragma warning(pop)
 #pragma warning(default : 4702)
+#endif
 
 #include <cassert>
 #include <chrono>
@@ -183,7 +187,7 @@ private:
 	std::mutex mQueuedEventsLock;
 	std::deque<CallDataBase*> mQueuedEvents;
 
-	std::atomic_bool mShouldShutdown = false;
+	std::atomic_bool mShouldShutdown{false};
 	bool mShutdown = false;
 	std::chrono::steady_clock::time_point mLastConnectionAttempt;
 

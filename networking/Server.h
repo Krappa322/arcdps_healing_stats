@@ -1,15 +1,19 @@
 #pragma once
+#ifdef _WIN32
 #pragma warning(disable : 4702)
 #pragma warning(push, 0)
-#include "evtc_rpc.grpc.pb.h"
+#endif
+#include <evtc_rpc.grpc.pb.h>
 
 #include <grpc/grpc.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/security/server_credentials.h>
+#ifdef _WIN32
 #pragma warning(pop)
 #pragma warning(default : 4702)
+#endif
 
 #include "evtc_rpc_messages.h"
 

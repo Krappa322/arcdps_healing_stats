@@ -66,12 +66,12 @@ namespace Log_
 
 #ifdef DEBUG
 // Add optimized out call to printf to get a compiler warning for format string errors
-#define LOG(pFormatString, ...) Log_::LogImplementation_(Log_::GetFileName(__FILE__), __func__, pFormatString, __VA_ARGS__); if (false) { printf(pFormatString, __VA_ARGS__); }
+#define LOG(pFormatString, ...) Log_::LogImplementation_(Log_::GetFileName(__FILE__), __func__, pFormatString, ##__VA_ARGS__); if (false) { printf(pFormatString, ##__VA_ARGS__); }
 #else
 #define LOG(pFormatString, ...)
 #endif
 #define DEBUGLOG(...)
 
-#define LOG_ARC(pFormatString, ...) Log_::LogImplementationArc_(Log_::GetFileName(__FILE__), __func__, pFormatString, __VA_ARGS__); if (false) { printf(pFormatString, __VA_ARGS__); }
+#define LOG_ARC(pFormatString, ...) Log_::LogImplementationArc_(Log_::GetFileName(__FILE__), __func__, pFormatString, ##__VA_ARGS__); if (false) { printf(pFormatString, ##__VA_ARGS__); }
 
 #define BOOL_STR(pBool) pBool == true ? "true" : "false"

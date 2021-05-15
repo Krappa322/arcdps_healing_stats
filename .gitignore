@@ -1,6 +1,8 @@
 .vs
 x64
 x86
+build
+.xmake
 ~AutoRecover*
 *.ini
 *.mock

@@ -68,7 +68,7 @@
       <PrecompiledHeaderFile />
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -90,7 +90,7 @@
       <PrecompiledHeaderFile />
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -103,34 +103,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="evtc_rpc.grpc.pb.cc">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
-    </ClCompile>
-    <ClCompile Include="evtc_rpc.pb.cc">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
-    </ClCompile>
+    <ClCompile Include="..\x64\autogen\evtc_rpc.grpc.pb.cc" />
+    <ClCompile Include="..\x64\autogen\evtc_rpc.pb.cc" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="Client.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\x64\autogen\evtc_rpc.grpc.pb.h" />
+    <ClInclude Include="..\x64\autogen\evtc_rpc.pb.h" />
     <ClInclude Include="Client.h" />
-    <ClInclude Include="evtc_rpc.grpc.pb.h" />
-    <ClInclude Include="evtc_rpc.pb.h" />
     <ClInclude Include="evtc_rpc_messages.h" />
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="evtc_rpc.proto">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">python build_proto.py x64-windows %(Filename)%(Extension)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">python build_proto.py x64-windows %(Filename)%(Extension) $(SolutionDir)$(Platform)\autogen</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">[PROTO] %(Filename)%(Extension)</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\%(Filename).grpc.pb.cc;.\%(Filename).grpc.pb.h;.\%(Filename).pb.cc;.\%(Filename).pb.h</Outputs>
-      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">python build_proto.py x64-windows %(Filename)%(Extension)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.cc;$(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.h;$(SolutionDir)$(Platform)\autogen\%(Filename).pb.cc;$(SolutionDir)$(Platform)\autogen\%(Filename).pb.h</Outputs>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</BuildInParallel>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">python build_proto.py x64-windows %(Filename)%(Extension) $(SolutionDir)$(Platform)\autogen</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">[PROTO] %(Filename)%(Extension)</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\%(Filename).grpc.pb.cc;.\%(Filename).grpc.pb.h;.\%(Filename).pb.cc;.\%(Filename).pb.h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.cc;$(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.h;$(SolutionDir)$(Platform)\autogen\%(Filename).pb.cc;$(SolutionDir)$(Platform)\autogen\%(Filename).pb.h</Outputs>
       <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</BuildInParallel>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">build_proto.py</AdditionalInputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">build_proto.py</AdditionalInputs>

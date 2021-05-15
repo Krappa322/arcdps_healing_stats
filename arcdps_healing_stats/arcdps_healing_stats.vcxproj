@@ -89,7 +89,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeaderFile />
-      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;..\src;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -110,7 +110,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;..\src;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -131,7 +131,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeaderFile />
-      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;..\src;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>

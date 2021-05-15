@@ -1,13 +1,18 @@
 #include "Log.h"
 
+#ifdef _WIN32
 #include "arcdps_structs.h"
 #include "Exports.h"
+#endif
 
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 
 #include <chrono>
 #include <ctime>
@@ -39,9 +44,13 @@ void Log_::LogImplementation_(const char* pComponentName, const char* pFunctionN
 
 	va_end(args);
 
+#ifdef _WIN32
 	DWORD written;
 	/*bool result = */WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), buffer, static_cast<DWORD>(strlen(buffer)), &written, 0);
 	//assert(result == true); // Sometimes logging happens after mod_release for some reason
+#else
+	printf("%s", buffer);
+#endif
 
 	if (LOG_FILE == NULL)
 	{
@@ -54,6 +63,7 @@ void Log_::LogImplementation_(const char* pComponentName, const char* pFunctionN
 	}
 }
 
+#ifdef _WIN32
 void Log_::LogImplementationArc_(const char* pComponentName, const char* pFunctionName, const char* pFormatString, ...)
 {
 	if (GlobalObjects::ARC_E3 == nullptr)
@@ -86,3 +96,4 @@ void Log_::LogImplementationArc_(const char* pComponentName, const char* pFuncti
 
 	GlobalObjects::ARC_E3(buffer);
 }
+#endif

@@ -1,8 +1,14 @@
 #include "../networking/Server.h"
 
-int main()
+int main(int pArgumentCount, char** pArgumentVector)
 {
-	evtc_rpc_server Server{"localhost:50052"};
+	if (pArgumentCount != 2)
+	{
+		fprintf(stderr, "Invalid argument count\nusage: %s <listening endpoint>", pArgumentVector[0]);
+		return 1;
+	}
+
+	evtc_rpc_server Server{pArgumentVector[1]};
 	Server.Serve();
 	return 0;
 }
