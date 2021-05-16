@@ -14,10 +14,10 @@ AggregatedStatsCollection::AggregatedStatsCollection(std::map<uintptr_t, std::pa
 	: mOptions{pOptions}
 	, mDebugMode{pDebugMode}
 {
-	mLocalState = mStats.end();
+	mLocalState = mSourceData.end();
 	for (auto& [id, state] : pPeerStates)
 	{
-		auto [iter, inserted] = mStats.try_emplace(id, std::move(state.first), std::move(state.second), pOptions, pDebugMode);
+		auto [iter, inserted] = mSourceData.try_emplace(id, std::move(state.first), std::move(state.second), pOptions, pDebugMode);
 		assert(inserted == true);
 		if (id == pLocalUniqueId)
 		{
@@ -25,7 +25,7 @@ AggregatedStatsCollection::AggregatedStatsCollection(std::map<uintptr_t, std::pa
 		}
 	}
 
-	assert(mLocalState != mStats.end());
+	assert(mLocalState != mSourceData.end());
 }
 
 const AggregatedStatsEntry& AggregatedStatsCollection::GetTotal(DataSource pDataSource)
@@ -50,7 +50,7 @@ const AggregatedStatsEntry& AggregatedStatsCollection::GetTotal(DataSource pData
 		hits += entry.Hits;
 	}
 
-	mTotal = std::make_unique<AggregatedStatsEntry>(0, "__SUPERTOTAL__", healing, hits, std::nullopt);
+	mTotal = std::make_unique<AggregatedStatsEntry>(0, "__SUPERTOTAL__", mLocalState->second.Stats.GetCombatTime(), healing, hits, std::nullopt);
 	return *mTotal;
 }
 
@@ -61,21 +61,21 @@ const AggregatedVector& AggregatedStatsCollection::GetStats(DataSource pDataSour
 		return mLocalState->second.Stats.GetStats(pDataSource);
 	}
 
-	if (myStats != nullptr)
+	if (mStats != nullptr)
 	{
-		return *myStats;
+		return *mStats;
 	}
 
-	myStats = std::make_unique<AggregatedVector>();
+	mStats = std::make_unique<AggregatedVector>();
 
-	for (auto& [id, stat] : mStats)
+	for (auto& [id, source] : mSourceData)
 	{
-		const AggregatedStatsEntry& entry = stat.Stats.GetTotal();
-		myStats->Add(id, std::string{stat.Name}, entry.Healing, entry.Hits, entry.Casts);
+		const AggregatedStatsEntry& entry = source.Stats.GetTotal();
+		mStats->Add(id, std::string{source.Name}, source.Stats.GetCombatTime(), entry.Healing, entry.Hits, entry.Casts);
 	}
 
-	AggregatedStats::Sort(myStats->Entries, static_cast<SortOrder>(mOptions.SortOrderChoice));
-	return *myStats;
+	AggregatedStats::Sort(mStats->Entries, static_cast<SortOrder>(mOptions.SortOrderChoice));
+	return *mStats;
 }
 
 const AggregatedVector& AggregatedStatsCollection::GetDetails(DataSource pDataSource, uint64_t pId)
@@ -85,8 +85,8 @@ const AggregatedVector& AggregatedStatsCollection::GetDetails(DataSource pDataSo
 		return mLocalState->second.Stats.GetDetails(pDataSource, pId);
 	}
 
-	auto iter = mStats.find(pId);
-	if (iter == mStats.end())
+	auto iter = mSourceData.find(pId);
+	if (iter == mSourceData.end())
 	{
 		return EMPTY_STATS;
 	}

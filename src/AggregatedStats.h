@@ -24,16 +24,17 @@ struct AggregatedStatsEntry
 {
 	uint64_t Id;
 	std::string Name;
+	float TimeInCombat;
 
 	uint64_t Healing;
 	uint64_t Hits;
 	std::optional<uint64_t> Casts;
 
-	AggregatedStatsEntry(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts);
+	AggregatedStatsEntry(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts);
 
 	auto GetTie() const
 	{
-		return std::tie(Id, Name, Healing, Hits, Casts);
+		return std::tie(Id, Name, TimeInCombat, Healing, Hits, Casts);
 	}
 };
 
@@ -42,7 +43,7 @@ struct AggregatedVector
 	std::vector<AggregatedStatsEntry> Entries;
 	uint64_t HighestHealing{0};
 
-	void Add(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts);
+	void Add(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts);
 };
 
 
@@ -82,6 +83,7 @@ private:
 	HealWindowOptions myOptions;
 	bool myDebugMode;
 
+	float myCombatTime = NAN;
 	std::unique_ptr<AggregatedStatsEntry> myTotal;
 	std::unique_ptr<AggregatedVector> myFilteredAgents;
 	std::unique_ptr<AggregatedVector> mySkills;

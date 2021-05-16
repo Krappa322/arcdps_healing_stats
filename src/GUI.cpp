@@ -16,9 +16,6 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		return;
 	}
 
-	float timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
-	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal(pDataSource);
-
 	char buffer[1024];
 	// Using "###" means the id of the window is calculated only from the part after the hashes (which
 	// in turn means that the name of the window can change if necessary)
@@ -59,7 +56,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	}
 
 	ImGui::Text("healing per second");
-	ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Healing, timeInCombat));
+	ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Healing, pState.TimeInCombat));
 
 	ImGui::Text("healing per hit");
 	ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Healing, pState.Hits));
@@ -84,10 +81,10 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 			entry.Healing,
 			entry.Hits,
 			entry.Casts,
-			divide_safe(entry.Healing, timeInCombat),
+			divide_safe(entry.Healing, entry.TimeInCombat),
 			divide_safe(entry.Healing, entry.Hits),
 			entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
-			divide_safe(entry.Healing * 100, aggregatedTotal.Healing)};
+			divide_safe(entry.Healing * 100, pState.Healing)};
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.DetailsEntryFormat, entryValues);
 
 		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
@@ -104,7 +101,6 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	UNREFERENCED_PARAMETER(pWindowIndex);
 	char buffer[1024];
 
-	float timeInCombat = pContext.CurrentAggregatedStats->GetCombatTime();
 	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal(pDataSource);
 
 	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetStats(pDataSource);
@@ -116,7 +112,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			entry.Healing,
 			entry.Hits,
 			entry.Casts,
-			divide_safe(entry.Healing, timeInCombat),
+			divide_safe(entry.Healing, entry.TimeInCombat),
 			divide_safe(entry.Healing, entry.Hits),
 			entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
 			static_cast<DataSource>(pContext.DataSourceChoice) != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
@@ -208,7 +204,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				aggregatedTotal.Healing,
 				aggregatedTotal.Hits,
 				aggregatedTotal.Casts,
-				divide_safe(aggregatedTotal.Healing, timeInCombat),
+				divide_safe(aggregatedTotal.Healing, aggregatedTotal.TimeInCombat),
 				divide_safe(aggregatedTotal.Healing, aggregatedTotal.Hits),
 				aggregatedTotal.Casts.has_value() == true ? std::optional{divide_safe(aggregatedTotal.Healing, *aggregatedTotal.Casts)} : std::nullopt,
 				timeInCombat };

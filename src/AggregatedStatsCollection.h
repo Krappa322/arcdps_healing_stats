@@ -23,12 +23,12 @@ public:
 	float GetCombatTime();
 
 private:
-	std::unique_ptr<AggregatedVector> myStats;
-	std::unique_ptr<AggregatedVector> myDetails;
+	std::unique_ptr<AggregatedVector> mStats;
+	std::unique_ptr<AggregatedVector> mDetails;
 	std::unique_ptr<AggregatedStatsEntry> mTotal;
 
 	std::map<uintptr_t, Player>::iterator mLocalState;
-	std::map<uintptr_t, Player> mStats;
+	std::map<uintptr_t, Player> mSourceData;
 	const HealWindowOptions mOptions;
 	const bool mDebugMode;
 };

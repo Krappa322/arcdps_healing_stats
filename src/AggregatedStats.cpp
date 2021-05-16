@@ -13,9 +13,10 @@
 constexpr const char* GROUP_FILTER_STRING[] = { "Group", "Squad", "All (Excluding Summons)", "All (Including Summons)" };
 static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
 
-AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts)
+AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts)
 	: Id{pId}
 	, Name{pName}
+	, TimeInCombat{pTimeInCombat}
 	, Healing{pHealing}
 	, Hits{pHits}
 	, Casts{pCasts}
@@ -34,9 +35,9 @@ AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealWindowOpt
 	assert(static_cast<DataSource>(myOptions.DataSourceChoice) < DataSource::Max);
 }
 
-void AggregatedVector::Add(uint64_t pId, std::string&& pName, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts)
+void AggregatedVector::Add(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts)
 {
-	const AggregatedStatsEntry& newEntry = Entries.emplace_back(pId, std::move(pName), pHealing, pHits, std::move(pCasts));
+	const AggregatedStatsEntry& newEntry = Entries.emplace_back(pId, std::move(pName), pTimeInCombat, pHealing, pHits, std::move(pCasts));
 	HighestHealing = (std::max)(HighestHealing, newEntry.Healing);
 }
 
@@ -55,7 +56,7 @@ const AggregatedStatsEntry& AggregatedStats::GetTotal()
 		hits += entry.Hits;
 	}
 
-	myTotal = std::make_unique<AggregatedStatsEntry>(0, "__TOTAL__", healing, hits, std::nullopt);
+	myTotal = std::make_unique<AggregatedStatsEntry>(0, "__TOTAL__", GetCombatTime(), healing, hits, std::nullopt);
 	return *myTotal;
 }
 
@@ -96,7 +97,7 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 	myGroupFilterTotals = std::make_unique<AggregatedVector>();
 	for (uint32_t i = 0; i < static_cast<uint32_t>(GroupFilter::Max); i++)
 	{
-		myGroupFilterTotals->Add(0, GROUP_FILTER_STRING[i], 0, 0, std::nullopt);
+		myGroupFilterTotals->Add(0, GROUP_FILTER_STRING[i], GetCombatTime(), 0, 0, std::nullopt);
 	}
 
 	HealWindowOptions fakeOptions;
@@ -169,14 +170,21 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 
 float AggregatedStats::GetCombatTime()
 {
+	if (isnan(myCombatTime) == false)
+	{
+		return myCombatTime;
+	}
+
 	if (mySourceData.EnteredCombatTime == 0)
 	{
-		return 0.0f;
+		myCombatTime = 0.0f;
+		return myCombatTime;
 	}
 
 	uint64_t end = GetCombatEnd();
 	assert(end >= mySourceData.EnteredCombatTime);
-	return (end - mySourceData.EnteredCombatTime) / 1000.0f;
+	myCombatTime = (end - mySourceData.EnteredCombatTime) / 1000.0f;
+	return myCombatTime;
 }
 
 uint64_t AggregatedStats::GetCombatEnd()
@@ -330,7 +338,7 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 			agentName = buffer;
 		}
 
-		entry->Add(agentId, std::move(agentName), agent.Healing, agent.Ticks, std::nullopt);
+		entry->Add(agentId, std::move(agentName), GetCombatTime(), agent.Healing, agent.Ticks, std::nullopt);
 	}
 
 	Sort(entry->Entries, static_cast<SortOrder>(myOptions.SortOrderChoice));
@@ -445,14 +453,14 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 			skillName = buffer;
 		}
 
-		entry->Add(skillId, std::string{skillName}, skill.Healing, skill.Ticks, std::nullopt);
+		entry->Add(skillId, std::string{skillName}, GetCombatTime(), skill.Healing, skill.Ticks, std::nullopt);
 	}
 
 	if (totalIndirectHealing != 0 || totalIndirectTicks != 0)
 	{
 		std::string skillName("Healing by Damage Dealt");
 
-		entry->Add(IndirectHealingSkillId, std::move(skillName), totalIndirectHealing, totalIndirectTicks, std::nullopt);
+		entry->Add(IndirectHealingSkillId, std::move(skillName), GetCombatTime(), totalIndirectHealing, totalIndirectTicks, std::nullopt);
 	}
 
 	Sort(entry->Entries, static_cast<SortOrder>(myOptions.SortOrderChoice));

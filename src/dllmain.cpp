@@ -124,12 +124,13 @@ arcdps_exports* mod_init()
 /* release mod -- return ignored */
 uintptr_t mod_release()
 {
+	GlobalObjects::EVTC_RPC_CLIENT->Shutdown();
+
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 		WriteIni(HEAL_TABLE_OPTIONS);
 	}
 
-	GlobalObjects::EVTC_RPC_CLIENT->Shutdown();
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD->join();
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD = nullptr;
 	GlobalObjects::EVTC_RPC_CLIENT = nullptr;

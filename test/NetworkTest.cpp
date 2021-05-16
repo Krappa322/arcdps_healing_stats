@@ -54,7 +54,7 @@ protected:
 	struct ClientInstance
 	{
 		std::unique_ptr<evtc_rpc_client> Client;
-		std::vector<cbtevent> ReceivedEvents; 
+		std::vector<cbtevent> ReceivedEvents;
 
 		evtc_rpc_client* operator->()
 		{
@@ -489,17 +489,18 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 		// Use the "Combined" window
 		AggregatedStats stats{std::move(*rawStats), options.Windows[9], false};
 
-		EXPECT_FLOAT_EQ(std::floor(stats.GetCombatTime()), 95.0f);
+		float combatTime = stats.GetCombatTime();
+		EXPECT_FLOAT_EQ(std::floor(combatTime), 95.0f);
 
 		const AggregatedStatsEntry& totalEntry = stats.GetTotal();
 		EXPECT_EQ(totalEntry.Healing, 304967);
 		EXPECT_EQ(totalEntry.Hits, 727);
 
 		AggregatedVector expectedTotals;
-		expectedTotals.Add(0, "Group", 207634, 449, std::nullopt);
-		expectedTotals.Add(0, "Squad", 304967, 727, std::nullopt);
-		expectedTotals.Add(0, "All (Excluding Summons)", 304967, 727, std::nullopt);
-		expectedTotals.Add(0, "All (Including Summons)", 409220, 1186, std::nullopt);
+		expectedTotals.Add(0, "Group", combatTime, 207634, 449, std::nullopt);
+		expectedTotals.Add(0, "Squad", combatTime, 304967, 727, std::nullopt);
+		expectedTotals.Add(0, "All (Excluding Summons)", combatTime, 304967, 727, std::nullopt);
+		expectedTotals.Add(0, "All (Including Summons)", combatTime, 409220, 1186, std::nullopt);
 
 		const AggregatedVector& totals = stats.GetStats(DataSource::Totals);
 		ASSERT_EQ(totals.Entries.size(), expectedTotals.Entries.size());
@@ -510,16 +511,16 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 		}
 
 		AggregatedVector expectedAgents;
-		expectedAgents.Add(2000, "Zarwae", 51011, 135, std::nullopt);
-		expectedAgents.Add(3148, "Apocalypse Dawn", 47929, 89, std::nullopt);
-		expectedAgents.Add(3150, "Waiana Sulis", 40005, 86, std::nullopt);
-		expectedAgents.Add(3149, "And Avr Two L Q E A", 39603, 71, std::nullopt);
-		expectedAgents.Add(3144, "Taya Celeste", 29086, 68, std::nullopt);
-		expectedAgents.Add(3145, "Teivarus", 26490, 71, std::nullopt);
-		expectedAgents.Add(3151, "Janna Larion", 21902, 71, std::nullopt);
-		expectedAgents.Add(3137, "Lady Manyak", 20637, 52, std::nullopt);
-		expectedAgents.Add(3146, "Akashi Vi Britannia", 20084, 55, std::nullopt);
-		expectedAgents.Add(3147, u8"Moa Fhómhair", 8220, 29, std::nullopt);
+		expectedAgents.Add(2000, "Zarwae", combatTime, 51011, 135, std::nullopt);
+		expectedAgents.Add(3148, "Apocalypse Dawn", combatTime, 47929, 89, std::nullopt);
+		expectedAgents.Add(3150, "Waiana Sulis", combatTime, 40005, 86, std::nullopt);
+		expectedAgents.Add(3149, "And Avr Two L Q E A", combatTime, 39603, 71, std::nullopt);
+		expectedAgents.Add(3144, "Taya Celeste", combatTime, 29086, 68, std::nullopt);
+		expectedAgents.Add(3145, "Teivarus", combatTime, 26490, 71, std::nullopt);
+		expectedAgents.Add(3151, "Janna Larion", combatTime, 21902, 71, std::nullopt);
+		expectedAgents.Add(3137, "Lady Manyak", combatTime, 20637, 52, std::nullopt);
+		expectedAgents.Add(3146, "Akashi Vi Britannia", combatTime, 20084, 55, std::nullopt);
+		expectedAgents.Add(3147, u8"Moa Fhómhair", combatTime, 8220, 29, std::nullopt);
 
 		const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
 		ASSERT_EQ(agents.Entries.size(), expectedAgents.Entries.size());
@@ -538,10 +539,11 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 	EXPECT_EQ(totalEntry.Healing, 304967*2);
 	EXPECT_EQ(totalEntry.Hits, 727*2);
 
+	float combatTime = stats.GetCombatTime();
 	AggregatedVector expectedStats;
-	expectedStats.Add(2000, "Zarwae", 304967, 727, std::nullopt);
-	expectedStats.Add(100000, "Local Zarwae", 304967, 727, std::nullopt);
-	
+	expectedStats.Add(2000, "Zarwae", combatTime, 304967, 727, std::nullopt);
+	expectedStats.Add(100000, "Local Zarwae", combatTime, 304967, 727, std::nullopt);
+
 	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
 	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());
 	EXPECT_EQ(actualStats.HighestHealing, expectedStats.HighestHealing);

@@ -26,7 +26,15 @@ uintptr_t EventSequencer::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* p
 	while (true)
 	{
 		DEBUGLOG(">> %llu", pId);
-		assert(current != pId);
+		if (current == pId)
+		{
+			assert(false);
+
+			DEBUGLOG("Received event %llu twice!", pId);
+
+			mCallback(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
+			return 0;
+		}
 
 		if (current == UINT64_MAX)
 		{
