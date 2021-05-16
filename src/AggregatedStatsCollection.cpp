@@ -35,9 +35,9 @@ const AggregatedStatsEntry& AggregatedStatsCollection::GetTotal(DataSource pData
 		return mLocalState->second.Stats.GetTotal();
 	}
 
-	if (mTotal != nullptr)
+	if (mPeersOutgoingTotal != nullptr)
 	{
-		return *mTotal;
+		return *mPeersOutgoingTotal;
 	}
 
 	uint64_t healing = 0;
@@ -50,8 +50,8 @@ const AggregatedStatsEntry& AggregatedStatsCollection::GetTotal(DataSource pData
 		hits += entry.Hits;
 	}
 
-	mTotal = std::make_unique<AggregatedStatsEntry>(0, "__SUPERTOTAL__", mLocalState->second.Stats.GetCombatTime(), healing, hits, std::nullopt);
-	return *mTotal;
+	mPeersOutgoingTotal = std::make_unique<AggregatedStatsEntry>(0, "__SUPERTOTAL__", mLocalState->second.Stats.GetCombatTime(), healing, hits, std::nullopt);
+	return *mPeersOutgoingTotal;
 }
 
 const AggregatedVector& AggregatedStatsCollection::GetStats(DataSource pDataSource)
@@ -61,21 +61,21 @@ const AggregatedVector& AggregatedStatsCollection::GetStats(DataSource pDataSour
 		return mLocalState->second.Stats.GetStats(pDataSource);
 	}
 
-	if (mStats != nullptr)
+	if (mPeersOutgoingStats != nullptr)
 	{
-		return *mStats;
+		return *mPeersOutgoingStats;
 	}
 
-	mStats = std::make_unique<AggregatedVector>();
+	mPeersOutgoingStats = std::make_unique<AggregatedVector>();
 
 	for (auto& [id, source] : mSourceData)
 	{
 		const AggregatedStatsEntry& entry = source.Stats.GetTotal();
-		mStats->Add(id, std::string{source.Name}, source.Stats.GetCombatTime(), entry.Healing, entry.Hits, entry.Casts);
+		mPeersOutgoingStats->Add(id, std::string{source.Name}, source.Stats.GetCombatTime(), entry.Healing, entry.Hits, entry.Casts);
 	}
 
-	AggregatedStats::Sort(mStats->Entries, static_cast<SortOrder>(mOptions.SortOrderChoice));
-	return *mStats;
+	AggregatedStats::Sort(mPeersOutgoingStats->Entries, static_cast<SortOrder>(mOptions.SortOrderChoice));
+	return *mPeersOutgoingStats;
 }
 
 const AggregatedVector& AggregatedStatsCollection::GetDetails(DataSource pDataSource, uint64_t pId)

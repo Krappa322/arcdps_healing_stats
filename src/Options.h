@@ -25,6 +25,7 @@ struct HealWindowContext : HealWindowOptions
 
 	std::vector<DetailsWindowState> OpenSkillWindows; // In-Memory only
 	std::vector<DetailsWindowState> OpenAgentWindows; // In-Memory only
+	std::vector<DetailsWindowState> OpenPeersOutgoingWindows; // In-Memory only
 };
 
 struct HealTableOptions

@@ -131,6 +131,9 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 		case DataSource::Skills:
 			vec = &pContext.OpenSkillWindows;
 			break;
+		case DataSource::PeersOutgoing:
+			vec = &pContext.OpenPeersOutgoingWindows;
+			break;
 		default:
 			vec = nullptr;
 			break;
@@ -343,7 +346,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			ImGui::PopID();
 		}
 
-		for (const DataSource dataSource : std::array{DataSource::Agents, DataSource::Skills})
+		for (const DataSource dataSource : std::array{DataSource::Agents, DataSource::Skills, DataSource::PeersOutgoing})
 		{
 			std::vector<DetailsWindowState>* vec;
 			switch (dataSource)
@@ -353,6 +356,9 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				break;
 			case DataSource::Skills:
 				vec = &curWindow.OpenSkillWindows;
+				break;
+			case DataSource::PeersOutgoing:
+				vec = &curWindow.OpenPeersOutgoingWindows;
 				break;
 			default:
 				vec = nullptr;
