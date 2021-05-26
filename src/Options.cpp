@@ -146,11 +146,12 @@ void ReadIni(HealTableOptions& pOptions)
 	}
 
 	pOptions.DebugMode = healtable_ini.GetBoolValue("settings", "debug_mode", pOptions.DebugMode);
-	const char* val = healtable_ini.GetValue("settings", "evtc_rpc_endpoint", nullptr);
+	const char* val;
+	/*const char* val = healtable_ini.GetValue("settings", "evtc_rpc_endpoint", nullptr);
 	if (val != nullptr)
 	{
 		snprintf(pOptions.EvtcRpcEndpoint, sizeof(pOptions.EvtcRpcEndpoint), "%s", val);
-	}
+	}*/ // Force everyone to use default endpoint
 
 	for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
 	{
