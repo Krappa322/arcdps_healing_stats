@@ -2,10 +2,20 @@
 
 #include "../src/Log.h"
 
-evtc_rpc_server::evtc_rpc_server(const char* pListeningEndpoint)
+evtc_rpc_server::evtc_rpc_server(const char* pListeningEndpoint, const grpc::SslServerCredentialsOptions* pCredentialsOptions)
 {
 	grpc::ServerBuilder builder;
-	builder.AddListeningPort(pListeningEndpoint, grpc::InsecureServerCredentials());
+
+	if (pCredentialsOptions != nullptr)
+	{
+		auto channel_creds = grpc::SslServerCredentials(*pCredentialsOptions);
+		builder.AddListeningPort(pListeningEndpoint, channel_creds);
+	}
+	else
+	{
+		builder.AddListeningPort(pListeningEndpoint, grpc::InsecureServerCredentials());
+	}
+
 	builder.RegisterService(&mService);
 
 	mCompletionQueue = builder.AddCompletionQueue();

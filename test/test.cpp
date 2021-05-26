@@ -58,6 +58,7 @@ protected:
 
 		{
 			arcdps_exports* temp_exports = mod_init();
+			ASSERT_NE(temp_exports->sig, 0);
 			memcpy(&Exports, temp_exports, sizeof(Exports)); // Maybe do some deep copy at some point but we're not using the strings in there anyways
 		}
 	}

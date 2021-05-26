@@ -10,6 +10,7 @@
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/security/server_credentials.h>
+#include <grpcpp/security/tls_credentials_options.h>
 #ifdef _WIN32
 #pragma warning(pop)
 #pragma warning(default : 4702)
@@ -107,7 +108,7 @@ class evtc_rpc_server
 	};
 
 public:
-	evtc_rpc_server(const char* pListeningEndpoint);
+	evtc_rpc_server(const char* pListeningEndpoint, const grpc::SslServerCredentialsOptions* pCredentialsOptions);
 	~evtc_rpc_server();
 
 	static void ThreadStartServe(void* pThis);

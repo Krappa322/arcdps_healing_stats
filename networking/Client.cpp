@@ -98,8 +98,9 @@ void evtc_rpc_client::CallDataBase::Destruct()
 }
 
 
-evtc_rpc_client::evtc_rpc_client(std::function<std::string()>&& pEndpointCallback, std::function<void(cbtevent*, uint16_t)>&& pCombatEventCallback)
-	: mEndpointCallback(pEndpointCallback)
+evtc_rpc_client::evtc_rpc_client(std::function<std::string()>&& pEndpointCallback, std::function<std::string()>&& pRootCertificatesCallback, std::function<void(cbtevent*, uint16_t)>&& pCombatEventCallback)
+	: mEndpointCallback{std::move(pEndpointCallback)}
+	, mRootCertificatesCallback{std::move(pRootCertificatesCallback)}
 	, mCombatEventCallback{std::move(pCombatEventCallback)}
 	, mLastConnectionAttempt{std::chrono::steady_clock::now() - std::chrono::hours{1}}
 {
@@ -250,6 +251,12 @@ void evtc_rpc_client::Serve()
 						HandleReadMessage(message);
 						break;
 					}
+					case CallDataType::Finish:
+					{
+						FinishCallData* message = static_cast<FinishCallData*>(base);
+						LOG("(tag %p) got result %i '%s' '%s' %zu", tag, message->ReturnedStatus.error_code(), message->ReturnedStatus.error_message().c_str(), message->ReturnedStatus.error_details().c_str(), message->ReturnedStatus.error_details().size());
+						break;
+					}
 
 					default:
 						LOG("(tag %p) No action required for CallDataType %i", tag, base->Type);
@@ -264,7 +271,11 @@ void evtc_rpc_client::Serve()
 				{
 					case CallDataType::Connect:
 					{
-						LOG("(tag %p) Connection to remote failed", tag);
+						FinishCallData* queuedData = new FinishCallData(std::shared_ptr{base->Context});
+						base->Context->Stream->Finish(&queuedData->ReturnedStatus, queuedData);
+
+						LOG("(tag %p) Connection to remote failed. Queued %p to get error code", tag, queuedData);
+
 						if (base->Context == mConnectionContext)
 						{
 							mConnectionContext = nullptr;
@@ -324,7 +335,12 @@ void evtc_rpc_client::Serve()
 				std::string endpoint = mEndpointCallback();
 
 				mConnectionContext = std::make_shared<ConnectionContext>();
-				mConnectionContext->Channel = grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials());
+				grpc::SslCredentialsOptions options;
+				options.pem_root_certs = mRootCertificatesCallback();
+
+				auto channel_creds = grpc::SslCredentials(options);
+				mConnectionContext->Channel = grpc::CreateChannel(endpoint, channel_creds);
+				//mConnectionContext->Channel = grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials());
 				mConnectionContext->Stub = evtc_rpc::evtc_rpc::NewStub(std::shared_ptr(mConnectionContext->Channel));
 
 				ConnectCallData* queuedData1 = new ConnectCallData{std::shared_ptr(mConnectionContext)};
@@ -335,7 +351,7 @@ void evtc_rpc_client::Serve()
 				queuedData2->Context->Stream->Read(&queuedData2->Message, queuedData2);
 
 				mLastConnectionAttempt = std::chrono::steady_clock::now();
-				LOG("Opening new connection to %s connect_tag=%p, read_tag=%p", endpoint.c_str(), queuedData1, queuedData2);
+				LOG("Opening new connection to %s connect_tag=%p, read_tag=%p, root_certs_size=%zu", endpoint.c_str(), queuedData1, queuedData2, options.pem_root_certs.size());
 			}
 		}
 		else if (mConnectionContext->WritePending == false)

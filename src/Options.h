@@ -31,7 +31,7 @@ struct HealWindowContext : HealWindowOptions
 struct HealTableOptions
 {
 	bool DebugMode = false;
-	char EvtcRpcEndpoint[128] = "dev-evtc-rpc.kappa322.com:443";
+	char EvtcRpcEndpoint[128] = "evtc-rpc.kappa322.com:443";
 	HealWindowContext Windows[HEAL_WINDOW_COUNT];
 
 	HealTableOptions();

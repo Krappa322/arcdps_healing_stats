@@ -8,7 +8,7 @@ int main(int pArgumentCount, char** pArgumentVector)
 		return 1;
 	}
 
-	evtc_rpc_server Server{pArgumentVector[1]};
+	evtc_rpc_server Server{pArgumentVector[1], nullptr};
 	Server.Serve();
 	return 0;
 }

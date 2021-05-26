@@ -6,11 +6,13 @@
 #include "Utilities.h"
 
 #include "imgui.h"
+#include "../resource.h"
 
 #include <atomic>
 
 #include <assert.h>
 #include <d3d9helper.h>
+#include <fstream>
 #include <stdint.h>
 #include <stdio.h>
 #include <Windows.h>
@@ -34,6 +36,79 @@ static const char* ARCDPS_VERSION;
 
 std::mutex HEAL_TABLE_OPTIONS_MUTEX;
 static HealTableOptions HEAL_TABLE_OPTIONS;
+
+static BOOL EnumNamesFunc(HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_PTR lParam)
+{
+	LOG("EnumNamesFunc - %p %p '%ls' %p '%ls' %llu", hModule, lpType, IS_INTRESOURCE(lpType) ? L"IS_RESOURCE" : lpType, lpName, IS_INTRESOURCE(lpName) ? L"IS_RESOURCE" : lpName, lParam);
+
+	return TRUE;
+}
+
+static BOOL EnumTypesFunc(HMODULE hModule, LPTSTR lpType, LONG_PTR lParam)
+{
+	LOG("EnumTypesFunc - %p %p '%ls' %llu", hModule, lpType, IS_INTRESOURCE(lpType) ? L"IS_RESOURCE" : lpType , lParam);
+
+	bool res = EnumResourceNames(hModule, lpType, &EnumNamesFunc, 12345);
+	LOG("EnumResourceNames returned %s", BOOL_STR(res));
+
+	return TRUE;
+}
+
+static const char* LoadRootCertificatesFromResource()
+{
+	HMODULE dll_handle = GlobalObjects::SELF_HANDLE;
+	bool res = EnumResourceTypes(dll_handle, &EnumTypesFunc, 12345);
+	LOG("EnumResourceTypes returned %s", BOOL_STR(res));
+
+	HRSRC root_certificates_handle = FindResource(dll_handle, MAKEINTRESOURCE(IDR_ROOT_CERTIFICATES), L"CERTIFICATE");
+	if (root_certificates_handle == NULL)
+	{
+		return "Failed to find root certificates";
+	}
+
+	// Load the dialog box into global memory.
+	HGLOBAL root_certificates_data_handle = LoadResource(dll_handle, root_certificates_handle);
+	if (root_certificates_data_handle == NULL)
+	{
+		return "Failed to load root certificates";
+	}
+
+	// Lock the dialog box into global memory.
+	void* root_certificates_data = LockResource(root_certificates_data_handle);
+	if (root_certificates_data == nullptr)
+	{
+		return "Failed to lock root certificates";
+	}
+
+	DWORD root_certificates_size = SizeofResource(dll_handle, root_certificates_handle);
+	if (root_certificates_size == 0)
+	{
+		return "Failed to get root certificates size";
+	}
+
+	GlobalObjects::ROOT_CERTIFICATES.assign(static_cast<const char*>(root_certificates_data), root_certificates_size);
+	LOG("Loaded root certificates, size %zu from %p %u", GlobalObjects::ROOT_CERTIFICATES.size(), root_certificates_data, root_certificates_size);
+	return nullptr;
+}
+
+static const char* LoadRootCertificatesFromFile()
+{
+	std::ifstream filestream("roots.pem", std::ios::in);
+	if (filestream.is_open() == false)
+	{
+		LOG("roots.pem doesn't exist");
+		return "file doesn't exist";
+	}
+	
+	filestream.seekg(0, std::ios::end);
+	GlobalObjects::ROOT_CERTIFICATES.resize(filestream.tellg());
+	filestream.seekg(0, std::ios::beg);
+	filestream.read(&GlobalObjects::ROOT_CERTIFICATES[0], GlobalObjects::ROOT_CERTIFICATES.size());
+	filestream.close();
+
+	LOG("Loaded %s", GlobalObjects::ROOT_CERTIFICATES.c_str());
+	return nullptr;
+}
 
 static void* MallocWrapper(size_t pSize, void* /*pUserData*/)
 {
@@ -90,23 +165,6 @@ arcdps_exports* mod_init()
 		WriteConsoleA(hnd, &buff[0], (DWORD)(p - &buff[0]), &written, 0);
 	}
 
-	{
-		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
-		ReadIni(HEAL_TABLE_OPTIONS);
-	}
-
-	auto getEndpoint = []() -> std::string
-		{
-			std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
-
-			return std::string{HEAL_TABLE_OPTIONS.EvtcRpcEndpoint};
-		};
-
-	GlobalObjects::EVENT_SEQUENCER = std::make_unique<EventSequencer>(ProcessLocalEvent);
-	GlobalObjects::EVENT_PROCESSOR = std::make_unique<EventProcessor>();
-	GlobalObjects::EVTC_RPC_CLIENT = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), ProcessPeerEvent);
-	GlobalObjects::EVTC_RPC_CLIENT_THREAD = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, GlobalObjects::EVTC_RPC_CLIENT.get());
-
 	memset(&ARC_EXPORTS, 0, sizeof(arcdps_exports));
 	ARC_EXPORTS.sig = 0x9c9b3c99;
 	ARC_EXPORTS.imguivers = IMGUI_VERSION_NUM;
@@ -118,6 +176,43 @@ arcdps_exports* mod_init()
 	ARC_EXPORTS.options_end = mod_options_end;
 	ARC_EXPORTS.combat_local = mod_combat_local;
 	ARC_EXPORTS.wnd_nofilter = mod_wnd;
+
+	const char* certificate_load_result = LoadRootCertificatesFromFile();
+	if (certificate_load_result != nullptr)
+	{
+		certificate_load_result = LoadRootCertificatesFromResource();
+	}
+
+	if (certificate_load_result != nullptr)
+	{
+		LOG("Failed startup - %s", certificate_load_result);
+
+		ARC_EXPORTS.sig = 0;
+		ARC_EXPORTS.size = reinterpret_cast<uintptr_t>(certificate_load_result);
+		return &ARC_EXPORTS;
+	}
+
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		ReadIni(HEAL_TABLE_OPTIONS);
+	}
+
+	auto getEndpoint = []() -> std::string
+		{
+			std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+
+			return std::string{HEAL_TABLE_OPTIONS.EvtcRpcEndpoint};
+		};
+	auto getCertificates = []() -> std::string
+		{
+			return std::string{GlobalObjects::ROOT_CERTIFICATES};
+		}; 
+
+	GlobalObjects::EVENT_SEQUENCER = std::make_unique<EventSequencer>(ProcessLocalEvent);
+	GlobalObjects::EVENT_PROCESSOR = std::make_unique<EventProcessor>();
+	GlobalObjects::EVTC_RPC_CLIENT = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), std::move(getCertificates), std::function{ProcessPeerEvent});
+	GlobalObjects::EVTC_RPC_CLIENT_THREAD = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, GlobalObjects::EVTC_RPC_CLIENT.get());
+
 	return &ARC_EXPORTS;
 }
 

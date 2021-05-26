@@ -148,6 +148,15 @@
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\arcdps_personal_stats.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\vcpkg_installed\x64-windows-static\share\grpc\roots.pem" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

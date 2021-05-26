@@ -18,12 +18,15 @@ public:
 	static inline bool ALLOC_CONSOLE = false;
 #endif
 
+	static inline HMODULE SELF_HANDLE = NULL;
 	static inline E7Signature ARC_E7 = nullptr;
 	static inline E3Signature ARC_E3 = nullptr;
 	static inline std::unique_ptr<EventSequencer> EVENT_SEQUENCER = nullptr;
 	static inline std::unique_ptr<EventProcessor> EVENT_PROCESSOR = nullptr;
 	static inline std::unique_ptr<evtc_rpc_client> EVTC_RPC_CLIENT = nullptr;
 	static inline std::unique_ptr<std::thread> EVTC_RPC_CLIENT_THREAD = nullptr;
+
+	static inline std::string ROOT_CERTIFICATES = "";
 };
 
 typedef void* (*MallocSignature)(size_t);

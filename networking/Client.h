@@ -162,7 +162,7 @@ class evtc_rpc_client
 	};
 
 public:
-	evtc_rpc_client(std::function<std::string()>&& pEndpointCallback, std::function<void(cbtevent*, uint16_t)>&& pCombatEventCallback);
+	evtc_rpc_client(std::function<std::string()>&& pEndpointCallback, std::function<std::string()>&& pRootCertsCallback, std::function<void(cbtevent*, uint16_t)>&& pCombatEventCallback);
 
 	uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 	uintptr_t ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
@@ -183,6 +183,7 @@ private:
 	void SendEvent(CallDataBase* pCallData);
 
 	const std::function<std::string()> mEndpointCallback;
+	const std::function<std::string()> mRootCertificatesCallback;
 	const std::function<void(cbtevent*, uint16_t)> mCombatEventCallback;
 
 	std::mutex mQueuedEventsLock;

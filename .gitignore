@@ -7,5 +7,6 @@ build
 *.ini
 *.mock
 *.log
+*.aps
 packages
 vcpkg_installed

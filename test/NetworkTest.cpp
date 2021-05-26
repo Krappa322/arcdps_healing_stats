@@ -12,10 +12,126 @@
 
 #include <utility>
 
-bool operator==(const cbtevent& pLeft, const cbtevent& pRight)
+namespace
 {
-	return memcmp(&pLeft, &pRight, sizeof(pLeft)) == 0;
-}
+const static grpc::SslServerCredentialsOptions::PemKeyCertPair UNIT_TEST_CERT_PAIR
+{
+R"STRING_LITERAL(-----BEGIN RSA PRIVATE KEY-----
+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
+-----END RSA PRIVATE KEY-----)STRING_LITERAL",
+R"STRING_LITERAL(-----BEGIN CERTIFICATE-----
+MIIFGDCCAwACAQEwDQYJKoZIhvcNAQELBQAwUDELMAkGA1UEBhMCU0UxETAPBgNV
+BAgMCEJsZWtpbmdlMQ0wCwYDVQQKDARUZXN0MQ0wCwYDVQQLDARUZXN0MRAwDgYD
+VQQDDAdSb290IENBMB4XDTIxMDUxODIxNDIwMloXDTMxMDUxNjIxNDIwMlowVDEL
+MAkGA1UEBhMCU0UxETAPBgNVBAgMCEJsZWtpbmdlMQ0wCwYDVQQKDARUZXN0MQ8w
+DQYDVQQLDAZTZXJ2ZXIxEjAQBgNVBAMMCWxvY2FsaG9zdDCCAiIwDQYJKoZIhvcN
+AQEBBQADggIPADCCAgoCggIBAKHWzfohGkzLG5lywlSEW08xWEXJOZO8eZx///iP
+Jhe8MUL74k1evwg5cpRFcZUNZay0JqGCKYc0JU/GIJhWMl6ma7ZgukzYw+aAsnPN
+UxZoJYWZxCcJFqWVyRHlS6Bv+YgERAEiMgMAfhTdGOIMKliOxwuYk+6C+U5avXBL
+xeFddho5QDk6NxXnMVE8uMM0aq1uUCyjpk06cAXU+PMQkBbPVH5Hh7MHD4L/+uo6
+v0H/QdHvBgRg6IzQhCmCwQdd1JMcxfuEi1wjQnZh9MwNo57l34anV6381u4d6VAX
+HfB+j7BppBIu4MxROzSr//Q9nkpcf3QFVJ/sPuKmBCoX2vEk99idUPzow/26VP8L
+zzKkeDPhj/Uhu50A68f3lFng1Fltdk4DT4ufPWBKHUPCbsc4I68SkB0vdWMARjJg
+NNqm3uuN2hdVOObfrKD7fPS0WTPl3gkrsNBMBS377tkliFjiEFPlBcbC2nlVklOI
+aF6y1aST4zVrhg0vy5aRkDW55QnrCom3J5ZK/dPxDlPZSD5gTB75zl4OIUrnKkvg
+BNPT5PfhNgADe/OrGQFQq+mqygYYHI1M01CNNLnsnbeQ64ofqdrOPvBf8dw5olZ4
+p7zI4hiiP0Y0dnIsI0Sa8xzQEbGvwFAIqXbiUvGrZVvEap0Kmuul02Sv+KFzE/Ni
+RxHTAgMBAAEwDQYJKoZIhvcNAQELBQADggIBAEm4w0XAB2p48sjjoRgBDWtrWzpB
+6733Ba0ScIt4GaHunsSg+YUNltVWK2Pf1UmCxBIVq/cuu8vf7rvf6gAVxDMKkWVI
+YVGkKoTCTBP83EuvqLOjI7ZggNNNbw+96bbl71khpLWVJ/WPgPg14Q8m/WVpdBvl
+riyiuTXeTZo3C3luHALXU1VAeM1geuAY6/thWETmbzimqWcDr8AEkj4JXMV1FGmk
+DsaeDoEP3v91MfRULDy7bUW5v2I6HFzxiHywz1wXyKYUL/sdYiYXnlbqqhbp89M+
+nlm3ltqcGfwXy+ChF9m8pUc5zpjreEgP3LKT1hX1kAj28unCcr0ja8aDa7gNr0C/
+lTNnt+LkO2MpTDdAKtrjAgz9fd1nDr5+hdRB3sL09gCxEioP4AU3D5fg3kD0KmCr
+VcDmG0o97pyj3USkTadSE/wxgvQjo12jtCu1K8TYHgejqE//qcAOGykjzg0m9kr9
+DOm27GEcYzBu2ip6vPo9YOpTQtMSTXvuw/cs3WfjMHFBLPy/gIZ06gQtm3Ue9E00
+IQfrhEVkJfWjQWgrH3yIP6RXC08/hikNCyy91AvjbA+4xxDm1qr2yBdnNdKWWqJm
+QvXw5hn+LXrbndRrxhvrnhilvmSEO7Ocbr2vtBnrpxHpycKyRn1We8hWkyIyzUPA
+NOpvdk1FH2CajXCT
+-----END CERTIFICATE-----)STRING_LITERAL"
+};
+
+const static std::string UNIT_TEST_CA =
+R"STRING_LITERAL(-----BEGIN CERTIFICATE-----
+MIIFgTCCA2mgAwIBAgIUJ6HGrj/fSWM/GT6DBXHnPV9EohkwDQYJKoZIhvcNAQEL
+BQAwUDELMAkGA1UEBhMCU0UxETAPBgNVBAgMCEJsZWtpbmdlMQ0wCwYDVQQKDARU
+ZXN0MQ0wCwYDVQQLDARUZXN0MRAwDgYDVQQDDAdSb290IENBMB4XDTIxMDUxODIx
+NDIwMFoXDTMxMDUxNjIxNDIwMFowUDELMAkGA1UEBhMCU0UxETAPBgNVBAgMCEJs
+ZWtpbmdlMQ0wCwYDVQQKDARUZXN0MQ0wCwYDVQQLDARUZXN0MRAwDgYDVQQDDAdS
+b290IENBMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAuPFhEIMkRflv
+M/o5RdAXD3j04uIE9DUskRjWEAPdZaWu0uIahfhrJXzO9ciiBixNa1NwGZyogXPC
+DhYcs6whLJUkyGj44bLr5YokW/VTUsxP6happwSQQm5yQCQGFSs69cSQNnG3IzO2
+HEotiMtVnpgC1AuQwJ8F4Vhg79fWxsO7LdceGdf/DRVpP2qTdonA7sMmpkRevkKO
+0MYrChIiakui1xi33eh91DugdzisUOA8LUrspiX29djpWj9s7CadrXddie+RIHMH
+HdzZ0Zap31DASoqELcAo9B1Yl3IQmqD7dCrKwEu5ZoS+TUdm3gtI9hZ+Fw1IjVyw
+FeL3Gw4KzKyHEewEyJ1q/AsSdSzpXsezfCr94wP5NT3fmHYAxVaKwkgTo6cQEWi2
+9T+0RA2WVhCRTtx6koqngWFO2/gwL4NgvIL8why/qbbT9SyUIVuzxkQu6GKSGh28
+rE4LZ1pHKagtJgXdwic+Eh0czWRcmVV55K6gfYcewghGzvDbi0TtPoJcQCPT0Det
+G1ezN0hl6ekAgisHx1YPTZYHRDBIiLoUWRHrNxQpHU7Whk1dFx4hRTu1LbU9LzU9
+8jeOFSCq8YUQpNoyp7Vi3VhUVQYjrqOfNPitrl1YoBEKmIASKpdQJoKub/wnMI1i
++ArkAgzMICbah6R3oni9DU5X88tMxh8CAwEAAaNTMFEwHQYDVR0OBBYEFBCBNBlP
+W/SedwkpRVipiWZg6lMKMB8GA1UdIwQYMBaAFBCBNBlPW/SedwkpRVipiWZg6lMK
+MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggIBAESKEhlLNrqArH2+
+w63mHtuqSWYpNG39btXdRuSNLZf6eOfXZGB2svaM0c07MjPq2z0i+jQ0VA0nT3uD
+KmV+6lpsaWgws4m2CremW541y90RArT/Ca54ziBl27BW/qLnr/l+74o+Pw3VyM+k
+flMPMZR23FFIcIFCRQvkA3ubSfFioRNMKdPHVBedOKU1nxlcIVMPxpaTGqeH034z
+gvpZR+uCYdiUDb71lEGlUJTiU0WWshlYsWWQ3KTFCm3K7jiyOh7tkbtO9fvT9G81
+n3/1cMfxvvCK4bKlO9t8s8bSZd0oM/eY7DYW4XlNub0/N7zjB6ptTRBQNdQ9G6Fl
+jCQbW6lms+SlsYHkFyq1xmnVRCdsEz8g2rmMtYHEvr1HABbcsRCV+rZwvdDoQnl3
+y9PmHEui2WD9ypkouapgXTWxLEY48sC1FDAEXv+tS8MNNXtGTcto3TUMpqjNyhu6
+Gnb5sqGws3KCuW3ObPgoaDZMF+/Wc8AneLSiu4eXH4qJmTYFrPVrqqVHD7y4c5Uk
+8d+uVXKol3GT53ghrhErIs/Zr3Chav9Mgu6i7VhrrgYsDUOijvkySBDSPuFzywQs
+gW58G2yLyQQNZRjFJQMTkUdDo54/y+AgNfNf3xaBYRIGqcxSbWP/UTogSxD0HNAH
+zUjXeAdwm/NFW/NuH1osYu9zny71
+-----END CERTIFICATE-----)STRING_LITERAL";
 
 void FillRandomData(void* pBuffer, size_t pBufferSize)
 {
@@ -23,6 +139,12 @@ void FillRandomData(void* pBuffer, size_t pBufferSize)
 	{
 		static_cast<byte*>(pBuffer)[i] = rand() % 256;
 	}
+}
+} // anonymous namespace
+
+bool operator==(const cbtevent& pLeft, const cbtevent& pRight)
+{
+	return memcmp(&pLeft, &pRight, sizeof(pLeft)) == 0;
 }
 
 // parameters are <max parallel callbacks, max fuzz width>
@@ -34,7 +156,11 @@ protected:
 		uint64_t seed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		srand(static_cast<uint32_t>(seed));
 
-		mServerThread = std::make_unique<std::thread>(evtc_rpc_server::ThreadStartServe, &Server);
+		grpc::SslServerCredentialsOptions server_credentials_options;
+		server_credentials_options.pem_root_certs = UNIT_TEST_CA;
+		server_credentials_options.pem_key_cert_pairs.push_back(UNIT_TEST_CERT_PAIR);
+		Server = std::make_unique<evtc_rpc_server>("localhost:50051", &server_credentials_options);
+		mServerThread = std::make_unique<std::thread>(evtc_rpc_server::ThreadStartServe, Server.get());
 	}
 
 	void TearDown() override
@@ -47,7 +173,7 @@ protected:
 		{
 			thread.join();
 		}
-		Server.Shutdown();
+		Server->Shutdown();
 		mServerThread->join();
 	}
 
@@ -81,7 +207,11 @@ protected:
 			{
 				return std::string{"localhost:50051"};
 			};
-		newClient->Client = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), std::move(eventhandler));
+		auto getCertificates = []() -> std::string
+			{
+				return std::string{UNIT_TEST_CA};
+			}; 
+		newClient->Client = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), std::move(getCertificates), std::move(eventhandler));
 
 		mClientThreads.emplace_back(evtc_rpc_client::ThreadStartServe, mClients.back()->Client.get());
 		return *newClient.get();
@@ -94,7 +224,7 @@ private:
 	std::vector<std::unique_ptr<ClientInstance>> mClients;
 
 public:
-	evtc_rpc_server Server{"localhost:50051"};
+	std::unique_ptr<evtc_rpc_server> Server;
 
 private:
 	std::unique_ptr<std::thread> mServerThread;
@@ -131,23 +261,30 @@ protected:
 		uint64_t seed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		srand(static_cast<uint32_t>(seed));
 
-		Server = std::make_unique<evtc_rpc_server>("localhost:50051");
+		grpc::SslServerCredentialsOptions server_credentials_options;
+		server_credentials_options.pem_root_certs = UNIT_TEST_CA;
+		server_credentials_options.pem_key_cert_pairs.push_back(UNIT_TEST_CERT_PAIR);
+		Server = std::make_unique<evtc_rpc_server>("localhost:50051", &server_credentials_options);
 
 		auto eventhandler = [this](cbtevent* /*pEvent*/, uint16_t /*pInstanceId*/)
 		{
 			// Do nothing
 		};
 		auto getEndpoint = []() -> std::string
-		{
-			return std::string{"localhost:50051"};
-		};
-		Client = std::make_unique<evtc_rpc_client>(std::function{getEndpoint}, std::move(eventhandler));
+			{
+				return std::string{"localhost:50051"};
+			};
+		auto getCertificates = []() -> std::string
+			{
+				return std::string{UNIT_TEST_CA};
+			}; 
+		Client = std::make_unique<evtc_rpc_client>(std::function{getEndpoint}, std::function{getCertificates}, std::move(eventhandler));
 
 		auto eventhandler2 = [this](cbtevent* pEvent, uint16_t pInstanceId)
 		{
 			Processor.PeerCombat(pEvent, pInstanceId);
 		};
-		PeerClient = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), std::move(eventhandler2));
+		PeerClient = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), std::move(getCertificates), std::move(eventhandler2));
 
 		ACTIVE_PROCESSOR = &Processor;
 		ACTIVE_CLIENT = Client.get();
@@ -214,11 +351,11 @@ TEST_F(SimpleNetworkTestFixture, RegisterSelf)
 		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(200))
 		{
 			{
-				std::lock_guard lock(Server.mRegisteredAgentsLock);
-				if (Server.mRegisteredAgents.size() >= 1)
+				std::lock_guard lock(Server->mRegisteredAgentsLock);
+				if (Server->mRegisteredAgents.size() >= 1)
 				{
-					auto iter = Server.mRegisteredAgents.find("testagent.1234");
-					if (iter != Server.mRegisteredAgents.end() && iter->second->InstanceId == instid)
+					auto iter = Server->mRegisteredAgents.find("testagent.1234");
+					if (iter != Server->mRegisteredAgents.end() && iter->second->InstanceId == instid)
 					{
 						completed = true;
 						break;
@@ -230,11 +367,11 @@ TEST_F(SimpleNetworkTestFixture, RegisterSelf)
 		}
 		EXPECT_TRUE(completed);
 		{
-			std::lock_guard lock(Server.mRegisteredAgentsLock);
+			std::lock_guard lock(Server->mRegisteredAgentsLock);
 
-			EXPECT_EQ(Server.mRegisteredAgents.size(), 1);
-			auto iter = Server.mRegisteredAgents.find("testagent.1234");
-			ASSERT_NE(iter, Server.mRegisteredAgents.end());
+			EXPECT_EQ(Server->mRegisteredAgents.size(), 1);
+			auto iter = Server->mRegisteredAgents.find("testagent.1234");
+			ASSERT_NE(iter, Server->mRegisteredAgents.end());
 			EXPECT_EQ(iter->first, "testagent.1234");
 			EXPECT_EQ(iter->second->Iterator, iter);
 			EXPECT_EQ(iter->second->InstanceId, instid);
@@ -270,9 +407,9 @@ TEST_F(SimpleNetworkTestFixture, RegisterPeer)
 	while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(100))
 	{
 		{
-			std::lock_guard lock(Server.mRegisteredAgentsLock);
-			auto iter = Server.mRegisteredAgents.find("testagent.1234");
-			if (iter != Server.mRegisteredAgents.end())
+			std::lock_guard lock(Server->mRegisteredAgentsLock);
+			auto iter = Server->mRegisteredAgents.find("testagent.1234");
+			if (iter != Server->mRegisteredAgents.end())
 			{
 				if (iter->second->Peers.size() > 0)
 				{
@@ -286,11 +423,11 @@ TEST_F(SimpleNetworkTestFixture, RegisterPeer)
 	}
 	ASSERT_TRUE(completed);
 	{
-		std::lock_guard lock(Server.mRegisteredAgentsLock);
+		std::lock_guard lock(Server->mRegisteredAgentsLock);
 
-		EXPECT_EQ(Server.mRegisteredAgents.size(), 1);
-		auto iter = Server.mRegisteredAgents.find("testagent.1234");
-		ASSERT_NE(iter, Server.mRegisteredAgents.end());
+		EXPECT_EQ(Server->mRegisteredAgents.size(), 1);
+		auto iter = Server->mRegisteredAgents.find("testagent.1234");
+		ASSERT_NE(iter, Server->mRegisteredAgents.end());
 		EXPECT_EQ(iter->first, "testagent.1234");
 		EXPECT_EQ(iter->second->Iterator, iter);
 		EXPECT_EQ(iter->second->InstanceId, 10);
@@ -311,9 +448,9 @@ TEST_F(SimpleNetworkTestFixture, RegisterPeer)
 	while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(100))
 	{
 		{
-			std::lock_guard lock(Server.mRegisteredAgentsLock);
-			auto iter = Server.mRegisteredAgents.find("testagent.1234");
-			if (iter != Server.mRegisteredAgents.end())
+			std::lock_guard lock(Server->mRegisteredAgentsLock);
+			auto iter = Server->mRegisteredAgents.find("testagent.1234");
+			if (iter != Server->mRegisteredAgents.end())
 			{
 				if (iter->second->Peers.size() == 0)
 				{
@@ -327,11 +464,11 @@ TEST_F(SimpleNetworkTestFixture, RegisterPeer)
 	}
 	ASSERT_TRUE(completed);
 	{
-		std::lock_guard lock(Server.mRegisteredAgentsLock);
+		std::lock_guard lock(Server->mRegisteredAgentsLock);
 
-		EXPECT_EQ(Server.mRegisteredAgents.size(), 1);
-		auto iter = Server.mRegisteredAgents.find("testagent.1234");
-		ASSERT_NE(iter, Server.mRegisteredAgents.end());
+		EXPECT_EQ(Server->mRegisteredAgents.size(), 1);
+		auto iter = Server->mRegisteredAgents.find("testagent.1234");
+		ASSERT_NE(iter, Server->mRegisteredAgents.end());
 		EXPECT_EQ(iter->first, "testagent.1234");
 		EXPECT_EQ(iter->second->Iterator, iter);
 		EXPECT_EQ(iter->second->InstanceId, 10);
@@ -372,9 +509,9 @@ TEST_F(SimpleNetworkTestFixture, CombatEvent)
 	while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(100))
 	{
 		{
-			std::lock_guard lock(Server.mRegisteredAgentsLock);
-			auto iter = Server.mRegisteredAgents.find("testagent.1234");
-			if (iter != Server.mRegisteredAgents.end())
+			std::lock_guard lock(Server->mRegisteredAgentsLock);
+			auto iter = Server->mRegisteredAgents.find("testagent.1234");
+			if (iter != Server->mRegisteredAgents.end())
 			{
 				if (iter->second->Peers.size() > 0)
 				{
@@ -409,9 +546,9 @@ TEST_F(SimpleNetworkTestFixture, CombatEvent)
 	while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(100))
 	{
 		{
-			std::lock_guard lock(Server.mRegisteredAgentsLock);
-			auto iter = Server.mRegisteredAgents.find("testagent2.1234");
-			if (iter != Server.mRegisteredAgents.end())
+			std::lock_guard lock(Server->mRegisteredAgentsLock);
+			auto iter = Server->mRegisteredAgents.find("testagent2.1234");
+			if (iter != Server->mRegisteredAgents.end())
 			{
 				if (iter->second->Peers.size() > 0)
 				{
