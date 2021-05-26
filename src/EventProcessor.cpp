@@ -88,6 +88,8 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		return;
 	}
 
+	mSkillTable->RegisterSkillName(pEvent->skillid, pSkillname);
+
 	// Event actually did something
 	if (pEvent->buff_dmg > 0 || pEvent->value > 0)
 	{
