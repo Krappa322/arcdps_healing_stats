@@ -148,6 +148,8 @@ extern "C" __declspec(dllexport) ModReleaseSignature get_release_addr()
 /* initialize mod -- return table that arcdps will use for callbacks */
 arcdps_exports* mod_init()
 {
+	std::unique_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+
 	if (GlobalObjects::ALLOC_CONSOLE == true)
 	{
 		AllocConsole();
@@ -164,6 +166,12 @@ arcdps_exports* mod_init()
 		HANDLE hnd = GetStdHandle(STD_OUTPUT_HANDLE);
 		WriteConsoleA(hnd, &buff[0], (DWORD)(p - &buff[0]), &written, 0);
 	}
+
+	if (GlobalObjects::IS_SHUTDOWN == false)
+	{
+		LOG("mod_init called twice");
+	}
+	GlobalObjects::IS_SHUTDOWN = false;
 
 	memset(&ARC_EXPORTS, 0, sizeof(arcdps_exports));
 	ARC_EXPORTS.sig = 0x9c9b3c99;
@@ -219,6 +227,13 @@ arcdps_exports* mod_init()
 /* release mod -- return ignored */
 uintptr_t mod_release()
 {
+	std::unique_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+	if (GlobalObjects::IS_SHUTDOWN == true)
+	{
+		LOG("mod_release called before mod_init");
+	}
+	GlobalObjects::IS_SHUTDOWN = true;
+
 	GlobalObjects::EVTC_RPC_CLIENT->Shutdown();
 
 	{
@@ -242,6 +257,13 @@ uintptr_t mod_release()
 
 uintptr_t mod_imgui(uint32_t pNotCharSelectionOrLoading)
 {
+	std::shared_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+	if (GlobalObjects::IS_SHUTDOWN == true)
+	{
+		DEBUGLOG("already shutdown");
+		return 1;
+	}
+
 	if (pNotCharSelectionOrLoading == 0)
 	{
 		return 0;
@@ -257,6 +279,13 @@ uintptr_t mod_imgui(uint32_t pNotCharSelectionOrLoading)
 
 uintptr_t mod_options_end()
 {
+	std::shared_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+	if (GlobalObjects::IS_SHUTDOWN == true)
+	{
+		DEBUGLOG("already shutdown");
+		return 1;
+	}
+
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 		Display_ArcDpsOptions(HEAL_TABLE_OPTIONS);
@@ -270,6 +299,13 @@ static std::atomic<uint32_t> SELF_INSTANCE_ID = UINT32_MAX;
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
+	std::shared_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+	if (GlobalObjects::IS_SHUTDOWN == true)
+	{
+		DEBUGLOG("already shutdown");
+		return 1;
+	}
+
 	GlobalObjects::EVENT_PROCESSOR->AreaCombat(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 	GlobalObjects::EVTC_RPC_CLIENT->ProcessAreaEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 	return 0;
@@ -279,6 +315,13 @@ uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, 
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
+	std::shared_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+	if (GlobalObjects::IS_SHUTDOWN == true)
+	{
+		DEBUGLOG("already shutdown");
+		return 1;
+	}
+
 	GlobalObjects::EVENT_SEQUENCER->ProcessEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 	return 0;
 }
@@ -292,6 +335,8 @@ uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestination
 
 void ProcessPeerEvent(cbtevent* pEvent, uint16_t pPeerInstanceId)
 {
+	assert(GlobalObjects::IS_SHUTDOWN == false); // Not atomic but that's fine, this is more of a sanity check
+
 	GlobalObjects::EVENT_PROCESSOR->PeerCombat(pEvent, pPeerInstanceId);
 }
 
@@ -307,6 +352,13 @@ struct ArcModifiers
 /* window callback -- return is assigned to umsg (return zero to not be processed by arcdps or game) */
 uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL)
 {
+	std::shared_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+	if (GlobalObjects::IS_SHUTDOWN == true)
+	{
+		DEBUGLOG("already shutdown");
+		return 0;
+	}
+
 	ImGui_ProcessKeyEvent(pWindowHandle, pMessage, pAdditionalW, pAdditionalL);
 
 	const ImGuiIO& io = ImGui::GetIO();

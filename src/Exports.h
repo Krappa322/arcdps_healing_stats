@@ -5,6 +5,7 @@
 #include "../networking/Client.h"
 
 #include <memory>
+#include <shared_mutex>
 
 typedef uint64_t(*E7Signature)();
 typedef void (*E3Signature)(const char* pString);
@@ -27,6 +28,9 @@ public:
 	static inline std::unique_ptr<std::thread> EVTC_RPC_CLIENT_THREAD = nullptr;
 
 	static inline std::string ROOT_CERTIFICATES = "";
+
+	static inline std::shared_mutex SHUTDOWN_LOCK;
+	static inline bool IS_SHUTDOWN = true;
 };
 
 typedef void* (*MallocSignature)(size_t);
