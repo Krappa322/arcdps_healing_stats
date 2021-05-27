@@ -267,8 +267,10 @@ void evtc_rpc_client::Serve()
 			{
 				LOG("(tag %p) Got not-ok", tag);
 
-				switch (base->Type)
+				if (mShutdown == false)
 				{
+					switch (base->Type)
+					{
 					case CallDataType::Connect:
 					{
 						FinishCallData* queuedData = new FinishCallData(std::shared_ptr{base->Context});
@@ -293,6 +295,7 @@ void evtc_rpc_client::Serve()
 					}
 					default:
 						break;
+					}
 				}
 			}
 

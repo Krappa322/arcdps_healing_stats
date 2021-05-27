@@ -19,6 +19,7 @@
 #include "evtc_rpc_messages.h"
 
 #include <deque>
+#include <shared_mutex>
 
 class evtc_rpc_server
 {
@@ -137,4 +138,7 @@ private:
 	evtc_rpc::evtc_rpc::AsyncService mService;
 	std::unique_ptr<grpc::Server> mServer;
 	std::unique_ptr<grpc::ServerCompletionQueue> mCompletionQueue;
+
+	std::shared_mutex mShutdownLock;
+	bool mIsShutdown = false;
 };

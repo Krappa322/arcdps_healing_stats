@@ -54,9 +54,11 @@ void evtc_rpc_server::Serve()
 			return;
 		}
 
-		if (ok == false)
+		std::shared_lock lock{mShutdownLock};
+
+		if (ok == false || mIsShutdown == true)
 		{
-			LOG("(tag %p) Got not-ok (type %u)", tag, static_cast<CallDataBase*>(tag)->Type);
+			LOG("(tag %p) Got not-ok or shutdown(%s) (type %u)", tag, BOOL_STR(mIsShutdown), static_cast<CallDataBase*>(tag)->Type);
 
 			switch (static_cast<CallDataBase*>(tag)->Type)
 			{
@@ -89,8 +91,8 @@ void evtc_rpc_server::Serve()
 				break;
 			}
 			default:
-				assert(false && "memory leak");
-				break;
+				LOG("Invalid CallDataType %i", static_cast<CallDataBase*>(tag)->Type);
+				assert(false);
 			}
 
 			continue;
@@ -105,7 +107,7 @@ void evtc_rpc_server::Serve()
 
 			queuedData->Context = std::make_shared<ConnectionContext>();
 			{
-				std::lock_guard lock(mRegisteredAgentsLock);
+				std::lock_guard agents_lock{mRegisteredAgentsLock};
 				queuedData->Context->Iterator = mRegisteredAgents.end();
 			}
 			mService.RequestConnect(&queuedData->Context->ServerContext, &queuedData->Context->Stream, mCompletionQueue.get(), mCompletionQueue.get(), queuedData);
@@ -141,8 +143,11 @@ void evtc_rpc_server::Serve()
 
 void evtc_rpc_server::Shutdown()
 {
+	std::unique_lock lock{mShutdownLock};
+
 	mServer->Shutdown();
 	mCompletionQueue->Shutdown();
+	mIsShutdown = true;
 }
 
 void evtc_rpc_server::HandleConnect(ConnectCallData* pCallData)
@@ -545,10 +550,18 @@ void evtc_rpc_server::ForceDisconnect(const char* pErrorMessage, const std::shar
 			removedFromTable = true;
 		}
 	}
+	
+	pClient->ForceDisconnected = true;
+
+	if (mIsShutdown == true)
+	{
+		LOG("(client %p) force disconnected (removedFromTable=%s) - '%s'. Server is shutting down so not queueing a Finish",
+			pClient.get(), BOOL_STR(removedFromTable), pErrorMessage);
+		return;
+	}
 
 	DisconnectCallData* queuedData = new DisconnectCallData{std::shared_ptr(pClient)};
 	pClient->Stream.Finish(grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, pErrorMessage}, queuedData);
-	pClient->ForceDisconnected = true;
-
-	LOG("(client %p tag %p) force disconnected (removedFromTable=%s)- '%s'", pClient.get(), queuedData, BOOL_STR(removedFromTable), pErrorMessage);
+	
+	LOG("(client %p tag %p) force disconnected (removedFromTable=%s) - '%s'", pClient.get(), queuedData, BOOL_STR(removedFromTable), pErrorMessage);
 }
