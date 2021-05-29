@@ -106,6 +106,18 @@ evtc_rpc_client::evtc_rpc_client(std::function<std::string()>&& pEndpointCallbac
 {
 }
 
+evtc_rpc_client_status evtc_rpc_client::GetStatus()
+{
+	evtc_rpc_client_status status;
+
+	{
+		std::lock_guard status_lock{mStatusLock};
+		status = mStatus;
+	}
+
+	return status;
+}
+
 uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* /*pSkillname*/, uint64_t pId, uint64_t /*pRevision*/)
 {
 	if (pEvent == nullptr)
@@ -257,6 +269,20 @@ void evtc_rpc_client::Serve()
 						LOG("(tag %p) got result %i '%s' '%s' %zu", tag, message->ReturnedStatus.error_code(), message->ReturnedStatus.error_message().c_str(), message->ReturnedStatus.error_details().c_str(), message->ReturnedStatus.error_details().size());
 						break;
 					}
+					case CallDataType::Connect:
+					{
+						ConnectCallData* message = static_cast<ConnectCallData*>(base);
+						
+						if (base->Context == mConnectionContext)
+						{
+							std::lock_guard lock{mStatusLock};
+							mStatus.Connected = true;
+							mStatus.ConnectTime = std::chrono::steady_clock::now();
+
+							LOG("(tag %p) Successfully connected to %s", tag, mStatus.Endpoint.c_str());
+						}
+						break;
+					}
 
 					default:
 						LOG("(tag %p) No action required for CallDataType %i", tag, base->Type);
@@ -281,6 +307,11 @@ void evtc_rpc_client::Serve()
 						if (base->Context == mConnectionContext)
 						{
 							mConnectionContext = nullptr;
+							
+							{
+								std::lock_guard status_lock{mStatusLock};
+								mStatus.Connected = false;
+							}
 						}
 						break;
 					}
@@ -290,6 +321,11 @@ void evtc_rpc_client::Serve()
 						if (base->Context == mConnectionContext)
 						{
 							mConnectionContext = nullptr;
+
+							{
+								std::lock_guard status_lock{mStatusLock};
+								mStatus.Connected = false;
+							}
 						}
 						break;
 					}
@@ -355,6 +391,11 @@ void evtc_rpc_client::Serve()
 
 				mLastConnectionAttempt = std::chrono::steady_clock::now();
 				LOG("Opening new connection to %s connect_tag=%p, read_tag=%p, root_certs_size=%zu", endpoint.c_str(), queuedData1, queuedData2, options.pem_root_certs.size());
+
+				{
+					std::lock_guard status_lock{mStatusLock};
+					mStatus.Endpoint = endpoint;
+				}
 			}
 		}
 		else if (mConnectionContext->WritePending == false)

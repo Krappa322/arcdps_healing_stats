@@ -22,6 +22,13 @@
 #include <queue>
 #include <memory>
 
+struct evtc_rpc_client_status
+{
+	bool Connected = false;
+	std::chrono::steady_clock::time_point ConnectTime;
+	std::string Endpoint;
+};
+
 class evtc_rpc_client
 {
 	typedef void(*PeerCombatCallbackSignature)(cbtevent* pEvent);
@@ -164,6 +171,8 @@ class evtc_rpc_client
 public:
 	evtc_rpc_client(std::function<std::string()>&& pEndpointCallback, std::function<std::string()>&& pRootCertsCallback, std::function<void(cbtevent*, uint16_t)>&& pCombatEventCallback);
 
+	evtc_rpc_client_status GetStatus();
+
 	uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 	uintptr_t ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 
@@ -199,4 +208,7 @@ private:
 	std::mutex mSelfInfoLock;
 	std::string mAccountName;
 	uint16_t mInstanceId = 0;
+
+	std::mutex mStatusLock;
+	evtc_rpc_client_status mStatus;
 };

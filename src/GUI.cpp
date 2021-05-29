@@ -383,6 +383,20 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 	}
 }
 
+static void Display_EvtcRpcStatus()
+{
+	evtc_rpc_client_status status = GlobalObjects::EVTC_RPC_CLIENT->GetStatus();
+	if (status.Connected == true)
+	{
+		uint64_t seconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - status.ConnectTime).count();
+		ImGui::TextColored(ImVec4(0.0f, 0.75f, 0.0f, 1.0f), "Connected to %s for %llu seconds", status.Endpoint.c_str(), seconds);
+	}
+	else
+	{
+		ImGui::TextColored(ImVec4(0.75f, 0.0f, 0.0f, 1.0f), "Failed connecting to %s. Retrying...", status.Endpoint.c_str());
+	}
+}
+
 void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 {
 	if (ImGui::BeginMenu("Heal Stats##HEAL") == true)
@@ -409,7 +423,9 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 			"(allowing other squad members to see your healing stats).\n"
 			"All local combat events will be sent to this server. Make\n"
 			"sure you trust it.");
+		Display_EvtcRpcStatus();
 
+		ImGui::Spacing();
 		if (ImGui::Button("reset all settings") == true)
 		{
 			pHealingOptions = HealTableOptions{};
