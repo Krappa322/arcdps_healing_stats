@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "arcdps_personal_stats_lib", "arcdps_personal_stats.vcxproj", "{3AE52975-FC4E-4804-8838-F230A5F1E79C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{8E446279-F584-484B-AECB-9E98E51D4B6F} = {8E446279-F584-484B-AECB-9E98E51D4B6F}
+		{68F4B081-08A4-4F37-A22B-035B738FBA15} = {68F4B081-08A4-4F37-A22B-035B738FBA15}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj", "{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}"
