@@ -96,4 +96,12 @@ void Log_::LogImplementationArc_(const char* pComponentName, const char* pFuncti
 
 	GlobalObjects::ARC_E3(buffer);
 }
+
+void Log_::FlushLogFile()
+{
+	if (LOG_FILE != NULL)
+	{
+		fflush(LOG_FILE);
+	}
+}
 #endif

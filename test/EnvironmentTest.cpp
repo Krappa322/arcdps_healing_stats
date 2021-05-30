@@ -35,6 +35,6 @@ TEST(EnvironmentTest, shutdown_race)
 	ASSERT_EQ(res, 1);
 	res = exports.options_end();
 	ASSERT_EQ(res, 1);
-	res = exports.wnd_nofilter(0, 1, 0, 0);
-	ASSERT_EQ(res, 0);
+	res = exports.wnd_nofilter(0, 123, 0, 0);
+	ASSERT_EQ(res, 123);
 }

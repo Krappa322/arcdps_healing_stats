@@ -227,12 +227,14 @@ arcdps_exports* mod_init()
 /* release mod -- return ignored */
 uintptr_t mod_release()
 {
-	std::unique_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
-	if (GlobalObjects::IS_SHUTDOWN == true)
 	{
-		LOG("mod_release called before mod_init");
+		std::unique_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+		if (GlobalObjects::IS_SHUTDOWN == true)
+		{
+			LOG("mod_release called before mod_init");
+		}
+		GlobalObjects::IS_SHUTDOWN = true;
 	}
-	GlobalObjects::IS_SHUTDOWN = true;
 
 	GlobalObjects::EVTC_RPC_CLIENT->Shutdown();
 
@@ -246,6 +248,9 @@ uintptr_t mod_release()
 	GlobalObjects::EVTC_RPC_CLIENT = nullptr;
 	GlobalObjects::EVENT_PROCESSOR = nullptr;
 	GlobalObjects::EVENT_SEQUENCER = nullptr;
+
+	LOG("Done with shutdown");
+	Log_::FlushLogFile();
 
 	if (GlobalObjects::ALLOC_CONSOLE == true)
 	{
@@ -356,7 +361,7 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 	if (GlobalObjects::IS_SHUTDOWN == true)
 	{
 		DEBUGLOG("already shutdown");
-		return 0;
+		return pMessage;
 	}
 
 	ImGui_ProcessKeyEvent(pWindowHandle, pMessage, pAdditionalW, pAdditionalL);
