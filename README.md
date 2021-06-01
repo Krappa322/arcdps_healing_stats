@@ -45,3 +45,5 @@ This project is licensed under the MIT license (see the LICENSE file for more de
 [Protocol Buffers](https://github.com/protocolbuffers/protobuf), licensed under the BSD-3-Clause license and included in this project as a linking/header dependency (provided through vcpkg or linux package manager).
 ### simpleini
 [simpleini](https://github.com/brofield/simpleini), licensed under the MIT license and included in this project as a directory [simpleini](/simpleini).
+### spdlog
+[spdlog](https://github.com/gabime/spdlog), licensed under the MIT license and included in this project as a directory [spdlog](/spdlog).
