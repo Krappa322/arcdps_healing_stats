@@ -502,6 +502,7 @@ void evtc_rpc_client::HandleReadMessage(ReadMessageCallData* pCallData)
 	using namespace evtc_rpc::messages;
 
 	// Add a new ReadMessageCallData so we can read the next message
+	if (mShutdown == false)
 	{
 		ReadMessageCallData* queuedData = new ReadMessageCallData{std::shared_ptr(pCallData->Context)};
 		pCallData->Context->Stream->Read(&queuedData->Message, queuedData);
