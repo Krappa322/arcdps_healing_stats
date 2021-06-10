@@ -82,22 +82,23 @@ target("server")
 	compilerflags = {}
 	if is_mode("debug") then
 		add_options("debug")
+		add_defines("_DEBUG")
 
 	elseif is_mode("asan") then
 		set_optimize("none")
-		add_defines("DEBUG")
+		add_defines("_DEBUG")
 		table.insert(compilerflags, "-fsanitize=address")
 		add_ldflags("-fsanitize=address")
 
 	elseif is_mode("tsan") then
 		set_optimize("none")
-		add_defines("DEBUG")
+		add_defines("_DEBUG")
 		table.insert(compilerflags, "-fsanitize=thread")
 		add_ldflags("-fsanitize=thread")
 
 	elseif is_mode("ubsan") then
 		set_optimize("none")
-		add_defines("DEBUG")
+		add_defines("_DEBUG")
 		table.insert(compilerflags, "-fsanitize=undefined")
 		--table.insert(compilerflags, "-fno-sanitize=alignment")
 		add_ldflags("-fsanitize=undefined")
@@ -112,7 +113,8 @@ target("server")
 
 	end
 
-	add_links("grpc++", "protobuf", "gpr")
+	add_linkdirs("spdlog/build_linux")
+	add_links("grpc++", "protobuf", "gpr", "spdlog")
 
 	add_files("src/Log.cpp", {cxxflags = compilerflags})
 	add_files("evtc_rpc_server/**.cpp", {cxxflags = compilerflags})
@@ -120,7 +122,7 @@ target("server")
 	add_files("networking/**.cpp", {cxxflags = compilerflags})
 	add_files("networking/**.proto")
 
-	add_includedirs("arcdps_mock/arcdps-extension")
+	add_includedirs("arcdps_mock/arcdps-extension", "spdlog/include")
 
 	if is_os("linux") then
 		add_defines("LINUX")

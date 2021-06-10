@@ -82,7 +82,7 @@ TEST_P(XevtcLogTestFixture, druid_solo)
 {
 	auto [parallelCallbacks, fuzzWidth] = GetParam();
 
-	uint32_t result = Mock.ExecuteFromXevtc("logs\\druid_solo.xevtc", parallelCallbacks, fuzzWidth);
+	uint32_t result = Mock.ExecuteFromXevtc("xevtc_logs\\druid_solo.xevtc", parallelCallbacks, fuzzWidth);
 	ASSERT_EQ(result, 0U);
 	ASSERT_TRUE(GlobalObjects::EVENT_SEQUENCER->QueueIsEmpty());
 
@@ -146,7 +146,7 @@ TEST_P(XevtcLogTestFixture, druid_MO)
 {
 	auto [parallelCallbacks, fuzzWidth] = GetParam();
 
-	uint32_t result = Mock.ExecuteFromXevtc("logs\\druid_MO.xevtc", parallelCallbacks, fuzzWidth);
+	uint32_t result = Mock.ExecuteFromXevtc("xevtc_logs\\druid_MO.xevtc", parallelCallbacks, fuzzWidth);
 	ASSERT_EQ(result, 0);
 	ASSERT_TRUE(GlobalObjects::EVENT_SEQUENCER->QueueIsEmpty());
 
@@ -203,7 +203,7 @@ TEST_P(XevtcLogTestFixture, null_names)
 {
 	auto [parallelCallbacks, fuzzWidth] = GetParam();
 
-	uint32_t result = Mock.ExecuteFromXevtc("logs\\null_names.xevtc", parallelCallbacks, fuzzWidth);
+	uint32_t result = Mock.ExecuteFromXevtc("xevtc_logs\\null_names.xevtc", parallelCallbacks, fuzzWidth);
 	ASSERT_EQ(result, 0);
 	ASSERT_TRUE(GlobalObjects::EVENT_SEQUENCER->QueueIsEmpty());
 

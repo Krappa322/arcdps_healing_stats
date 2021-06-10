@@ -54,7 +54,7 @@ static BOOL EnumTypesFunc(HMODULE hModule, LPTSTR lpType, LONG_PTR lParam)
 	return TRUE;
 }
 
-static const char* LoadRootCertificatesFromResource()
+const char* LoadRootCertificatesFromResource()
 {
 	HMODULE dll_handle = GlobalObjects::SELF_HANDLE;
 	bool res = EnumResourceTypes(dll_handle, &EnumTypesFunc, 12345);
@@ -123,6 +123,8 @@ static void FreeWrapper(void* pPointer, void* /*pUserData*/)
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
 extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9*, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
+	Log_::Init(false, "addons/logs/arcdps_healing_stats.txt");
+
 	GlobalObjects::ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(GlobalObjects::ARC_E3 != nullptr);
 	GlobalObjects::ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(pArcModule, "e7"));
@@ -203,6 +205,8 @@ arcdps_exports* mod_init()
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 		ReadIni(HEAL_TABLE_OPTIONS);
+
+		Log_::SetLevel(HEAL_TABLE_OPTIONS.LogLevel);
 	}
 
 	auto getEndpoint = []() -> std::string

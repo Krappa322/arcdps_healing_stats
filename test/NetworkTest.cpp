@@ -591,7 +591,7 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 	ag2.name = ":worshipperofnarnia.2689";
 	PeerClient->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
 
-	uint32_t result = Mock.ExecuteFromXevtc("logs\\druid_MO.xevtc", parallelCallbacks, 0);
+	uint32_t result = Mock.ExecuteFromXevtc("xevtc_logs\\druid_MO.xevtc", parallelCallbacks, 0);
 	ASSERT_EQ(result, 0);
 
 	Client->FlushEvents();

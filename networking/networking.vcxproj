@@ -69,7 +69,7 @@
       <PrecompiledHeaderFile />
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;..\spdlog\include;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -91,7 +91,7 @@
       <PrecompiledHeaderFile />
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\arcdps_mock\arcdps-extension;..\spdlog\include;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>

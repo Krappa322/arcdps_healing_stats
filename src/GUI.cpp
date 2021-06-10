@@ -417,6 +417,19 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 			"Includes debug data in target and skill names.\n"
 			"Turn this on before taking screenshots of potential calculation issues.");
 
+		const char* log_level_items[] = SPDLOG_LEVEL_NAMES;
+		int choice = pHealingOptions.LogLevel;
+		if (ImGui::Combo("logging", &choice, log_level_items, sizeof(log_level_items) / sizeof(log_level_items[0])) == true)
+		{
+			pHealingOptions.LogLevel = static_cast<spdlog::level::level_enum>(choice);
+			Log_::SetLevel(pHealingOptions.LogLevel);
+		}
+		ImGuiEx::AddTooltipToLastItem(
+			"If not set to off, enables logging at the specified log level.\n"
+			"Logs are saved in addons\\logs\\.");
+
+		ImGui::Spacing();
+
 		ImGui::InputText("evtc rpc server", pHealingOptions.EvtcRpcEndpoint, sizeof(pHealingOptions.EvtcRpcEndpoint));
 		ImGuiEx::AddTooltipToLastItem(
 			"The server to communicate with for evtc_rpc communication\n"
@@ -426,6 +439,7 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 		Display_EvtcRpcStatus();
 
 		ImGui::Spacing();
+
 		if (ImGui::Button("reset all settings") == true)
 		{
 			pHealingOptions = HealTableOptions{};

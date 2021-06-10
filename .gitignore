@@ -8,5 +8,6 @@ build
 *.mock
 *.log
 *.aps
+*.txt
 packages
 vcpkg_installed

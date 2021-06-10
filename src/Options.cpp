@@ -21,6 +21,13 @@ void WriteIni(const HealTableOptions& pOptions)
 	{
 		LOG("SetValue debug_mode failed with %i", error);
 	}
+
+	error = healtable_ini.SetLongValue("settings", "log_level", pOptions.LogLevel);
+	if (error < 0)
+	{
+		LOG("SetValue log_level failed with %i", error);
+	}
+
 	error = healtable_ini.SetValue("settings", "evtc_rpc_endpoint", pOptions.EvtcRpcEndpoint);
 	if (error < 0)
 	{
@@ -146,6 +153,8 @@ void ReadIni(HealTableOptions& pOptions)
 	}
 
 	pOptions.DebugMode = healtable_ini.GetBoolValue("settings", "debug_mode", pOptions.DebugMode);
+	pOptions.LogLevel = static_cast<spdlog::level::level_enum>(healtable_ini.GetLongValue("settings", "log_level", pOptions.LogLevel));
+
 	const char* val;
 	/*const char* val = healtable_ini.GetValue("settings", "evtc_rpc_endpoint", nullptr);
 	if (val != nullptr)

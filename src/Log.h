@@ -1,4 +1,7 @@
 #pragma once
+#define SPDLOG_COMPILED_LIB
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/rotating_file_sink.h>
 
 #include <stdio.h>
 
@@ -64,14 +67,18 @@ namespace Log_
 	void LogImplementationArc_(const char* pComponentName, const char* pFunctionName, const char* pFormatString, ...);
 
 	void FlushLogFile();
+	void Init(bool pRotateOnOpen, const char* pLogPath);
+	void SetLevel(spdlog::level::level_enum pLevel);
+
+	inline std::shared_ptr<spdlog::logger> LOGGER;
 }
 
-#ifdef DEBUG
-// Add optimized out call to printf to get a compiler warning for format string errors
+#define LogD(pFormatString, ...) Log_::LOGGER->debug("{}|{}|" pFormatString, Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
+#define LogI(pFormatString, ...) Log_::LOGGER->info("{}|{}|" pFormatString, Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
+#define LogW(pFormatString, ...) Log_::LOGGER->warn("{}|{}|" pFormatString, Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
+
 #define LOG(pFormatString, ...) Log_::LogImplementation_(Log_::GetFileName(__FILE__), __func__, pFormatString, ##__VA_ARGS__); if (false) { printf(pFormatString, ##__VA_ARGS__); }
-#else
-#define LOG(pFormatString, ...) if (false) { printf(pFormatString, ##__VA_ARGS__); }
-#endif
+
 #define DEBUGLOG(pFormatString, ...) if (false) { printf(pFormatString, ##__VA_ARGS__); }
 
 #define LOG_ARC(pFormatString, ...) Log_::LogImplementationArc_(Log_::GetFileName(__FILE__), __func__, pFormatString, ##__VA_ARGS__); if (false) { printf(pFormatString, ##__VA_ARGS__); }
