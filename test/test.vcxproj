@@ -50,6 +50,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NetworkTest.cpp" />
     <ClCompile Include="LocalStatsTest.cpp" />
+    <ClCompile Include="StressTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\arcdps_personal_stats.vcxproj">

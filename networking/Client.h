@@ -180,7 +180,7 @@ public:
 	void Serve();
 	void Shutdown();
 
-	void FlushEvents();
+	void FlushEvents(size_t pAcceptableQueueSize = 0);
 
 #ifndef TEST
 private:

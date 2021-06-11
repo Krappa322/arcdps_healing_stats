@@ -443,13 +443,13 @@ void evtc_rpc_client::Shutdown()
 	mShouldShutdown = true;
 }
 
-void evtc_rpc_client::FlushEvents()
+void evtc_rpc_client::FlushEvents(size_t pAcceptableQueueSize)
 {
 	while (true)
 	{
 		{
 			std::lock_guard lock(mQueuedEventsLock);
-			if (mQueuedEvents.size() == 0)
+			if (mQueuedEvents.size() <= pAcceptableQueueSize)
 			{
 				return;
 			}
