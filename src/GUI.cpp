@@ -105,10 +105,16 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImGui::End();
 }
 
-static void Display_Content(HealWindowContext& pContext, DataSource pDataSource, uint32_t pWindowIndex)
+static void Display_Content(HealWindowContext& pContext, DataSource pDataSource, uint32_t pWindowIndex, bool pEvtcRpcEnabled)
 {
 	UNREFERENCED_PARAMETER(pWindowIndex);
 	char buffer[1024];
+
+	if (pDataSource == DataSource::PeersOutgoing && pEvtcRpcEnabled == false)
+	{
+		ImGui::TextWrapped("Live stats sharing is disabled. Enable \"live stats sharing\" under \"Heal Stats Options\" in order to see the healing done by other players in the squad.");
+		return;
+	}
 
 	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal(pDataSource);
 
@@ -329,23 +335,23 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Combined)
 		{
-			Display_Content(curWindow, static_cast<DataSource>(curWindow.DataSourceChoice), i);
+			Display_Content(curWindow, static_cast<DataSource>(curWindow.DataSourceChoice), i, pHealingOptions.EvtcRpcEnabled);
 		}
 		else
 		{
 			ImGui::PushID(static_cast<int>(DataSource::Totals));
 			ImGuiEx::TextColoredCentered(ImColor(0, 209, 165), "Totals");
-			Display_Content(curWindow, DataSource::Totals, i);
+			Display_Content(curWindow, DataSource::Totals, i, pHealingOptions.EvtcRpcEnabled);
 			ImGui::PopID();
 
 			ImGui::PushID(static_cast<int>(DataSource::Agents));
 			ImGuiEx::TextColoredCentered(ImColor(0, 209, 165), "Targets");
-			Display_Content(curWindow, DataSource::Agents, i);
+			Display_Content(curWindow, DataSource::Agents, i, pHealingOptions.EvtcRpcEnabled);
 			ImGui::PopID();
 
 			ImGui::PushID(static_cast<int>(DataSource::Skills));
 			ImGuiEx::TextColoredCentered(ImColor(0, 209, 165), "Skills");
-			Display_Content(curWindow, DataSource::Skills, i);
+			Display_Content(curWindow, DataSource::Skills, i, pHealingOptions.EvtcRpcEnabled);
 			ImGui::PopID();
 		}
 
