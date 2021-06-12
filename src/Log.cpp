@@ -75,11 +75,18 @@ void Log_::FlushLogFile()
 
 void Log_::Init(bool pRotateOnOpen, const char* pLogPath)
 {
-	Log_::LOGGER = spdlog::rotating_logger_mt<spdlog::async_factory_nonblock>("arcdps_healing_stats", pLogPath, 128*1024*1024, 8, pRotateOnOpen);
+	if (Log_::LOGGER != nullptr)
+	{
+		LogD("Skipping logger initialization since logger is not nullptr");
+		return;
+	}
+
+	Log_::LOGGER = spdlog::rotating_logger_mt<spdlog::async_factory>("arcdps_healing_stats", pLogPath, 128*1024*1024, 8, pRotateOnOpen);
 	Log_::LOGGER->set_pattern("%b %d %H:%M:%S.%f %t %L %v");
 	spdlog::flush_every(std::chrono::seconds(5));
 }
 
+static std::atomic_bool LoggerLocked = false;
 void Log_::SetLevel(spdlog::level::level_enum pLevel)
 {
 	if (pLevel < 0 || pLevel >= spdlog::level::n_levels)
@@ -87,7 +94,18 @@ void Log_::SetLevel(spdlog::level::level_enum pLevel)
 		LogW("Not setting level to {} since level is out of range", pLevel);
 		return;
 	}
+	if (LoggerLocked == true)
+	{
+		LogW("Not setting level to {} since logger is locked", pLevel);
+		return;
+	}
 
 	Log_::LOGGER->set_level(pLevel);
 	LogI("Changed level to {}", pLevel);
+}
+
+void Log_::LockLogger()
+{
+	LoggerLocked = true;
+	LogI("Locked logger");
 }

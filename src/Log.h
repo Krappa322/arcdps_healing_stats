@@ -69,6 +69,7 @@ namespace Log_
 	void FlushLogFile();
 	void Init(bool pRotateOnOpen, const char* pLogPath);
 	void SetLevel(spdlog::level::level_enum pLevel);
+	void LockLogger();
 
 	inline std::shared_ptr<spdlog::logger> LOGGER;
 }

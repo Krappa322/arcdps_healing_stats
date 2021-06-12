@@ -4,7 +4,7 @@
 int main(int pArgumentCount, char** pArgumentVector)
 {
 	Log_::Init(false, "logs/evtc_rpc_server.txt");
-	Log_::SetLevel(spdlog::level::info);
+	Log_::SetLevel(spdlog::level::debug);
 
 	if (pArgumentCount != 2)
 	{
