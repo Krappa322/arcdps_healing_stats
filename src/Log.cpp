@@ -6,6 +6,7 @@
 #include "Exports.h"
 #endif
 
+#include <spdlog/async.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 
 #include <assert.h>
@@ -74,7 +75,7 @@ void Log_::FlushLogFile()
 
 void Log_::Init(bool pRotateOnOpen, const char* pLogPath)
 {
-	Log_::LOGGER = spdlog::rotating_logger_mt("arcdps_healing_stats", pLogPath, 128*1024*1024, 8, pRotateOnOpen);
+	Log_::LOGGER = spdlog::rotating_logger_mt<spdlog::async_factory_nonblock>("arcdps_healing_stats", pLogPath, 128*1024*1024, 8, pRotateOnOpen);
 	Log_::LOGGER->set_pattern("%b %d %H:%M:%S.%f %t %L %v");
 	spdlog::flush_every(std::chrono::seconds(5));
 }
