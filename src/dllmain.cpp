@@ -123,7 +123,7 @@ static void FreeWrapper(void* pPointer, void* /*pUserData*/)
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
 extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9*, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
-	Log_::Init(false, "addons/logs/arcdps_healing_stats.txt");
+	Log_::Init(false, "addons/logs/arcdps_healing_stats/arcdps_healing_stats.txt");
 
 	GlobalObjects::ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(GlobalObjects::ARC_E3 != nullptr);

@@ -426,7 +426,9 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 		}
 		ImGuiEx::AddTooltipToLastItem(
 			"If not set to off, enables logging at the specified log level.\n"
-			"Logs are saved in addons\\logs\\.");
+			"Logs are saved in addons\\logs\\arcdps_healing_stats\\. Logging\n"
+			"will have a small impact on performance. The log can reach a\n"
+			"maximum size of 1 GiB");
 
 		ImGui::Spacing();
 
