@@ -147,7 +147,6 @@ bool operator==(const cbtevent& pLeft, const cbtevent& pRight)
 	return memcmp(&pLeft, &pRight, sizeof(pLeft)) == 0;
 }
 
-// parameters are <max parallel callbacks, max fuzz width>
 class SimpleNetworkTestFixture : public ::testing::Test
 {
 protected:
@@ -229,6 +228,11 @@ public:
 private:
 	std::unique_ptr<std::thread> mServerThread;
 	std::vector<std::thread> mClientThreads;
+};
+
+// Parameters are <register before disabling>
+class DisableClientTestFixture : public SimpleNetworkTestFixture, public testing::WithParamInterface<bool>
+{
 };
 
 namespace
@@ -571,6 +575,84 @@ TEST_F(SimpleNetworkTestFixture, CombatEvent)
 	std::vector<cbtevent> expectedEvents{ev};
 	EXPECT_EQ(client2.ReceivedEvents, expectedEvents);
 }
+
+
+TEST_P(DisableClientTestFixture, DisableClient)
+{
+	ClientInstance& client1 = NewClient();
+
+	if (GetParam() == true)
+	{
+		LogD("RegisterBeforeDisabling is true, sending events");
+	}
+	else
+	{
+		client1->SetEnabledStatus(false);
+	}
+
+	// Send a self agent registration event followed by a non-self agent registration event followed by a combat event
+	ag ag1{};
+	ag ag2{};
+	ag1.elite = 0;
+	ag1.prof = static_cast<Prof>(1);
+	ag2.self = 1;
+	ag2.id = 10;
+	ag2.name = "testagent.1234";
+	client1->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+
+	ag2.self = 0;
+	ag2.id = 11;
+	ag2.name = "testagent2.1234";
+	client1->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+
+	cbtevent ev;
+	FillRandomData(&ev, sizeof(ev));
+	client1->ProcessLocalEvent(&ev, nullptr, nullptr, nullptr, 0, 0);
+
+	if (GetParam() == true)
+	{
+		FlushEvents();
+
+		std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+		bool completed = false;
+		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(100))
+		{
+			{
+				std::lock_guard lock(Server->mRegisteredAgentsLock);
+				auto iter = Server->mRegisteredAgents.find("testagent.1234");
+				if (iter != Server->mRegisteredAgents.end())
+				{
+					if (iter->second->Peers.size() > 0)
+					{
+						completed = true;
+						break;
+					}
+				}
+			}
+
+			Sleep(1);
+		}
+		ASSERT_TRUE(completed);
+
+		LogD("Waiting for client to be registered took {}ms", std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count());
+
+		client1->SetEnabledStatus(false);
+	}
+
+	Sleep(1000);
+
+	{
+		std::lock_guard lock(Server->mRegisteredAgentsLock);
+
+		EXPECT_EQ(Server->mRegisteredAgents.size(), 0);
+	}
+}
+
+INSTANTIATE_TEST_SUITE_P(
+	Normal,
+	DisableClientTestFixture,
+	::testing::Values(false, true));
+
 
 TEST_P(NetworkXevtcTestFixture, druid_MO)
 {

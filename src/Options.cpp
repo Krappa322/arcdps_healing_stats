@@ -34,6 +34,12 @@ void WriteIni(const HealTableOptions& pOptions)
 		LOG("SetValue evtc_rpc_endpoint failed with %i", error);
 	}
 
+	error = healtable_ini.SetBoolValue("settings", "evtc_rpc_enabled", pOptions.EvtcRpcEnabled);
+	if (error < 0)
+	{
+		LOG("SetValue evtc_rpc_enabled failed with %i", error);
+	}
+
 	for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
 	{
 		char section[128];
@@ -161,6 +167,7 @@ void ReadIni(HealTableOptions& pOptions)
 	{
 		snprintf(pOptions.EvtcRpcEndpoint, sizeof(pOptions.EvtcRpcEndpoint), "%s", val);
 	}*/ // Force everyone to use default endpoint
+	pOptions.EvtcRpcEnabled = healtable_ini.GetBoolValue("settings", "evtc_rpc_enabled", pOptions.EvtcRpcEnabled);
 
 	for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
 	{

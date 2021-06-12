@@ -9,6 +9,15 @@
 #include <array>
 #include <Windows.h>
 
+static const char* const DATA_SOURCE_ITEMS[] = {"targets", "skills", "totals", "combined", "peers outgoing"};
+static_assert((sizeof(DATA_SOURCE_ITEMS) / sizeof(DATA_SOURCE_ITEMS[0])) == static_cast<uint64_t>(DataSource::Max), "Added data source without updating gui?");
+
+static const char* const SORT_ORDER_ITEMS[] = { "alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending" };
+static_assert((sizeof(SORT_ORDER_ITEMS) / sizeof(SORT_ORDER_ITEMS[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
+
+static const char* const COMBAT_END_CONDITION_ITEMS[] = { "combat exit", "last damage event", "last heal event", "last damage / heal event" };
+static_assert((sizeof(COMBAT_END_CONDITION_ITEMS) / sizeof(COMBAT_END_CONDITION_ITEMS[0])) == static_cast<uint64_t>(CombatEndCondition::Max), "Added combat end condition without updating gui?");
+
 static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowState& pState, DataSource pDataSource)
 {
 	if (pState.IsOpen == false)
@@ -227,16 +236,12 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 		{
-			const char* const dataSourceItems[] = {"targets", "skills", "totals", "combined", "peers outgoing"};
-			static_assert((sizeof(dataSourceItems) / sizeof(dataSourceItems[0])) == static_cast<uint64_t>(DataSource::Max), "Added data source without updating gui?");
-			ImGui::Combo("data source", &curWindow.DataSourceChoice, dataSourceItems, static_cast<int>(DataSource::Max));
+			ImGui::Combo("data source", &curWindow.DataSourceChoice, DATA_SOURCE_ITEMS, static_cast<int>(DataSource::Max));
 			ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
 
 			if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
 			{
-				const char* const sortOrderItems[] = { "alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending" };
-				static_assert((sizeof(sortOrderItems) / sizeof(sortOrderItems[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
-				ImGui::Combo("sort order", &curWindow.SortOrderChoice, sortOrderItems, static_cast<int>(SortOrder::Max));
+				ImGui::Combo("sort order", &curWindow.SortOrderChoice, SORT_ORDER_ITEMS, static_cast<int>(SortOrder::Max));
 				ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
 
 				if (ImGui::BeginMenu("stats exclude") == true)
@@ -250,9 +255,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				}
 			}
 
-			const char* const combatEndConditionItems[] = { "combat exit", "last damage event", "last heal event", "last damage / heal event" };
-			static_assert((sizeof(combatEndConditionItems) / sizeof(combatEndConditionItems[0])) == static_cast<uint64_t>(CombatEndCondition::Max), "Added combat end condition without updating gui?");
-			ImGui::Combo("combat end", &curWindow.CombatEndConditionChoice, combatEndConditionItems, static_cast<int>(CombatEndCondition::Max));
+			ImGui::Combo("combat end", &curWindow.CombatEndConditionChoice, COMBAT_END_CONDITION_ITEMS, static_cast<int>(CombatEndCondition::Max));
 			ImGuiEx::AddTooltipToLastItem("Decides what should be used for determining combat\n"
 			                              "end (and consequently time in combat)");
 
@@ -383,13 +386,17 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 	}
 }
 
-static void Display_EvtcRpcStatus()
+static void Display_EvtcRpcStatus(const HealTableOptions& pHealingOptions)
 {
 	evtc_rpc_client_status status = GlobalObjects::EVTC_RPC_CLIENT->GetStatus();
 	if (status.Connected == true)
 	{
 		uint64_t seconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - status.ConnectTime).count();
 		ImGui::TextColored(ImVec4(0.0f, 0.75f, 0.0f, 1.0f), "Connected to %s for %llu seconds", status.Endpoint.c_str(), seconds);
+	}
+	else if (pHealingOptions.EvtcRpcEnabled == false)
+	{
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.2f, 1.0f), "Not connected since live stats sharing is disabled", status.Endpoint.c_str());
 	}
 	else
 	{
@@ -432,13 +439,32 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 
 		ImGui::Spacing();
 
+		if (ImGui::Checkbox("enable live stats sharing", &pHealingOptions.EvtcRpcEnabled) == true)
+		{
+			GlobalObjects::EVTC_RPC_CLIENT->SetEnabledStatus(pHealingOptions.EvtcRpcEnabled);
+		}
+		ImGuiEx::AddTooltipToLastItem(
+			"Enables live sharing of healing statistics with other\n"
+			"players in your squad. This is done through a central server\n"
+			"(see option below). After enabling live sharing, it might not\n"
+			"work properly until after changing map instance so all squad\n"
+			"members are properly detected.\n"
+			"\n"
+			"The stats shared from other players can be viewed through a\n"
+			"heal stats window with its data source set to \"%s\"\n"
+			"\n"
+			"Enabling this option has a small impact on performance, and\n"
+			"will put some additional load on your connection (a maximum\n"
+			"of about 10 kiB/s up and 100 kiB/s down)"
+			, DATA_SOURCE_ITEMS[static_cast<int>(DataSource::PeersOutgoing)]);
+
 		ImGui::InputText("evtc rpc server", pHealingOptions.EvtcRpcEndpoint, sizeof(pHealingOptions.EvtcRpcEndpoint));
 		ImGuiEx::AddTooltipToLastItem(
 			"The server to communicate with for evtc_rpc communication\n"
 			"(allowing other squad members to see your healing stats).\n"
 			"All local combat events will be sent to this server. Make\n"
 			"sure you trust it.");
-		Display_EvtcRpcStatus();
+		Display_EvtcRpcStatus(pHealingOptions);
 
 		ImGui::Spacing();
 

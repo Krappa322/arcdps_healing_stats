@@ -118,6 +118,12 @@ evtc_rpc_client_status evtc_rpc_client::GetStatus()
 	return status;
 }
 
+void evtc_rpc_client::SetEnabledStatus(bool pEnabledStatus)
+{
+	mDisabled = !pEnabledStatus;
+	LogI("Changed enabled status to {}", pEnabledStatus);
+}
+
 uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* /*pSkillname*/, uint64_t pId, uint64_t /*pRevision*/)
 {
 	if (pEvent == nullptr)
@@ -366,6 +372,17 @@ void evtc_rpc_client::Serve()
 			}
 
 			mCompletionQueue.Shutdown();
+		}
+		else if (mDisabled == true)
+		{
+			if (mConnectionContext != nullptr)
+			{
+				// grpc doesn't give much of an interface to stop the calls, this is the best we can do. Queueing a Finish call
+				// will not do anything, it leaves us at the mercy of the server to actually complete the underlying call.
+				mConnectionContext->ClientContext.TryCancel();
+
+				LogD("Client was disabled, cancelling calls");
+			}
 		}
 		else if (mConnectionContext == nullptr)
 		{
