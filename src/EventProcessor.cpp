@@ -77,6 +77,19 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self);
 	}
 
+	if (pEvent->skillid != 0)
+	{
+		if (pSkillname != nullptr)
+		{
+			mSkillTable->RegisterSkillName(pEvent->skillid, pSkillname);
+		}
+		else
+		{
+			LogD("Got event with skillid {} but skillname is nullptr - is_statechange={} is_activation={} is_buffremove={} buff={} buff_dmg={} value={}",
+				pEvent->skillid, pEvent->is_statechange, pEvent->is_activation, pEvent->is_buffremove, pEvent->buff, pEvent->buff_dmg, pEvent->value);
+		}
+	}
+
 	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
 	{
 		return;
@@ -87,8 +100,6 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		// Buff application - not interesting
 		return;
 	}
-
-	mSkillTable->RegisterSkillName(pEvent->skillid, pSkillname);
 
 	// Event actually did something
 	if (pEvent->buff_dmg > 0 || pEvent->value > 0)
@@ -178,6 +189,19 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		return;
 	}
 
+	if (pEvent->skillid != 0)
+	{
+		if (pSkillname != nullptr)
+		{
+			mSkillTable->RegisterSkillName(pEvent->skillid, pSkillname);
+		}
+		else
+		{
+			LogD("Got event with skillid {} but skillname is nullptr - is_statechange={} is_activation={} is_buffremove={} buff={} buff_dmg={} value={}",
+				pEvent->skillid, pEvent->is_statechange, pEvent->is_activation, pEvent->is_buffremove, pEvent->buff, pEvent->buff_dmg, pEvent->value);
+		}
+	}
+
 	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
 	{
 		// Not a HP modifying event - not interesting
@@ -214,8 +238,6 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 	{
 		mAgentTable.AddAgent(pDestinationAgent->id, pEvent->dst_instid, pDestinationAgent->name, std::nullopt, pEvent->dst_master_instid != 0, std::nullopt);
 	}
-
-	mSkillTable->RegisterSkillName(pEvent->skillid, pSkillname);
 
 	mLocalState.HealingEvent(pEvent, pDestinationAgent->id);
 
