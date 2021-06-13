@@ -53,7 +53,6 @@ protected:
 	{
 		//PlayerStats::GlobalState.Clear(); // Make sure agents etc. aren't leaked between test runs
 
-		GlobalObjects::ALLOC_CONSOLE = false;
 		ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
 
 		{

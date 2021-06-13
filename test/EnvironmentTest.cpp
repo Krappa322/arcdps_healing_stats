@@ -6,8 +6,6 @@
 
 TEST(EnvironmentTest, shutdown_race)
 {
-	GlobalObjects::ALLOC_CONSOLE = false;
-
 	ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
 	arcdps_exports exports = *mod_init();
 	ASSERT_NE(exports.sig, 0);

@@ -156,23 +156,6 @@ arcdps_exports* mod_init()
 	LogD(">>");
 	std::unique_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
 
-	if (GlobalObjects::ALLOC_CONSOLE == true)
-	{
-		AllocConsole();
-		SetConsoleOutputCP(CP_UTF8);
-
-		/* big buffer */
-		char buff[4096];
-		char* p = &buff[0];
-		p += _snprintf(p, 400, "==== mod_init ====\n");
-		p += _snprintf(p, 400, "arcdps: %s\n", ARCDPS_VERSION);
-
-		/* print */
-		DWORD written = 0;
-		HANDLE hnd = GetStdHandle(STD_OUTPUT_HANDLE);
-		WriteConsoleA(hnd, &buff[0], (DWORD)(p - &buff[0]), &written, 0);
-	}
-
 	if (GlobalObjects::IS_SHUTDOWN == false)
 	{
 		LogW("mod_init called twice");
@@ -231,7 +214,7 @@ arcdps_exports* mod_init()
 
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, GlobalObjects::EVTC_RPC_CLIENT.get());
 
-	LogI("Startup completed");
+	LogI("Startup completed, arcdps_version={}", ARCDPS_VERSION);
 	return &ARC_EXPORTS;
 }
 
@@ -268,11 +251,6 @@ uintptr_t mod_release()
 
 	LogI("Shutdown completed");
 	Log_::FlushLogFile();
-
-	if (GlobalObjects::ALLOC_CONSOLE == true)
-	{
-		FreeConsole();
-	}
 
 	return 0;
 }
