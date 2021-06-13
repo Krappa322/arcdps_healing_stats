@@ -143,13 +143,17 @@ extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArc
 /* export -- arcdps looks for this exported function and calls the address it returns on client exit */
 extern "C" __declspec(dllexport) ModReleaseSignature get_release_addr()
 {
+	LogD(">>");
 	ARCDPS_VERSION = nullptr;
+
+	LogI("<<");
 	return mod_release;
 }
 
 /* initialize mod -- return table that arcdps will use for callbacks */
 arcdps_exports* mod_init()
 {
+	LogD(">>");
 	std::unique_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
 
 	if (GlobalObjects::ALLOC_CONSOLE == true)
@@ -171,7 +175,7 @@ arcdps_exports* mod_init()
 
 	if (GlobalObjects::IS_SHUTDOWN == false)
 	{
-		LOG("mod_init called twice");
+		LogW("mod_init called twice");
 	}
 	GlobalObjects::IS_SHUTDOWN = false;
 
@@ -195,7 +199,7 @@ arcdps_exports* mod_init()
 
 	if (certificate_load_result != nullptr)
 	{
-		LOG("Failed startup - %s", certificate_load_result);
+		LogI("Failed startup - {}", certificate_load_result);
 
 		ARC_EXPORTS.sig = 0;
 		ARC_EXPORTS.size = reinterpret_cast<uintptr_t>(certificate_load_result);
@@ -227,17 +231,24 @@ arcdps_exports* mod_init()
 
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, GlobalObjects::EVTC_RPC_CLIENT.get());
 
+	LogI("Startup completed");
 	return &ARC_EXPORTS;
 }
 
 /* release mod -- return ignored */
 uintptr_t mod_release()
 {
+	LogD("Shutting down, sequencer={}, processor={}, client={} client_thread={}",
+		static_cast<void*>(GlobalObjects::EVENT_SEQUENCER.get()),
+		static_cast<void*>(GlobalObjects::EVENT_PROCESSOR.get()),
+		static_cast<void*>(GlobalObjects::EVTC_RPC_CLIENT.get()), 
+		static_cast<void*>(GlobalObjects::EVTC_RPC_CLIENT_THREAD.get()));
+
 	{
 		std::unique_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
 		if (GlobalObjects::IS_SHUTDOWN == true)
 		{
-			LOG("mod_release called before mod_init");
+			LogW("mod_release called before mod_init");
 		}
 		GlobalObjects::IS_SHUTDOWN = true;
 	}
@@ -255,7 +266,7 @@ uintptr_t mod_release()
 	GlobalObjects::EVENT_PROCESSOR = nullptr;
 	GlobalObjects::EVENT_SEQUENCER = nullptr;
 
-	LOG("Done with shutdown");
+	LogI("Shutdown completed");
 	Log_::FlushLogFile();
 
 	if (GlobalObjects::ALLOC_CONSOLE == true)
