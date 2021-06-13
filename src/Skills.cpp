@@ -80,18 +80,27 @@ SkillTable::SkillTable()
 
 	std::lock_guard lock(mLock);
 
+	// Fixing names
 	mSkillNames.emplace(1066, "Revive"); // Pressing "f" on a downed person
+	mSkillNames.emplace(13594, "Selfless Daring"); // The game maps this name incorrectly to "Selflessness Daring"
 	mSkillNames.emplace(14024, "Natural Healing"); // The game does not map this one at all
+	mSkillNames.emplace(26558, "Energy Expulsion");
+	mSkillNames.emplace(30313, "Escapist's Fortitude"); // The game maps this to the wrong skill
+
+	// Clarifying names that exist on more than one skill
 	mSkillNames.emplace(21750, "Signet of the Ether (Active)");
 	mSkillNames.emplace(21775, "Aqua Surge (Self)");
 	mSkillNames.emplace(21776, "Aqua Surge (Area)");
-	mSkillNames.emplace(26558, "Energy Expulsion");
 	mSkillNames.emplace(26937, "Enchanted Daggers (Initial)");
 	mSkillNames.emplace(28313, "Enchanted Daggers (Siphon)");
-	mSkillNames.emplace(30313, "Escapist's Fortitude"); // The game maps this to the wrong skill
 	mSkillNames.emplace(45686, "Breakrazor's Bastion (Self)");
 	mSkillNames.emplace(46232, "Breakrazor's Bastion (Area)");
 	mSkillNames.emplace(49103, "Signet of the Ether (Passive)");
+
+	// Instant cast skills that might otherwise not be mapped in peer stats
+	// 13594 is on this list as well, but we already override it above
+	mSkillNames.emplace(40787, "Chapter 1: Desert Bloom");
+	mSkillNames.emplace(41714, "Mantra of Solace");
 }
 
 
