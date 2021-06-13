@@ -232,6 +232,7 @@ uintptr_t mod_release()
 		if (GlobalObjects::IS_SHUTDOWN == true)
 		{
 			LogW("mod_release called before mod_init");
+			return 0;
 		}
 		GlobalObjects::IS_SHUTDOWN = true;
 	}
