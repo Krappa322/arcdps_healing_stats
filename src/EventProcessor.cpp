@@ -42,6 +42,18 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 			LOG("Deregister agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
 				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
 				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
+
+			// If it's a player, process implicit combat exit
+			if (pDestinationAgent->name != nullptr && pDestinationAgent->name[0] != '\0')
+			{
+				std::lock_guard lock(mPeerStatesLock);
+				const auto iter = mPeerStates.find(pSourceAgent->id);
+				if (iter != mPeerStates.end())
+				{
+					iter->second->ExitedCombat(timeGetTime());
+					LogI("Implicit exit combat for peer unique_id={} character_name='{}' account_name='{}'", pSourceAgent->id, pSourceAgent->name, pDestinationAgent->name);
+				}
+			}
 		}
 
 		return;

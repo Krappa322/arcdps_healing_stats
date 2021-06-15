@@ -6,6 +6,11 @@
 
 class TestLogFlusher : public testing::EmptyTestEventListener
 {
+	void OnTestStart(const ::testing::TestInfo& pTestInfo) override
+	{
+		LogI("Starting test {}.{}.{}", pTestInfo.test_suite_name(), pTestInfo.test_case_name(), pTestInfo.name());
+	}
+
 	// Called after a failed assertion or a SUCCESS().
 	void OnTestPartResult(const testing::TestPartResult& /*pTestInfo*/) override
 	{
@@ -26,5 +31,8 @@ int main(int pArgumentCount, char** pArgumentVector)
 	Log_::LockLogger();
 
 	::testing::InitGoogleTest(&pArgumentCount, pArgumentVector); 
+
+	testing::UnitTest::GetInstance()->listeners().Append(new TestLogFlusher);
+
 	return RUN_ALL_TESTS();
 }

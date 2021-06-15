@@ -74,9 +74,9 @@ namespace Log_
 	inline std::shared_ptr<spdlog::logger> LOGGER;
 }
 
-#define LogD(pFormatString, ...) Log_::LOGGER->debug("{}|{}|" pFormatString, Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
-#define LogI(pFormatString, ...) Log_::LOGGER->info("{}|{}|" pFormatString, Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
-#define LogW(pFormatString, ...) Log_::LOGGER->warn("{}|{}|" pFormatString, Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
+#define LogD(pFormatString, ...) Log_::LOGGER->debug(FMT_STRING("{}|{}|" pFormatString), Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
+#define LogI(pFormatString, ...) Log_::LOGGER->info(FMT_STRING("{}|{}|" pFormatString), Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
+#define LogW(pFormatString, ...) Log_::LOGGER->warn(FMT_STRING("{}|{}|" pFormatString), Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
 
 #define LOG(pFormatString, ...) Log_::LogImplementation_(Log_::GetFileName(__FILE__), __func__, pFormatString, ##__VA_ARGS__); if (false) { printf(pFormatString, ##__VA_ARGS__); }
 
