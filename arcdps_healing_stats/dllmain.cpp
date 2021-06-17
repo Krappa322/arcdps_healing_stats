@@ -1,6 +1,6 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "Exports.h"
-
+#include "Log.h"
 #include "Windows.h"
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -11,12 +11,13 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		//printf("DllMain: %p\n", hModule);
 		GlobalObjects::SELF_HANDLE = hModule;
+		break;
+	case DLL_PROCESS_DETACH:
+		spdlog::shutdown();
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
-	case DLL_PROCESS_DETACH:
 		break;
 	}
 	return TRUE;
