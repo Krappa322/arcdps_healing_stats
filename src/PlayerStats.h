@@ -29,6 +29,8 @@ struct HealingStatsSlim
 	uint16_t SubGroup = 0;
 
 	std::vector<HealEvent> Events; // Really this should be some segmented vector, will probably write one if it becomes a pain point
+
+	bool IsOutOfCombat();
 };
 
 class PlayerStats
@@ -38,6 +40,7 @@ public:
 
 	void EnteredCombat(uint64_t pTime, uint16_t pSubGroup);
 	void ExitedCombat(uint64_t pTime);
+	bool ResetIfNotInCombat(); // Returns true if peer was reset
 
 	void DamageEvent(cbtevent* pEvent);
 	void HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId);

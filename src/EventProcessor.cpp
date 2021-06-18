@@ -186,6 +186,26 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 			mLocalState.EnteredCombat(pEvent->time, static_cast<uint16_t>(pEvent->dst_agent));
 		}
 
+		std::lock_guard lock(mPeerStatesLock);
+		for (auto& peer : mPeerStates)
+		{
+			std::optional<std::string> name_str = mAgentTable.GetName(peer.first);
+			const char* name = "(unknown name)";
+			if (name_str.has_value() == true)
+			{
+				name = name_str->c_str();
+			}
+
+			if (peer.second->ResetIfNotInCombat() == true)
+			{
+				LogD("Cleared stats for {} {} since self entered combat", peer.first, name);
+			}
+			else
+			{
+				LogD("Didn't clear stats for {} {} even though self entered combat - they are already in combat", peer.first, name);
+			}
+		}
+
 		return;
 	}
 	else if (pEvent->is_statechange == CBTS_EXITCOMBAT)

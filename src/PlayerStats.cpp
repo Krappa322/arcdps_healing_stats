@@ -24,11 +24,16 @@ bool HealEvent::operator!=(const HealEvent& pRight) const
 	return (*this == pRight) == false;
 }
 
+bool HealingStatsSlim::IsOutOfCombat()
+{
+	return EnteredCombatTime == 0 || ExitedCombatTime != 0;
+}
+
 void PlayerStats::EnteredCombat(uint64_t pTime, uint16_t pSubGroup)
 {
 	std::lock_guard<std::mutex> lock(myLock);
 
-	if (myStats.ExitedCombatTime != 0 || myStats.EnteredCombatTime == 0)
+	if (myStats.IsOutOfCombat() == true)
 	{
 		myStats.EnteredCombatTime = pTime;
 		myStats.ExitedCombatTime = 0;
@@ -49,7 +54,7 @@ void PlayerStats::ExitedCombat(uint64_t pTime)
 {
 	std::lock_guard<std::mutex> lock(myLock);
 
-	if (myStats.ExitedCombatTime != 0 || myStats.EnteredCombatTime == 0)
+	if (myStats.IsOutOfCombat() == true)
 	{
 		LOG("Tried to exit combat when not in combat (current time %llu)", pTime);
 		return;
@@ -66,12 +71,30 @@ void PlayerStats::ExitedCombat(uint64_t pTime)
 	LOG("Spent %llu ms in combat, collected %zu events", myStats.ExitedCombatTime - myStats.EnteredCombatTime, myStats.Events.size());
 }
 
+bool PlayerStats::ResetIfNotInCombat()
+{
+	std::lock_guard<std::mutex> lock(myLock);
+	
+	if (myStats.IsOutOfCombat() == true)
+	{
+		// Reset everything except the subgroup
+		myStats.EnteredCombatTime = 0;
+		myStats.ExitedCombatTime = 0;
+		myStats.LastDamageEvent = 0;
+		myStats.Events.clear();
+
+		return true;
+	}
+
+	return false;
+}
+
 void PlayerStats::DamageEvent(cbtevent* pEvent)
 {
 	{
 		std::lock_guard<std::mutex> lock(myLock);
 
-		if (myStats.EnteredCombatTime == 0 || myStats.ExitedCombatTime != 0)
+		if (myStats.IsOutOfCombat() == true)
 		{
 			return;
 		}
@@ -92,7 +115,7 @@ void PlayerStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
 	{
 		std::lock_guard<std::mutex> lock(myLock);
 
-		if (myStats.EnteredCombatTime == 0 || myStats.ExitedCombatTime != 0)
+		if (myStats.IsOutOfCombat() == true)
 		{
 			LOG("Event before combat enter %llu", pEvent->time);
 			return;
