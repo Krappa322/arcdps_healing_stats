@@ -1,10 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
   "name": "arcdps-personal-stats",
-  "version-string": "1.3rc2",
+  "version-string": "2.0rc2",
   "dependencies": [
-    "protobuf",
-    "grpc",
-    "gtest"
+	"grpc",
+	"gtest"
   ]
 }
