@@ -237,8 +237,14 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			snprintf(buffer + written, sizeof(buffer) - written, "###HEALWINDOW%u", i);
 		}
 
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
+		if (curWindow.TitleFormat[0] == '\0')
+		{
+			window_flags |= ImGuiWindowFlags_NoTitleBar;
+		}
+
 		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
-		ImGui::Begin(buffer, &curWindow.Shown, ImGuiWindowFlags_NoCollapse);
+		ImGui::Begin(buffer, &curWindow.Shown, window_flags);
 
 		if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 		{
@@ -275,7 +281,8 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			ImGui::InputText("window title", curWindow.TitleFormat, sizeof(curWindow.TitleFormat));
 			if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
 			{
-				ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
+				ImGuiEx::AddTooltipToLastItem("Format for the title of this window. Leave empty\n"
+											  "to hide the title bar.\n"
 											  "{1}: Total healing\n"
 											  "{2}: Total hits\n"
 											  "{3}: Total casts (not implemented yet)\n"
