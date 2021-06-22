@@ -77,7 +77,7 @@ void Log_::Init(bool pRotateOnOpen, const char* pLogPath)
 {
 	if (Log_::LOGGER != nullptr)
 	{
-		LogD("Skipping logger initialization since logger is not nullptr");
+		LogW("Skipping logger initialization since logger is not nullptr");
 		return;
 	}
 

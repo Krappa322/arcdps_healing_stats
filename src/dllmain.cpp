@@ -123,8 +123,6 @@ static void FreeWrapper(void* pPointer, void* /*pUserData*/)
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
 extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9*, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
-	Log_::Init(false, "addons/logs/arcdps_healing_stats/arcdps_healing_stats.txt");
-
 	GlobalObjects::ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(GlobalObjects::ARC_E3 != nullptr);
 	GlobalObjects::ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(pArcModule, "e7"));
@@ -153,8 +151,12 @@ extern "C" __declspec(dllexport) ModReleaseSignature get_release_addr()
 /* initialize mod -- return table that arcdps will use for callbacks */
 arcdps_exports* mod_init()
 {
-	LogD(">>");
 	std::unique_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+
+	if (GlobalObjects::IS_UNIT_TEST == false)
+	{
+		Log_::Init(false, "addons/logs/arcdps_healing_stats/arcdps_healing_stats.txt");
+	}
 
 	if (GlobalObjects::IS_SHUTDOWN == false)
 	{
@@ -214,7 +216,7 @@ arcdps_exports* mod_init()
 
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, GlobalObjects::EVTC_RPC_CLIENT.get());
 
-	LogI("Startup completed, arcdps_version={}", ARCDPS_VERSION);
+	LogI("Startup completed, arcdps_version={} healing_stats_version={}", ARCDPS_VERSION, ARC_EXPORTS.out_build);
 	return &ARC_EXPORTS;
 }
 
@@ -252,6 +254,12 @@ uintptr_t mod_release()
 
 	LogI("Shutdown completed");
 	Log_::FlushLogFile();
+
+	if (GlobalObjects::IS_UNIT_TEST == false)
+	{
+		Log_::LOGGER = nullptr;
+		spdlog::shutdown();
+	}
 
 	return 0;
 }

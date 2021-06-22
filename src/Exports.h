@@ -13,6 +13,8 @@ typedef void (*E3Signature)(const char* pString);
 class GlobalObjects
 {
 public:
+	static inline bool IS_UNIT_TEST = false;
+
 	static inline HMODULE SELF_HANDLE = NULL;
 	static inline E7Signature ARC_E7 = nullptr;
 	static inline E3Signature ARC_E3 = nullptr;

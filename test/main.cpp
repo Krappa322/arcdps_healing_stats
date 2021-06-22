@@ -1,3 +1,4 @@
+#include "Exports.h"
 #include "Log.h"
 
 #pragma warning(push, 0)
@@ -26,6 +27,8 @@ class TestLogFlusher : public testing::EmptyTestEventListener
 
 int main(int pArgumentCount, char** pArgumentVector)
 {
+	GlobalObjects::IS_UNIT_TEST = true;
+
 	Log_::Init(true, "logs/unit_tests.txt");
 	Log_::SetLevel(spdlog::level::debug);
 	Log_::LockLogger();
@@ -34,5 +37,10 @@ int main(int pArgumentCount, char** pArgumentVector)
 
 	testing::UnitTest::GetInstance()->listeners().Append(new TestLogFlusher);
 
-	return RUN_ALL_TESTS();
+	int result = RUN_ALL_TESTS();
+
+	Log_::LOGGER = nullptr;
+	spdlog::shutdown();
+
+	return result;
 }

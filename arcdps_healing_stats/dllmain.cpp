@@ -14,7 +14,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		GlobalObjects::SELF_HANDLE = hModule;
 		break;
 	case DLL_PROCESS_DETACH:
-		spdlog::shutdown();
 		break;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
