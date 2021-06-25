@@ -57,19 +57,19 @@ void WriteIni(const HealTableOptions& pOptions)
 			LOG("SetValue hotkey failed with %i", error);
 		}
 
-		error = healtable_ini.SetLongValue(section, "data_source_choice", pOptions.Windows[i].DataSourceChoice);
+		error = healtable_ini.SetLongValue(section, "data_source_choice", static_cast<long>(pOptions.Windows[i].DataSourceChoice));
 		if (error < 0)
 		{
 			LOG("SetValue data_source_choice failed with %i", error);
 		}
 
-		error = healtable_ini.SetLongValue(section, "sort_order_choice", pOptions.Windows[i].SortOrderChoice);
+		error = healtable_ini.SetLongValue(section, "sort_order_choice", static_cast<long>(pOptions.Windows[i].SortOrderChoice));
 		if (error < 0)
 		{
 			LOG("SetValue sort_order_choice failed with %i", error);
 		}
 
-		error = healtable_ini.SetLongValue(section, "combat_end_condition_choice", pOptions.Windows[i].CombatEndConditionChoice);
+		error = healtable_ini.SetLongValue(section, "combat_end_condition_choice", static_cast<long>(pOptions.Windows[i].CombatEndConditionChoice));
 		if (error < 0)
 		{
 			LOG("SetValue combat_end_condition_choice failed with %i", error);
@@ -177,9 +177,9 @@ void ReadIni(HealTableOptions& pOptions)
 		pOptions.Windows[i].Shown = healtable_ini.GetBoolValue(section, "show_window", pOptions.Windows[i].Shown);
 		pOptions.Windows[i].Hotkey = healtable_ini.GetLongValue(section, "hotkey", pOptions.Windows[i].Hotkey);
 
-		pOptions.Windows[i].DataSourceChoice = healtable_ini.GetLongValue(section, "data_source_choice", pOptions.Windows[i].DataSourceChoice);
-		pOptions.Windows[i].SortOrderChoice = healtable_ini.GetLongValue(section, "sort_order_choice", pOptions.Windows[i].SortOrderChoice);
-		pOptions.Windows[i].CombatEndConditionChoice = healtable_ini.GetLongValue(section, "combat_end_condition_choice", pOptions.Windows[i].CombatEndConditionChoice);
+		pOptions.Windows[i].DataSourceChoice = static_cast<DataSource>(healtable_ini.GetLongValue(section, "data_source_choice", static_cast<long>(pOptions.Windows[i].DataSourceChoice)));
+		pOptions.Windows[i].SortOrderChoice = static_cast<SortOrder>(healtable_ini.GetLongValue(section, "sort_order_choice", static_cast<long>(pOptions.Windows[i].SortOrderChoice)));
+		pOptions.Windows[i].CombatEndConditionChoice = static_cast<CombatEndCondition>(healtable_ini.GetLongValue(section, "combat_end_condition_choice", static_cast<long>(pOptions.Windows[i].CombatEndConditionChoice)));
 
 		pOptions.Windows[i].ExcludeGroup = healtable_ini.GetBoolValue(section, "exclude_group", pOptions.Windows[i].ExcludeGroup);
 		pOptions.Windows[i].ExcludeOffGroup = healtable_ini.GetBoolValue(section, "exclude_off_group", pOptions.Windows[i].ExcludeOffGroup);
@@ -227,36 +227,36 @@ DetailsWindowState::DetailsWindowState(const AggregatedStatsEntry& pEntry)
 
 HealTableOptions::HealTableOptions()
 {
-	Windows[0].DataSourceChoice = static_cast<int>(DataSource::Totals);
+	Windows[0].DataSourceChoice = DataSource::Totals;
 	snprintf(Windows[0].Name, sizeof(Windows[0].Name), "%s", "Totals");
 	snprintf(Windows[0].TitleFormat, sizeof(Windows[0].TitleFormat), "%s", "Totals ({1}s in combat)");
 	snprintf(Windows[0].EntryFormat, sizeof(Windows[0].EntryFormat), "%s", "{1} ({4}/s)");
 
-	Windows[1].DataSourceChoice = static_cast<int>(DataSource::Agents);
+	Windows[1].DataSourceChoice = DataSource::Agents;
 	snprintf(Windows[1].Name, sizeof(Windows[1].Name), "%s", "Targets");
 	snprintf(Windows[1].TitleFormat, sizeof(Windows[1].TitleFormat), "%s", "Targets {1} ({4}/s, {7}s in combat)");
 
-	Windows[2].DataSourceChoice = static_cast<int>(DataSource::Skills);
+	Windows[2].DataSourceChoice = DataSource::Skills;
 	snprintf(Windows[2].Name, sizeof(Windows[2].Name), "%s", "Skills");
 	snprintf(Windows[2].TitleFormat, sizeof(Windows[2].TitleFormat), "%s", "Skills {1} ({4}/s, {7}s in combat)");
 
-	Windows[3].DataSourceChoice = static_cast<int>(DataSource::Agents);
+	Windows[3].DataSourceChoice = DataSource::Agents;
 	snprintf(Windows[3].Name, sizeof(Windows[3].Name), "%s", "Targets (hits)");
 	snprintf(Windows[3].TitleFormat, sizeof(Windows[3].TitleFormat), "%s", "Targets {1} ({5}/hit, {2} hits)");
 	snprintf(Windows[3].EntryFormat, sizeof(Windows[3].EntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
 	snprintf(Windows[3].DetailsEntryFormat, sizeof(Windows[3].DetailsEntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
 
-	Windows[4].DataSourceChoice = static_cast<int>(DataSource::Skills);
+	Windows[4].DataSourceChoice = DataSource::Skills;
 	snprintf(Windows[4].Name, sizeof(Windows[4].Name), "%s", "Skills (hits)");
 	snprintf(Windows[4].TitleFormat, sizeof(Windows[4].TitleFormat), "%s", "Skills {1} ({5}/hit, {2} hits)");
 	snprintf(Windows[4].EntryFormat, sizeof(Windows[4].EntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
 	snprintf(Windows[4].DetailsEntryFormat, sizeof(Windows[4].DetailsEntryFormat), "%s", "{1} ({5}/hit, {2} hits)");
 
-	Windows[5].DataSourceChoice = static_cast<int>(DataSource::PeersOutgoing);
+	Windows[5].DataSourceChoice = DataSource::PeersOutgoing;
 	snprintf(Windows[5].Name, sizeof(Windows[5].Name), "%s", "Peers outgoing");
 	snprintf(Windows[5].TitleFormat, sizeof(Windows[5].TitleFormat), "%s", "Outgoing healing {1} ({4}/s, {7}s in combat)");
 
-	Windows[9].DataSourceChoice = static_cast<int>(DataSource::Combined);
+	Windows[9].DataSourceChoice = DataSource::Combined;
 	snprintf(Windows[9].Name, sizeof(Windows[9].Name), "%s", "Combined");
 	snprintf(Windows[9].TitleFormat, sizeof(Windows[9].TitleFormat), "%s", "Combined {1} ({4}/s, {7}s in combat)");
 }

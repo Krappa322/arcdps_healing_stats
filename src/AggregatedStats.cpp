@@ -31,8 +31,8 @@ AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealWindowOpt
 	, myGroupFilterTotals(nullptr)
 	, myDebugMode(pDebugMode)
 {
-	assert(static_cast<SortOrder>(myOptions.SortOrderChoice) < SortOrder::Max);
-	assert(static_cast<DataSource>(myOptions.DataSourceChoice) < DataSource::Max);
+	assert(myOptions.SortOrderChoice < SortOrder::Max);
+	assert(myOptions.DataSourceChoice < DataSource::Max);
 }
 
 void AggregatedVector::Add(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts)
@@ -341,7 +341,7 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 		entry->Add(agentId, std::move(agentName), GetCombatTime(), agent.Healing, agent.Ticks, std::nullopt);
 	}
 
-	Sort(entry->Entries, static_cast<SortOrder>(myOptions.SortOrderChoice));
+	Sort(entry->Entries, myOptions.SortOrderChoice);
 
 	return *entry;
 }
@@ -463,7 +463,7 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 		entry->Add(IndirectHealingSkillId, std::move(skillName), GetCombatTime(), totalIndirectHealing, totalIndirectTicks, std::nullopt);
 	}
 
-	Sort(entry->Entries, static_cast<SortOrder>(myOptions.SortOrderChoice));
+	Sort(entry->Entries, myOptions.SortOrderChoice);
 
 	return *entry;
 }

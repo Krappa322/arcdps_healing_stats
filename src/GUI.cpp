@@ -9,14 +9,9 @@
 #include <array>
 #include <Windows.h>
 
-static const char* const DATA_SOURCE_ITEMS[] = {"targets", "skills", "totals", "combined", "peers outgoing"};
-static_assert((sizeof(DATA_SOURCE_ITEMS) / sizeof(DATA_SOURCE_ITEMS[0])) == static_cast<uint64_t>(DataSource::Max), "Added data source without updating gui?");
-
-static const char* const SORT_ORDER_ITEMS[] = { "alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending" };
-static_assert((sizeof(SORT_ORDER_ITEMS) / sizeof(SORT_ORDER_ITEMS[0])) == static_cast<uint64_t>(SortOrder::Max), "Added sort option without updating gui?");
-
-static const char* const COMBAT_END_CONDITION_ITEMS[] = { "combat exit", "last damage event", "last heal event", "last damage / heal event" };
-static_assert((sizeof(COMBAT_END_CONDITION_ITEMS) / sizeof(COMBAT_END_CONDITION_ITEMS[0])) == static_cast<uint64_t>(CombatEndCondition::Max), "Added combat end condition without updating gui?");
+static constexpr EnumStringArray<DataSource> DATA_SOURCE_ITEMS{"targets", "skills", "totals", "combined", "peers outgoing"};
+static constexpr EnumStringArray<SortOrder> SORT_ORDER_ITEMS{"alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending"};
+static constexpr EnumStringArray<CombatEndCondition> COMBAT_END_CONDITION_ITEMS{"combat exit", "last damage event", "last heal event", "last damage / heal event"};
 
 static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowState& pState, DataSource pDataSource)
 {
@@ -130,7 +125,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			divide_safe(entry.Healing, entry.TimeInCombat),
 			divide_safe(entry.Healing, entry.Hits),
 			entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
-			static_cast<DataSource>(pContext.DataSourceChoice) != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
+			pContext.DataSourceChoice != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
 
 		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
@@ -214,9 +209,9 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		}
 
 		float timeInCombat = curWindow.CurrentAggregatedStats->GetCombatTime();
-		const AggregatedStatsEntry& aggregatedTotal = curWindow.CurrentAggregatedStats->GetTotal(static_cast<DataSource>(curWindow.DataSourceChoice));
+		const AggregatedStatsEntry& aggregatedTotal = curWindow.CurrentAggregatedStats->GetTotal(curWindow.DataSourceChoice);
 
-		if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
+		if (curWindow.DataSourceChoice != DataSource::Totals)
 		{
 			std::array<std::optional<std::variant<uint64_t, double>>, 7> titleValues{
 				aggregatedTotal.Healing,
@@ -246,85 +241,100 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
 		ImGui::Begin(buffer, &curWindow.Shown, window_flags);
 
+		ImGui::SetNextWindowSize(ImVec2(200, 0));
 		if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 		{
-			ImGui::Combo("data source", &curWindow.DataSourceChoice, DATA_SOURCE_ITEMS, static_cast<int>(DataSource::Max));
-			ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
+			ImGui::Text(" "); ImGui::SameLine();
+			ImGuiEx::ComboMenu("data source", curWindow.DataSourceChoice, DATA_SOURCE_ITEMS);
+			ImGuiEx::AddTooltipToLastItem("Decides what data is shown in the window");
 
-			if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
+			if (curWindow.DataSourceChoice != DataSource::Totals)
 			{
-				ImGui::Combo("sort order", &curWindow.SortOrderChoice, SORT_ORDER_ITEMS, static_cast<int>(SortOrder::Max));
+				ImGui::Text(" "); ImGui::SameLine();
+				ImGuiEx::ComboMenu("sort order", curWindow.SortOrderChoice, SORT_ORDER_ITEMS);
 				ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
 
+				ImGui::Text(" "); ImGui::SameLine();
+				ImGui::SetNextWindowSize(ImVec2(0, 0));
 				if (ImGui::BeginMenu("stats exclude") == true)
 				{
-					ImGui::Checkbox("group", &curWindow.ExcludeGroup);
-					ImGui::Checkbox("off-group", &curWindow.ExcludeOffGroup);
-					ImGui::Checkbox("off-squad", &curWindow.ExcludeOffSquad);
-					ImGui::Checkbox("summons", &curWindow.ExcludeMinions);
-					ImGui::Checkbox("unmapped", &curWindow.ExcludeUnmapped);
+					ImGuiEx::SmallCheckBox("group", &curWindow.ExcludeGroup);
+					ImGuiEx::SmallCheckBox("off-group", &curWindow.ExcludeOffGroup);
+					ImGuiEx::SmallCheckBox("off-squad", &curWindow.ExcludeOffSquad);
+					ImGuiEx::SmallCheckBox("summons", &curWindow.ExcludeMinions);
+					ImGuiEx::SmallCheckBox("unmapped", &curWindow.ExcludeUnmapped);
+
 					ImGui::EndMenu();
 				}
 			}
 
-			ImGui::Combo("combat end", &curWindow.CombatEndConditionChoice, COMBAT_END_CONDITION_ITEMS, static_cast<int>(CombatEndCondition::Max));
+			ImGui::Text(" "); ImGui::SameLine();
+			ImGuiEx::ComboMenu("combat end", curWindow.CombatEndConditionChoice, COMBAT_END_CONDITION_ITEMS);
 			ImGuiEx::AddTooltipToLastItem("Decides what should be used for determining combat\n"
 			                              "end (and consequently time in combat)");
 
-			ImGui::Checkbox("show progress bars", &curWindow.ShowProgressBars);
-			ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
-			                              "that entry is in proportion to the largest entry");
+			ImGui::Separator();
 
-			ImGui::InputText("short name", curWindow.Name, sizeof(curWindow.Name));
-			ImGuiEx::AddTooltipToLastItem("The name used to represent this window in the \"heal stats\" menu");
+			if (ImGui::BeginMenu("Display") == true)
+			{
+				ImGuiEx::SmallCheckBox("draw bars", &curWindow.ShowProgressBars);
+				ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
+					"that entry is in proportion to the largest entry");
 
-			ImGui::InputText("window title", curWindow.TitleFormat, sizeof(curWindow.TitleFormat));
-			if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
-			{
-				ImGuiEx::AddTooltipToLastItem("Format for the title of this window. Leave empty\n"
-											  "to hide the title bar.\n"
-											  "{1}: Total healing\n"
-											  "{2}: Total hits\n"
-											  "{3}: Total casts (not implemented yet)\n"
-											  "{4}: Healing per second\n"
-											  "{5}: Healing per hit\n"
-											  "{6}: Healing per cast (not implemented yet)\n"
-											  "{7}: Time in combat");
-			}
-			else
-			{
-				ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
-											  "{1}: Time in combat");
+				ImGuiEx::SmallInputText("short name", curWindow.Name, sizeof(curWindow.Name));
+				ImGuiEx::AddTooltipToLastItem("The name used to represent this window in the \"heal stats\" menu");
+
+				ImGuiEx::SmallInputText("title bar format", curWindow.TitleFormat, sizeof(curWindow.TitleFormat));
+				if (curWindow.DataSourceChoice != DataSource::Totals)
+				{
+					ImGuiEx::AddTooltipToLastItem("Format for the title of this window. Leave empty\n"
+						"to hide the title bar.\n"
+						"{1}: Total healing\n"
+						"{2}: Total hits\n"
+						"{3}: Total casts (not implemented yet)\n"
+						"{4}: Healing per second\n"
+						"{5}: Healing per hit\n"
+						"{6}: Healing per cast (not implemented yet)\n"
+						"{7}: Time in combat");
+				}
+				else
+				{
+					ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
+						"{1}: Time in combat");
+				}
+
+				ImGuiEx::SmallInputText("stats format", curWindow.EntryFormat, sizeof(curWindow.EntryFormat));
+				if (curWindow.DataSourceChoice != DataSource::Totals)
+				{
+					ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
+						"{1}: Healing\n"
+						"{2}: Hits\n"
+						"{3}: Casts (not implemented yet)\n"
+						"{4}: Healing per second\n"
+						"{5}: Healing per hit\n"
+						"{6}: Healing per cast (not implemented yet)\n"
+						"{7}: Percent of total healing");
+				}
+				else
+				{
+					ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
+						"{1}: Healing\n"
+						"{2}: Hits\n"
+						"{3}: Casts (not implemented yet)\n"
+						"{4}: Healing per second\n"
+						"{5}: Healing per hit\n"
+						"{6}: Healing per cast (not implemented yet)");
+				}
+				ImGui::EndMenu();
 			}
 
-			ImGui::InputText("entry format", curWindow.EntryFormat, sizeof(curWindow.EntryFormat));
-			if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Totals)
-			{
-				ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
-											  "{1}: Healing\n"
-											  "{2}: Hits\n"
-											  "{3}: Casts (not implemented yet)\n"
-											  "{4}: Healing per second\n"
-											  "{5}: Healing per hit\n"
-											  "{6}: Healing per cast (not implemented yet)\n"
-											  "{7}: Percent of total healing");
-			}
-			else
-			{
-				ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
-											  "{1}: Healing\n"
-											  "{2}: Hits\n"
-											  "{3}: Casts (not implemented yet)\n"
-											  "{4}: Healing per second\n"
-											  "{5}: Healing per hit\n"
-											  "{6}: Healing per cast (not implemented yet)");
-			}
+			ImGui::Separator();
 
 			float oldPosY = ImGui::GetCursorPosY();
 			ImGui::BeginGroup();
 
 			ImGui::SetCursorPosY(oldPosY + ImGui::GetStyle().FramePadding.y);
-			ImGui::Text("hotkey");
+			ImGui::Text("Hotkey");
 
 			ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
 			ImGui::SetCursorPosY(oldPosY);
@@ -340,9 +350,9 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			ImGui::EndPopup();
 		}
 
-		if (static_cast<DataSource>(curWindow.DataSourceChoice) != DataSource::Combined)
+		if (curWindow.DataSourceChoice != DataSource::Combined)
 		{
-			Display_Content(curWindow, static_cast<DataSource>(curWindow.DataSourceChoice), i, pHealingOptions.EvtcRpcEnabled);
+			Display_Content(curWindow, curWindow.DataSourceChoice, i, pHealingOptions.EvtcRpcEnabled);
 		}
 		else
 		{
@@ -425,14 +435,14 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 		{
 			char buffer[128];
 			snprintf(buffer, sizeof(buffer), "(%u) %s", i, pHealingOptions.Windows[i].Name);
-			ImGui::Checkbox(buffer, &pHealingOptions.Windows[i].Shown);
+			ImGuiEx::SmallCheckBox(buffer, &pHealingOptions.Windows[i].Shown);
 		}
 		ImGui::EndMenu();
 	}
 
 	if (ImGui::BeginMenu("Heal Stats Options##HEAL") == true)
 	{
-		ImGui::Checkbox("debug mode", &pHealingOptions.DebugMode);
+		ImGuiEx::SmallCheckBox("debug mode", &pHealingOptions.DebugMode);
 		ImGuiEx::AddTooltipToLastItem(
 			"Includes debug data in target and skill names.\n"
 			"Turn this on before taking screenshots of potential calculation issues.");
@@ -452,7 +462,7 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 
 		ImGui::Spacing();
 
-		if (ImGui::Checkbox("enable live stats sharing", &pHealingOptions.EvtcRpcEnabled) == true)
+		if (ImGuiEx::SmallCheckBox("enable live stats sharing", &pHealingOptions.EvtcRpcEnabled) == true)
 		{
 			GlobalObjects::EVTC_RPC_CLIENT->SetEnabledStatus(pHealingOptions.EvtcRpcEnabled);
 		}
@@ -469,9 +479,9 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 			"Enabling this option has a small impact on performance, and\n"
 			"will put some additional load on your connection (a maximum\n"
 			"of about 10 kiB/s up and 100 kiB/s down)"
-			, DATA_SOURCE_ITEMS[static_cast<int>(DataSource::PeersOutgoing)]);
+			, DATA_SOURCE_ITEMS[DataSource::PeersOutgoing]);
 
-		ImGui::InputText("evtc rpc server", pHealingOptions.EvtcRpcEndpoint, sizeof(pHealingOptions.EvtcRpcEndpoint));
+		ImGuiEx::SmallInputText("evtc rpc server", pHealingOptions.EvtcRpcEndpoint, sizeof(pHealingOptions.EvtcRpcEndpoint));
 		ImGuiEx::AddTooltipToLastItem(
 			"The server to communicate with for evtc_rpc communication\n"
 			"(allowing other squad members to see your healing stats).\n"

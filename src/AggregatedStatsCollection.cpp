@@ -74,7 +74,7 @@ const AggregatedVector& AggregatedStatsCollection::GetStats(DataSource pDataSour
 		mPeersOutgoingStats->Add(id, std::string{source.Name}, source.Stats.GetCombatTime(), entry.Healing, entry.Hits, entry.Casts);
 	}
 
-	AggregatedStats::Sort(mPeersOutgoingStats->Entries, static_cast<SortOrder>(mOptions.SortOrderChoice));
+	AggregatedStats::Sort(mPeersOutgoingStats->Entries, mOptions.SortOrderChoice);
 	return *mPeersOutgoingStats;
 }
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "Log.h"
 
 #include <assert.h>
 #include <math.h>
@@ -7,8 +8,30 @@
 
 #include <algorithm>
 #include <array>
+#include <array>
+#include <string>
 #include <optional>
 #include <variant>
+
+template<typename EnumType, size_t Size = static_cast<size_t>(EnumType::Max)>
+class EnumStringArray : public std::array<const char*, Size>
+{
+public:
+	template <typename... Args,
+		typename = std::enable_if_t<(std::is_same_v<Args, const char*> && ...)>>
+	constexpr EnumStringArray(Args... pArgs)
+		: std::array<const char*, Size>{pArgs...}
+	{
+		static_assert(sizeof...(Args) == Size, "Incorrect array size");
+	}
+
+	using std::array<const char*, Size>::operator[];
+
+	constexpr const char* operator[](EnumType pIndex) const
+	{
+		return std::array<const char*, Size>::operator[](static_cast<size_t>(pIndex));
+	}
+};
 
 uint64_t constexpr divide_rounded_safe(uint64_t pDividend, uint64_t pDivisor)
 {

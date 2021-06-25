@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#include <type_traits>
+
 constexpr static uint32_t MAX_HEAL_WINDOW_NAME = 31;
 constexpr static uint32_t MAX_HEAL_WINDOW_TITLE = 127;
 constexpr static uint32_t MAX_HEAL_WINDOW_ENTRY = 127;
@@ -39,9 +41,9 @@ struct HealWindowOptions
 {
 	bool Shown = false;
 
-	int DataSourceChoice = static_cast<int>(DataSource::Agents);
-	int SortOrderChoice = static_cast<int>(SortOrder::DescendingSize);
-	int CombatEndConditionChoice = static_cast<int>(CombatEndCondition::LastDamageEvent);
+	DataSource DataSourceChoice = DataSource::Agents;
+	SortOrder SortOrderChoice = SortOrder::DescendingSize;
+	CombatEndCondition CombatEndConditionChoice = CombatEndCondition::LastDamageEvent;
 
 	bool ExcludeGroup = false;
 	bool ExcludeOffGroup = false;
@@ -58,3 +60,4 @@ struct HealWindowOptions
 
 	int Hotkey = 0;
 };
+static_assert(std::is_same<std::underlying_type<DataSource>::type, int>::value == true, "HealWindowOptions::DataSourceChoice size changed");
