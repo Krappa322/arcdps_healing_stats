@@ -9,39 +9,8 @@
 
 #include <utility>
 
-extern "C" __declspec(dllexport) void e3(const char* pString);
-extern "C" __declspec(dllexport) uint64_t e6();
-extern "C" __declspec(dllexport) uint64_t e7();
-
 namespace
 {
-#pragma pack(push, 1)
-	struct ArcModifiers
-	{
-		uint16_t _1 = VK_SHIFT;
-		uint16_t _2 = VK_MENU;
-		uint16_t Multi = 0;
-		uint16_t Fill = 0;
-	};
-#pragma pack(pop)
-}
-
-void e3(const char* /*pString*/)
-{
-	return; // Logging, ignored
-}
-
-uint64_t e6()
-{
-	return 0; // everything set to false
-}
-
-uint64_t e7()
-{
-	ArcModifiers mods;
-	return *reinterpret_cast<uint64_t*>(&mods);
-}
-
 // parameters are <max parallel callbacks, max fuzz width>
 class XevtcLogTestFixture : public ::testing::TestWithParam<std::pair<uint32_t, uint32_t>>
 {
@@ -76,6 +45,7 @@ protected:
 		return iter->second.second;
 	}
 };
+} // anonymous namespace
 
 TEST_P(XevtcLogTestFixture, druid_solo)
 {
@@ -108,7 +78,7 @@ TEST_P(XevtcLogTestFixture, druid_solo)
 	expectedSkills.Add(21775, "Aqua Surge (Self)", combatTime, 12954, 3, std::nullopt);
 	expectedSkills.Add(31318, "Lunar Impact", combatTime, 12090, 4, std::nullopt);
 	expectedSkills.Add(31535, "Ancestral Grace", combatTime, 10976, 4, std::nullopt);
-	expectedSkills.Add(29863, "Vigorous Recovery", combatTime, 8432, 31, std::nullopt);
+	expectedSkills.Add(29863, "Live Vicariously", combatTime, 8432, 31, std::nullopt);
 	expectedSkills.Add(12567, "Nature's Renewal Aura", combatTime, 6862, 47, std::nullopt);
 	expectedSkills.Add(21776, "Aqua Surge (Area)", combatTime, 6597, 3, std::nullopt);
 	expectedSkills.Add(12836, "Water Blast Combo", combatTime, 4737, 3, std::nullopt);
@@ -232,7 +202,7 @@ TEST_P(XevtcLogTestFixture, null_names)
 	expectedSkills.Add(21775, "Aqua Surge (Self)", combatTime, 12954, 3, std::nullopt);
 	expectedSkills.Add(31318, "Lunar Impact", combatTime, 12090, 4, std::nullopt);
 	expectedSkills.Add(31535, "Ancestral Grace", combatTime, 10976, 4, std::nullopt);
-	expectedSkills.Add(29863, "Vigorous Recovery", combatTime, 8432, 31, std::nullopt);
+	expectedSkills.Add(29863, "Live Vicariously", combatTime, 8432, 31, std::nullopt);
 	expectedSkills.Add(12567, "Nature's Renewal Aura", combatTime, 6862, 47, std::nullopt);
 	expectedSkills.Add(21776, "Aqua Surge (Area)", combatTime, 6597, 3, std::nullopt);
 	expectedSkills.Add(12836, "Water Blast Combo", combatTime, 4737, 3, std::nullopt);

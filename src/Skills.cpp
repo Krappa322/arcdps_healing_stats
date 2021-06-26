@@ -85,6 +85,7 @@ SkillTable::SkillTable()
 	mSkillNames.emplace(13594, "Selfless Daring"); // The game maps this name incorrectly to "Selflessness Daring"
 	mSkillNames.emplace(14024, "Natural Healing"); // The game does not map this one at all
 	mSkillNames.emplace(26558, "Energy Expulsion");
+	mSkillNames.emplace(29863, "Live Vicariously"); // The game maps this name incorrectly to "Vigorous Recovery"
 	mSkillNames.emplace(30313, "Escapist's Fortitude"); // The game maps this to the wrong skill
 
 	// Clarifying names that exist on more than one skill

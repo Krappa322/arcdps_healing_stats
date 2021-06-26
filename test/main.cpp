@@ -5,6 +5,39 @@
 #include <gtest/gtest.h>
 #pragma warning(pop)
 
+extern "C" __declspec(dllexport) void e3(const char* pString);
+extern "C" __declspec(dllexport) uint64_t e6();
+extern "C" __declspec(dllexport) uint64_t e7();
+
+#pragma pack(push, 1)
+namespace
+{
+struct ArcModifiers
+{
+	uint16_t _1 = VK_SHIFT;
+	uint16_t _2 = VK_MENU;
+	uint16_t Multi = 0;
+	uint16_t Fill = 0;
+};
+} // anonymous namespace
+#pragma pack(pop)
+
+void e3(const char* /*pString*/)
+{
+	return; // Logging, ignored
+}
+
+uint64_t e6()
+{
+	return 0; // everything set to false
+}
+
+uint64_t e7()
+{
+	ArcModifiers mods;
+	return *reinterpret_cast<uint64_t*>(&mods);
+}
+
 class TestLogFlusher : public testing::EmptyTestEventListener
 {
 	void OnTestStart(const ::testing::TestInfo& pTestInfo) override
