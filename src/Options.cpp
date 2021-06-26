@@ -134,6 +134,12 @@ void WriteIni(const HealTableOptions& pOptions)
 		{
 			LOG("SetValue details_entry_format failed with %i", error);
 		}
+
+		error = healtable_ini.SetLongValue(section, "window_flags", pOptions.Windows[i].WindowFlags);
+		if (error < 0)
+		{
+			LOG("SetValue window_flags failed with %i", error);
+		}
 	}
 
 	error = healtable_ini.SaveFile("addons\\arcdps\\arcdps_healing_stats.ini");
@@ -212,6 +218,8 @@ void ReadIni(HealTableOptions& pOptions)
 		{
 			snprintf(pOptions.Windows[i].DetailsEntryFormat, sizeof(pOptions.Windows[i].DetailsEntryFormat), "%s", val);
 		}
+
+		pOptions.Windows[i].WindowFlags = static_cast<ImGuiWindowFlags_>(healtable_ini.GetLongValue(section, "window_flags", pOptions.Windows[i].WindowFlags));
 
 		LOG("Read window %u from ini file: show_window=%s data_source_choice=%i sort_order_choice=%i combat_end_condition_choice=%i, exclude_group=%s exclude_off_group=%s exclude_off_squad=%s exclude_minions=%s exclude_unmapped=%s show_progress_bars=%s, name='%s' title_format='%s' entry_format='%s' details_entry_format='%s'",
 			i, BOOL_STR(pOptions.Windows[i].Shown), pOptions.Windows[i].DataSourceChoice, pOptions.Windows[i].SortOrderChoice, pOptions.Windows[i].CombatEndConditionChoice, BOOL_STR(pOptions.Windows[i].ExcludeGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffSquad), BOOL_STR(pOptions.Windows[i].ExcludeMinions), BOOL_STR(pOptions.Windows[i].ExcludeUnmapped), BOOL_STR(pOptions.Windows[i].ShowProgressBars), pOptions.Windows[i].Name, pOptions.Windows[i].TitleFormat, pOptions.Windows[i].EntryFormat, pOptions.Windows[i].DetailsEntryFormat);

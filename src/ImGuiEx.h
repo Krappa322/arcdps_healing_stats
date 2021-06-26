@@ -4,10 +4,15 @@
 #include "imgui.h"
 
 #include <optional>
+#include <type_traits>
 
 // Helpers for ImGui functions
 namespace ImGuiEx
 {
+	bool SmallCheckBox(const char* pLabel, bool* pIsPressed);
+	bool SmallInputText(const char* pLabel, char* pBuffer, size_t pBufferSize);
+	void StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio);
+
 	template <typename... Args>
 	void TextRightAlignedSameLine(const char* pFormatString, Args... pArgs)
 	{
@@ -51,6 +56,8 @@ namespace ImGuiEx
 	template <typename EnumType, size_t Size = static_cast<size_t>(EnumType::Max)>
 	void ComboMenu(const char* pLabel, EnumType& pCurrentItem, const EnumStringArray<EnumType, Size>& pItems)
 	{
+		static_assert(std::is_enum<EnumType>::value == true, "Accidental loss of type safety?");
+
 		ImVec2 size{0, 0};
 		for (const char* item : pItems)
 		{
@@ -79,7 +86,20 @@ namespace ImGuiEx
 		}
 	}
 
-	bool SmallCheckBox(const char* pLabel, bool* pIsPressed);
-	bool SmallInputText(const char* pLabel, char* pBuffer, size_t pBufferSize);
-	void StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio);
+	template <typename EnumType>
+	void SmallEnumCheckBox(const char* pLabel, EnumType* pSavedLocation, EnumType pStyleFlag, bool pCheckBoxIsInverseOfFlag)
+	{
+		static_assert(std::is_enum<EnumType>::value == true, "Accidental loss of type safety?");
+
+		bool checked = (*pSavedLocation & pStyleFlag) == pStyleFlag;
+		if (pCheckBoxIsInverseOfFlag == true)
+		{
+			checked = !checked;
+		}
+
+		if (ImGuiEx::SmallCheckBox(pLabel, &checked) == true)
+		{
+			*pSavedLocation = static_cast<EnumType>(*pSavedLocation ^ pStyleFlag);
+		}
+	}
 }

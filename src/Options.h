@@ -4,15 +4,13 @@
 #include "Log.h"
 #include "State.h"
 
-#include <stdint.h>
-
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
 #include <string>
-#include <vector>
-
 #include <type_traits>
+#include <vector>
 
 struct DetailsWindowState : AggregatedStatsEntry
 {

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <stdint.h>
+#include "imgui.h"
 
+#include <cstdint>
 #include <type_traits>
 
 constexpr static uint32_t MAX_HEAL_WINDOW_NAME = 31;
@@ -52,12 +53,16 @@ struct HealWindowOptions
 	bool ExcludeUnmapped = true;
 
 	bool ShowProgressBars = true;
-
 	char Name[MAX_HEAL_WINDOW_NAME + 1] = {};
 	char TitleFormat[MAX_HEAL_WINDOW_TITLE + 1] = "{1} ({4}/s, {7}s in combat)";
 	char EntryFormat[MAX_HEAL_WINDOW_ENTRY + 1] = "{1} ({4}/s, {7}%)";
 	char DetailsEntryFormat[MAX_HEAL_WINDOW_ENTRY + 1] = "{1} ({4}/s, {7}%)";
 
+	ImGuiWindowFlags_ WindowFlags = ImGuiWindowFlags_None;
+
 	int Hotkey = 0;
 };
 static_assert(std::is_same<std::underlying_type<DataSource>::type, int>::value == true, "HealWindowOptions::DataSourceChoice size changed");
+static_assert(std::is_same<std::underlying_type<SortOrder>::type, int>::value == true, "HealWindowOptions::SortOrderChoice size changed");
+static_assert(std::is_same<std::underlying_type<CombatEndCondition>::type, int>::value == true, "HealWindowOptions::CombatEndConditionChoice size changed");
+static_assert(std::is_same<std::underlying_type<ImGuiWindowFlags_>::type, int>::value == true, "HealWindowOptions::WindowFlags size changed");

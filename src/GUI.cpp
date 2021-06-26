@@ -232,11 +232,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			snprintf(buffer + written, sizeof(buffer) - written, "###HEALWINDOW%u", i);
 		}
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse;
-		if (curWindow.TitleFormat[0] == '\0')
-		{
-			window_flags |= ImGuiWindowFlags_NoTitleBar;
-		}
+		ImGuiWindowFlags window_flags = curWindow.WindowFlags | ImGuiWindowFlags_NoCollapse;
 
 		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
 		ImGui::Begin(buffer, &curWindow.Shown, window_flags);
@@ -287,8 +283,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				ImGuiEx::SmallInputText("title bar format", curWindow.TitleFormat, sizeof(curWindow.TitleFormat));
 				if (curWindow.DataSourceChoice != DataSource::Totals)
 				{
-					ImGuiEx::AddTooltipToLastItem("Format for the title of this window. Leave empty\n"
-						"to hide the title bar.\n"
+					ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
 						"{1}: Total healing\n"
 						"{2}: Total hits\n"
 						"{3}: Total casts (not implemented yet)\n"
@@ -325,6 +320,15 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 						"{5}: Healing per hit\n"
 						"{6}: Healing per cast (not implemented yet)");
 				}
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Style") == true)
+			{
+				ImGuiEx::SmallEnumCheckBox("title bar", &curWindow.WindowFlags, ImGuiWindowFlags_NoTitleBar, true);
+				ImGuiEx::SmallEnumCheckBox("scroll bar", &curWindow.WindowFlags, ImGuiWindowFlags_NoScrollbar, true);
+				ImGuiEx::SmallEnumCheckBox("background", &curWindow.WindowFlags, ImGuiWindowFlags_NoBackground, true);
 				ImGui::EndMenu();
 			}
 
