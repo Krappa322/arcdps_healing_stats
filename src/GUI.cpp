@@ -237,7 +237,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
 		ImGui::Begin(buffer, &curWindow.Shown, window_flags);
 
-		ImGui::SetNextWindowSize(ImVec2(200, 0));
+		ImGui::SetNextWindowSize(ImVec2(170, 0));
 		if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 		{
 			ImGui::Text(" "); ImGui::SameLine();
@@ -251,7 +251,6 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
 
 				ImGui::Text(" "); ImGui::SameLine();
-				ImGui::SetNextWindowSize(ImVec2(0, 0));
 				if (ImGui::BeginMenu("stats exclude") == true)
 				{
 					ImGuiEx::SmallCheckBox("group", &curWindow.ExcludeGroup);
@@ -342,6 +341,8 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 			ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
 			ImGui::SetCursorPosY(oldPosY);
+
+			ImGui::PushItemWidth(ImGui::CalcTextSize("-----").x);
 			ImGui::InputInt("##HOTKEY", &curWindow.Hotkey, 0);
 
 			ImGui::SameLine();
