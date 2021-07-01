@@ -1,4 +1,5 @@
 #include "EventProcessor.h"
+#include "Exports.h"
 #include "Log.h"
 #include "Skills.h"
 
@@ -280,6 +281,14 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		assert(healedAmount != 0);
 	}
 	LOG("Registered heal event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+
+	cbtevent logEvent = *pEvent;
+
+	// Flip event values so healed amount is negative
+	logEvent.value *= -1;
+	logEvent.buff_dmg *= -1;
+
+	GlobalObjects::ARC_E9(&logEvent, 0x9c9b3c99);
 }
 
 void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
@@ -376,6 +385,18 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		assert(healedAmount != 0);
 	}
 	LOG("Registered heal event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
+
+	cbtevent logEvent = *pEvent;
+
+	// Fix unique ids (they are invalid when coming from a peer)
+	logEvent.src_agent = *peerUniqueId;
+	logEvent.dst_agent = *dstUniqueId;
+
+	// Flip event values so healed amount is negative
+	logEvent.value *= -1;
+	logEvent.buff_dmg *= -1;
+
+	GlobalObjects::ARC_E9(&logEvent, 0x9c9b3c99);
 }
 
 std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState()

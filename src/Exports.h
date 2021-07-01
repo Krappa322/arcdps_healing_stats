@@ -7,8 +7,9 @@
 #include <memory>
 #include <shared_mutex>
 
-typedef uint64_t(*E7Signature)();
 typedef void (*E3Signature)(const char* pString);
+typedef uint64_t(*E7Signature)();
+typedef void (*E9Signature)(cbtevent* pEvent, uint32_t pSignature);
 
 class GlobalObjects
 {
@@ -16,8 +17,9 @@ public:
 	static inline bool IS_UNIT_TEST = false;
 
 	static inline HMODULE SELF_HANDLE = NULL;
-	static inline E7Signature ARC_E7 = nullptr;
 	static inline E3Signature ARC_E3 = nullptr;
+	static inline E7Signature ARC_E7 = nullptr;
+	static inline E9Signature ARC_E9 = nullptr;
 	static inline std::unique_ptr<EventSequencer> EVENT_SEQUENCER = nullptr;
 	static inline std::unique_ptr<EventProcessor> EVENT_PROCESSOR = nullptr;
 	static inline std::unique_ptr<evtc_rpc_client> EVTC_RPC_CLIENT = nullptr;
