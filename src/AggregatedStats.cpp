@@ -232,6 +232,12 @@ uint64_t AggregatedStats::GetCombatEnd()
 		}
 	}
 
+	// In some cases CollectionTime or LastDamageEvent could have timestamps earlier than combat enter
+	if (end < mySourceData.EnteredCombatTime)
+	{
+		end = mySourceData.EnteredCombatTime;
+	}
+
 	return end;
 }
 
