@@ -152,6 +152,7 @@
     <ClInclude Include="src\Skills.h" />
     <ClInclude Include="src\State.h" />
     <ClInclude Include="src\Utilities.h" />
+    <ClInclude Include="src\AddonVersion.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

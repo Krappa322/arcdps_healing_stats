@@ -1,9 +1,12 @@
+#include "AddonVersion.h"
 #include "EventProcessor.h"
 #include "Exports.h"
 #include "Log.h"
 #include "Skills.h"
+#include "Utilities.h"
 
 #include <cassert>
+#include <cstddef>
 
 EventProcessor::EventProcessor()
 	: mSkillTable(std::make_shared<SkillTable>())
@@ -60,7 +63,50 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		return;
 	}
 
-	if (pEvent->is_statechange == CBTS_ENTERCOMBAT)
+	if (pEvent->is_statechange == CBTS_LOGSTART)
+	{
+		LogI("CBTS_LOGSTART - server_timestamp={} local_timestamp={}, species_id={}", pEvent->value, pEvent->buff_dmg, pEvent->src_agent);
+
+		cbtevent logEvent = {};
+
+		constexpr char versionString[] = HEALING_STATS_VERSION;
+		constexpr size_t versionStringLength = constexpr_strlen(versionString);
+
+		EvtcVersionHeader versionHeader = {};
+		static_assert(sizeof(versionHeader) == sizeof(logEvent.src_agent), "");
+		versionHeader.Signature = HEALING_STATS_ADDON_SIGNATURE;
+
+		versionHeader.EvtcRevision = HEALING_STATS_EVTC_REVISION;
+		static_assert(HEALING_STATS_EVTC_REVISION <= 0x00ffffff, "Revision does not fit in cbtevent");
+
+		versionHeader.VersionStringLength = versionStringLength;
+		static_assert(versionStringLength <= UINT8_MAX, "Version string length does not fit in cbtevent");
+
+		memcpy(&logEvent.src_agent, &versionHeader, sizeof(versionHeader));
+
+		static_assert(versionStringLength <= (offsetof(cbtevent, is_statechange) - offsetof(cbtevent, dst_agent)), "Version string does not fit in cbtevent");
+		memcpy(&logEvent.dst_agent, &versionString, versionStringLength);
+
+		GlobalObjects::ARC_E9(&logEvent, VERSION_EVENT_SIGNATURE);
+
+		return;
+	}
+	else if (pEvent->is_statechange == 40 /*CBTS_EXTENSION*/)
+	{
+		uint32_t pad;
+		memcpy(&pad, &pEvent->pad61, sizeof(pad));
+		LogD("Extension event addon_signature={:#010x}", pad);
+		if (pad == VERSION_EVENT_SIGNATURE)
+		{
+			EvtcVersionHeader versionHeader;
+			memcpy(&versionHeader, &pEvent->src_agent, sizeof(pEvent->src_agent));
+			LogI("Version event addon_signature={:#010x} addon_evtc_revision={} addon_version_string_length={} addon_version={}",
+				+versionHeader.Signature, +versionHeader.EvtcRevision, +versionHeader.VersionStringLength, std::string_view{reinterpret_cast<char*>(&pEvent->dst_agent), versionHeader.VersionStringLength});
+		}
+
+		return;
+	}
+	else if (pEvent->is_statechange == CBTS_ENTERCOMBAT)
 	{
 		LOG("EnterCombat agent %s %llu %hu %u %llu",
 			pSourceAgent->name, pSourceAgent->id, pEvent->src_master_instid, pSourceAgent->self, pEvent->dst_agent);

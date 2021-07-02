@@ -140,5 +140,8 @@
     <ClInclude Include="src\AggregatedStatsCollection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\AddonVersion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

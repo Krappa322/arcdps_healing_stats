@@ -262,6 +262,8 @@ class NetworkXevtcTestFixture : public ::testing::TestWithParam<uint32_t>
 protected:
 	void SetUp() override
 	{
+		get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free); // Initialize exports
+
 		uint64_t seed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		srand(static_cast<uint32_t>(seed));
 

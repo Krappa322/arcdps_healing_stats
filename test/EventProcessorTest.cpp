@@ -2,7 +2,10 @@
 #include <gtest/gtest.h>
 #pragma warning(pop)
 
+#include "AddonVersion.h"
 #include "EventProcessor.h"
+#include "Exports.h"
+#include "Utilities.h"
 
 TEST(EventProcessorTest, ImplicitSelfCombatExitOnSelfDeregister)
 {
@@ -177,4 +180,39 @@ TEST(EventProcessorTest, ResetPeerOnSelfCombatEnter)
 	EXPECT_FALSE(peer2_state->second.second.IsOutOfCombat());
 	EXPECT_NE(peer2_state->second.second.EnteredCombatTime, 0);
 	EXPECT_EQ(peer2_state->second.second.ExitedCombatTime, 0);
+}
+
+cbtevent VERSION_EVENT;
+static void e9_ExpectVersionEvent(cbtevent* pEvent, uint32_t pSignature)
+{
+	VERSION_EVENT = *pEvent;
+	VERSION_EVENT.time = timeGetTime();
+	VERSION_EVENT.is_statechange = 40 /* CBTS_EXTENSION */;
+	memcpy(&VERSION_EVENT.pad61, &pSignature, sizeof(pSignature));
+
+	EXPECT_EQ(pSignature, VERSION_EVENT_SIGNATURE);
+	EvtcVersionHeader versionHeader;
+	memcpy(&versionHeader, &pEvent->src_agent, sizeof(pEvent->src_agent));
+
+	EXPECT_EQ(versionHeader.EvtcRevision, HEALING_STATS_EVTC_REVISION);
+	EXPECT_EQ(versionHeader.Signature, HEALING_STATS_ADDON_SIGNATURE);
+	EXPECT_EQ(versionHeader.VersionStringLength, constexpr_strlen(HEALING_STATS_VERSION));
+
+	std::string_view version = std::string_view{reinterpret_cast<char*>(&pEvent->dst_agent), versionHeader.VersionStringLength};
+	EXPECT_EQ(version, HEALING_STATS_VERSION);
+}
+
+TEST(EventProcessorTest, LogStart)
+{
+	EventProcessor processor;
+
+	GlobalObjects::ARC_E9 = e9_ExpectVersionEvent;
+	cbtevent ev = {};
+	ev.is_statechange = CBTS_LOGSTART;
+	processor.AreaCombat(&ev, nullptr, nullptr, nullptr, 0, 0);
+
+	processor.AreaCombat(&VERSION_EVENT, nullptr, nullptr, nullptr, 0, 0);
+	processor.LocalCombat(&VERSION_EVENT, nullptr, nullptr, nullptr, 0, 0);
+
+	GlobalObjects::ARC_E9 = nullptr;
 }

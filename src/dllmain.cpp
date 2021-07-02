@@ -1,3 +1,4 @@
+#include "AddonVersion.h"
 #include "arcdps_structs.h"
 #include "Exports.h"
 #include "GUI.h"
