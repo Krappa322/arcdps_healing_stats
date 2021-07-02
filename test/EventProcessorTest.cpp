@@ -187,7 +187,7 @@ static void e9_ExpectVersionEvent(cbtevent* pEvent, uint32_t pSignature)
 {
 	VERSION_EVENT = *pEvent;
 	VERSION_EVENT.time = timeGetTime();
-	VERSION_EVENT.is_statechange = 40 /* CBTS_EXTENSION */;
+	VERSION_EVENT.is_statechange = CBTS_EXTENSION;
 	memcpy(&VERSION_EVENT.pad61, &pSignature, sizeof(pSignature));
 
 	EXPECT_EQ(pSignature, VERSION_EVENT_SIGNATURE);

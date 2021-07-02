@@ -430,7 +430,7 @@ void CombatMock::Execute()
 			combatEvent.is_ninety = 1; // simulate as if everyone is full hp
 			combatEvent.is_fifty = 0; // simulate as if everyone is full hp
 			combatEvent.is_moving = 0;
-			combatEvent.is_statechange = 0;
+			combatEvent.is_statechange = CBTS_NONE;
 			combatEvent.is_flanking = 0;
 			combatEvent.is_shields = 0;
 			combatEvent.pad61 = 0;

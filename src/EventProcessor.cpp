@@ -91,7 +91,7 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 
 		return;
 	}
-	else if (pEvent->is_statechange == 40 /*CBTS_EXTENSION*/)
+	else if (pEvent->is_statechange == CBTS_EXTENSION)
 	{
 		uint32_t pad;
 		memcpy(&pad, &pEvent->pad61, sizeof(pad));
