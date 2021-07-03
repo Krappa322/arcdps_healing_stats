@@ -18,6 +18,8 @@ class EventProcessor
 public:
 	EventProcessor();
 
+	void SetEvtcLoggingEnabled(bool pEnabled);
+
 	void AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 	void LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 	void PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId);
@@ -37,4 +39,6 @@ private:
 
 	std::mutex mPeerStatesLock;
 	std::map<uintptr_t, std::shared_ptr<PlayerStats>> mPeerStates;
+
+	std::atomic_bool mEvtcLoggingEnabled = false;
 };

@@ -13,6 +13,13 @@ EventProcessor::EventProcessor()
 {
 }
 
+void EventProcessor::SetEvtcLoggingEnabled(bool pEnabled)
+{
+	LogI("Setting evtc logging enabled to {} (previous value {})",
+		pEnabled, mEvtcLoggingEnabled.load(std::memory_order_relaxed));
+	mEvtcLoggingEnabled.store(pEnabled, std::memory_order_relaxed);
+}
+
 void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t /*pId*/, uint64_t /*pRevision*/)
 {
 	if (pEvent == nullptr)
@@ -87,7 +94,10 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		static_assert(versionStringLength <= (offsetof(cbtevent, is_statechange) - offsetof(cbtevent, dst_agent)), "Version string does not fit in cbtevent");
 		memcpy(&logEvent.dst_agent, &versionString, versionStringLength);
 
-		GlobalObjects::ARC_E9(&logEvent, VERSION_EVENT_SIGNATURE);
+		if (mEvtcLoggingEnabled.load(std::memory_order_relaxed) == true)
+		{
+			GlobalObjects::ARC_E9(&logEvent, VERSION_EVENT_SIGNATURE);
+		}
 
 		return;
 	}
@@ -334,7 +344,10 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 	logEvent.value *= -1;
 	logEvent.buff_dmg *= -1;
 
-	GlobalObjects::ARC_E9(&logEvent, 0x9c9b3c99);
+	if (mEvtcLoggingEnabled.load(std::memory_order_relaxed) == true)
+	{
+		GlobalObjects::ARC_E9(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
+	}
 }
 
 void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
@@ -442,7 +455,10 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 	logEvent.value *= -1;
 	logEvent.buff_dmg *= -1;
 
-	GlobalObjects::ARC_E9(&logEvent, 0x9c9b3c99);
+	if (mEvtcLoggingEnabled.load(std::memory_order_relaxed) == true)
+	{
+		GlobalObjects::ARC_E9(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
+	}
 }
 
 std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState()

@@ -454,7 +454,7 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 
 		const char* log_level_items[] = SPDLOG_LEVEL_NAMES;
 		int choice = pHealingOptions.LogLevel;
-		if (ImGui::Combo("logging", &choice, log_level_items, sizeof(log_level_items) / sizeof(log_level_items[0])) == true)
+		if (ImGui::Combo("debug logging", &choice, log_level_items, sizeof(log_level_items) / sizeof(log_level_items[0])) == true)
 		{
 			pHealingOptions.LogLevel = static_cast<spdlog::level::level_enum>(choice);
 			Log_::SetLevel(pHealingOptions.LogLevel);
@@ -465,7 +465,12 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 			"will have a small impact on performance. The log can reach a\n"
 			"maximum size of 1 GiB");
 
-		ImGui::Spacing();
+		ImGui::Separator();
+
+		if (ImGuiEx::SmallCheckBox("log healing to EVTC logs", &pHealingOptions.EvtcLoggingEnabled) == true)
+		{
+			GlobalObjects::EVENT_PROCESSOR->SetEvtcLoggingEnabled(pHealingOptions.EvtcLoggingEnabled);
+		}
 
 		if (ImGuiEx::SmallCheckBox("enable live stats sharing", &pHealingOptions.EvtcRpcEnabled) == true)
 		{
@@ -494,7 +499,7 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 			"sure you trust it.");
 		Display_EvtcRpcStatus(pHealingOptions);
 
-		ImGui::Spacing();
+		ImGui::Separator();
 
 		if (ImGui::Button("reset all settings") == true)
 		{

@@ -214,6 +214,7 @@ arcdps_exports* mod_init()
 		ReadIni(HEAL_TABLE_OPTIONS);
 
 		Log_::SetLevel(HEAL_TABLE_OPTIONS.LogLevel);
+		GlobalObjects::EVENT_PROCESSOR->SetEvtcLoggingEnabled(HEAL_TABLE_OPTIONS.EvtcLoggingEnabled);
 		GlobalObjects::EVTC_RPC_CLIENT->SetEnabledStatus(HEAL_TABLE_OPTIONS.EvtcRpcEnabled);
 	}
 

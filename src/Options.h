@@ -33,6 +33,8 @@ struct HealTableOptions
 {
 	bool DebugMode = false;
 	spdlog::level::level_enum LogLevel = spdlog::level::off;
+	
+	bool EvtcLoggingEnabled = true;
 
 	char EvtcRpcEndpoint[128] = "evtc-rpc.kappa322.com:443";
 	bool EvtcRpcEnabled = false;

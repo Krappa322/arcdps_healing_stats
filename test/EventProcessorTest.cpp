@@ -182,13 +182,13 @@ TEST(EventProcessorTest, ResetPeerOnSelfCombatEnter)
 	EXPECT_EQ(peer2_state->second.second.ExitedCombatTime, 0);
 }
 
-cbtevent VERSION_EVENT;
+static std::unique_ptr<cbtevent> LAST_VERSION_EVENT;
 static void e9_ExpectVersionEvent(cbtevent* pEvent, uint32_t pSignature)
 {
-	VERSION_EVENT = *pEvent;
-	VERSION_EVENT.time = timeGetTime();
-	VERSION_EVENT.is_statechange = CBTS_EXTENSION;
-	memcpy(&VERSION_EVENT.pad61, &pSignature, sizeof(pSignature));
+	LAST_VERSION_EVENT = std::make_unique<cbtevent>(*pEvent);
+	LAST_VERSION_EVENT->time = timeGetTime();
+	LAST_VERSION_EVENT->is_statechange = CBTS_EXTENSION;
+	memcpy(&LAST_VERSION_EVENT->pad61, &pSignature, sizeof(pSignature));
 
 	EXPECT_EQ(pSignature, VERSION_EVENT_SIGNATURE);
 	EvtcVersionHeader versionHeader;
@@ -204,15 +204,123 @@ static void e9_ExpectVersionEvent(cbtevent* pEvent, uint32_t pSignature)
 
 TEST(EventProcessorTest, LogStart)
 {
+	GlobalObjects::ARC_E9 = e9_ExpectVersionEvent;
+	LAST_VERSION_EVENT = nullptr;
+	
 	EventProcessor processor;
 
-	GlobalObjects::ARC_E9 = e9_ExpectVersionEvent;
+	// send log start without logging enabled, should not produce event
 	cbtevent ev = {};
 	ev.is_statechange = CBTS_LOGSTART;
-	processor.AreaCombat(&ev, nullptr, nullptr, nullptr, 0, 0);
 
-	processor.AreaCombat(&VERSION_EVENT, nullptr, nullptr, nullptr, 0, 0);
-	processor.LocalCombat(&VERSION_EVENT, nullptr, nullptr, nullptr, 0, 0);
+	processor.SetEvtcLoggingEnabled(false);
+	processor.AreaCombat(&ev, nullptr, nullptr, nullptr, 0, 0);
+	EXPECT_EQ(LAST_VERSION_EVENT, nullptr);
+
+	// send log start with logging enabled, should produce event
+	processor.SetEvtcLoggingEnabled(true);
+	processor.AreaCombat(&ev, nullptr, nullptr, nullptr, 0, 0);
+	EXPECT_NE(LAST_VERSION_EVENT, nullptr);
+
+	// Make sure nothing crashes when a version event is sent :)
+	processor.AreaCombat(LAST_VERSION_EVENT.get(), nullptr, nullptr, nullptr, 0, 0);
+	processor.LocalCombat(LAST_VERSION_EVENT.get(), nullptr, nullptr, nullptr, 0, 0);
 
 	GlobalObjects::ARC_E9 = nullptr;
+	LAST_VERSION_EVENT = nullptr;
+}
+
+static std::unique_ptr<cbtevent> EXPECTED_COMBAT_EVENT;
+static void e9_ExpectCombatEvent(cbtevent* pEvent, uint32_t pSignature)
+{
+	ASSERT_EQ(pSignature, HEALING_STATS_ADDON_SIGNATURE);
+	ASSERT_NE(EXPECTED_COMBAT_EVENT, nullptr);
+	ASSERT_EQ(memcmp(EXPECTED_COMBAT_EVENT.get(), pEvent, sizeof(*pEvent)), 0);
+}
+
+TEST(EventProcessorTest, LogCombatEvent)
+{
+	GlobalObjects::ARC_E9 = e9_ExpectCombatEvent;
+	EXPECTED_COMBAT_EVENT = nullptr;
+
+	EventProcessor processor;
+	processor.SetEvtcLoggingEnabled(false);
+
+	// Register "peer1.1234"
+	ag source_ag = {};
+	ag dest_ag = {};
+	source_ag.elite = 0; // agent registration
+	source_ag.prof = static_cast<Prof>(1); // agent registration
+	source_ag.id = 2001;
+	dest_ag.id = 101;
+	source_ag.name = "peer1";
+	dest_ag.name = "peer1.1234";
+	processor.AreaCombat(nullptr, &source_ag, &dest_ag, nullptr, 0, 0);
+
+	// Register "local.1234"
+	source_ag.id = 2000;
+	dest_ag.id = 100;
+	source_ag.name = "local";
+	dest_ag.name = "local.1234";
+	dest_ag.self = true;
+	processor.LocalCombat(nullptr, &source_ag, &dest_ag, nullptr, 0, 0);
+
+	for (bool logging_enabled : {false, true})
+	{
+		cbtevent ev = {};
+		ev.time = timeGetTime() - 1;
+		ev.src_agent = 2000;
+		ev.dst_agent = 2001;
+		ev.src_instid = 100;
+		ev.dst_instid = 101;
+		ev.value = 100;
+		if (logging_enabled == true)
+		{
+			EXPECTED_COMBAT_EVENT = std::make_unique<cbtevent>();
+			*EXPECTED_COMBAT_EVENT = ev;
+			EXPECTED_COMBAT_EVENT->value *= -1;
+		}
+		else
+		{
+			EXPECTED_COMBAT_EVENT = nullptr;
+		}
+
+		source_ag.id = 2000;
+		source_ag.self = true;
+		source_ag.name = "local";
+		dest_ag.id = 2001;
+		dest_ag.self = false;
+		source_ag.name = "peer1";
+		processor.LocalCombat(&ev, &source_ag, &dest_ag, nullptr, 0, 0);
+		
+		// Make sure nothing crashes when a version event is sent :)
+		ev.is_statechange = CBTS_EXTENSION;
+		uint32_t sig = HEALING_STATS_ADDON_SIGNATURE;
+		memcpy(&ev.pad61, &sig, sizeof(sig));
+		processor.AreaCombat(&ev, nullptr, nullptr, nullptr, 0, 0);
+		processor.LocalCombat(&ev, nullptr, nullptr, nullptr, 0, 0);
+
+		cbtevent ev2 = {};
+		ev2.src_agent = 0;
+		ev2.dst_agent = 0;
+		ev2.src_instid = 101;
+		ev2.dst_instid = 100;
+		if (logging_enabled == true)
+		{
+			EXPECTED_COMBAT_EVENT = std::make_unique<cbtevent>();
+			*EXPECTED_COMBAT_EVENT = ev2;
+			EXPECTED_COMBAT_EVENT->src_agent = 2001;
+			EXPECTED_COMBAT_EVENT->dst_agent = 2000;
+			EXPECTED_COMBAT_EVENT->value *= -1;
+		}
+		else
+		{
+			EXPECTED_COMBAT_EVENT = nullptr;
+		}
+
+		processor.PeerCombat(&ev2, 101);
+	}
+
+	GlobalObjects::ARC_E9 = nullptr;
+	EXPECTED_COMBAT_EVENT = nullptr;
 }
