@@ -168,11 +168,11 @@ arcdps_exports* mod_init()
 	GlobalObjects::IS_SHUTDOWN = false;
 
 	memset(&ARC_EXPORTS, 0, sizeof(arcdps_exports));
-	ARC_EXPORTS.sig = 0x9c9b3c99;
+	ARC_EXPORTS.sig = HEALING_STATS_ADDON_SIGNATURE;
 	ARC_EXPORTS.imguivers = IMGUI_VERSION_NUM;
 	ARC_EXPORTS.size = sizeof(arcdps_exports);
 	ARC_EXPORTS.out_name = "healing_stats";
-	ARC_EXPORTS.out_build = "2.0rc3";
+	ARC_EXPORTS.out_build = HEALING_STATS_VERSION;
 	ARC_EXPORTS.combat = mod_combat;
 	ARC_EXPORTS.imgui = mod_imgui;
 	ARC_EXPORTS.options_end = mod_options_end;
