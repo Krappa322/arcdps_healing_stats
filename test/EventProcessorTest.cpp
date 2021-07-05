@@ -53,7 +53,7 @@ TEST(EventProcessorTest, ImplicitSelfCombatExitOnSelfDeregister)
 	EXPECT_NE(local_state->second.second.ExitedCombatTime, 0);
 }
 
-TEST(EventProcessorTest, ImplicitPeerCombatExitOnSelfDeregister)
+TEST(EventProcessorTest, ImplicitPeerCombatExitOnPeerDeregister)
 {
 	EventProcessor processor;
 
@@ -82,7 +82,7 @@ TEST(EventProcessorTest, ImplicitPeerCombatExitOnSelfDeregister)
 	ASSERT_NE(peer_state, state.second.end());
 	EXPECT_EQ(peer_state->second.second.ExitedCombatTime, 0);
 
-	// Deregister self
+	// Deregister peer
 	source_ag.elite = 0; // agent deregistration
 	source_ag.prof = static_cast<Prof>(0); // agent deregistration
 	processor.AreaCombat(nullptr, &source_ag, &dest_ag, nullptr, 0, 0);
@@ -152,6 +152,9 @@ TEST(EventProcessorTest, ResetPeerOnSelfCombatEnter)
 	ev.src_instid = 101;
 	processor.PeerCombat(&ev, 101);
 
+	// Grab a reference to peer1 so it doesn't get removed from the map
+	std::shared_ptr<PlayerStats> ref = processor.mPeerStates.find(2001)->second;
+
 	// Enter combat with self
 	ev.src_agent = 2000;
 	ev.src_instid = 100;
@@ -180,6 +183,35 @@ TEST(EventProcessorTest, ResetPeerOnSelfCombatEnter)
 	EXPECT_FALSE(peer2_state->second.second.IsOutOfCombat());
 	EXPECT_NE(peer2_state->second.second.EnteredCombatTime, 0);
 	EXPECT_EQ(peer2_state->second.second.ExitedCombatTime, 0);
+
+	// Exit and enter combat again with self but without anyone holding a reference to peer1, this time they should not be in the map
+	ref.reset();
+
+	ev.src_agent = 2000;
+	ev.src_instid = 100;
+	ev.is_statechange = CBTS_EXITCOMBAT;
+	ev.time++;
+	processor.LocalCombat(&ev, &source_ag, &dest_ag, nullptr, 0, 0);
+
+	ev.is_statechange = CBTS_ENTERCOMBAT;
+	ev.time++;
+	source_ag.self = true;
+	processor.LocalCombat(&ev, &source_ag, &dest_ag, nullptr, 0, 0);
+
+	auto state2 = processor.GetState();
+	EXPECT_EQ(state2.second.size(), 2);
+
+	auto self_state2 = state2.second.find(2000);
+	ASSERT_NE(self_state2, state2.second.end());
+	EXPECT_FALSE(self_state2->second.second.IsOutOfCombat());
+	EXPECT_NE(self_state2->second.second.EnteredCombatTime, 0);
+	EXPECT_EQ(self_state2->second.second.ExitedCombatTime, 0);
+
+	auto peer2_state2 = state2.second.find(2002);
+	ASSERT_NE(peer2_state2, state2.second.end());
+	EXPECT_FALSE(peer2_state2->second.second.IsOutOfCombat());
+	EXPECT_EQ(peer2_state2->second.second.EnteredCombatTime, peer2_state->second.second.EnteredCombatTime);
+	EXPECT_EQ(peer2_state2->second.second.ExitedCombatTime, 0);
 }
 
 static std::unique_ptr<cbtevent> LAST_VERSION_EVENT;

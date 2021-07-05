@@ -244,22 +244,36 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		}
 
 		std::lock_guard lock(mPeerStatesLock);
-		for (auto& peer : mPeerStates)
+		for (auto iter = mPeerStates.begin(); iter != mPeerStates.end();)
 		{
-			std::optional<std::string> name_str = mAgentTable.GetName(peer.first);
+			std::optional<std::string> name_str = mAgentTable.GetName(iter->first);
 			const char* name = "(unknown name)";
 			if (name_str.has_value() == true)
 			{
 				name = name_str->c_str();
 			}
 
-			if (peer.second->ResetIfNotInCombat() == true)
+			if (iter->second->ResetIfNotInCombat() == true)
 			{
-				LogD("Cleared stats for {} {} since self entered combat", peer.first, name);
+				LogD("Cleared stats for {} {} since self entered combat", iter->first, name);
+
+				// use_count() is not fully synchronized but that's fine here since we only increment it under the
+				// protection of mPeerStatesLock, meaning that the worst case scenario is that the number is read
+				// higher than its real value.
+				if (iter->second.use_count() == 1)
+				{
+					LogD("Removing state for {} {} since self entered combat and their state is not referenced", iter->first, name);
+					iter = mPeerStates.erase(iter);
+				}
+				else
+				{
+					iter++;
+				}
 			}
 			else
 			{
-				LogD("Didn't clear stats for {} {} even though self entered combat - they are already in combat", peer.first, name);
+				LogD("Didn't clear stats for {} {} even though self entered combat - they are already in combat", iter->first, name);
+				iter++;
 			}
 		}
 
