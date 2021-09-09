@@ -4,6 +4,3 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui
-[submodule "spdlog"]
-	path = spdlog
-	url = https://github.com/gabime/spdlog

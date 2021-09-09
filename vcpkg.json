@@ -3,7 +3,8 @@
   "name": "arcdps-personal-stats",
   "version-string": "2.0rc2",
   "dependencies": [
-	"grpc",
-	"gtest"
+	  "grpc",
+    "gtest",
+    "spdlog"
   ]
 }

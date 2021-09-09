@@ -74,7 +74,7 @@
       <PrecompiledHeaderFile />
     </ClCompile>
     <Link>
-      <AdditionalDependencies>arcdps_personal_stats_lib.lib;networking.lib;winmm.lib;ws2_32.lib;crypt32.lib;spdlog.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>arcdps_personal_stats_lib.lib;networking.lib;winmm.lib;ws2_32.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(SolutionDir)\spdlog\build_windows\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -97,7 +97,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>arcdps_personal_stats_lib.lib;networking.lib;winmm.lib;ws2_32.lib;crypt32.lib;spdlogd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>arcdps_personal_stats_lib.lib;networking.lib;winmm.lib;ws2_32.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(Platform)\$(Configuration)\;$(SolutionDir)\spdlog\build_windows\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
