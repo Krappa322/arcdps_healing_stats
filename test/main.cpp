@@ -5,6 +5,8 @@
 #include <gtest/gtest.h>
 #pragma warning(pop)
 
+#include <grpcpp/grpcpp.h>
+
 extern "C" __declspec(dllexport) void e3(const char* pString);
 extern "C" __declspec(dllexport) uint64_t e6();
 extern "C" __declspec(dllexport) uint64_t e7();
@@ -77,6 +79,8 @@ int main(int pArgumentCount, char** pArgumentVector)
 	testing::UnitTest::GetInstance()->listeners().Append(new TestLogFlusher);
 
 	int result = RUN_ALL_TESTS();
+
+	LogW("{}", grpc::Version());
 
 	Log_::LOGGER = nullptr;
 	spdlog::shutdown();

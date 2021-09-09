@@ -28,9 +28,9 @@ uintptr_t EventSequencer::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* p
 		DEBUGLOG(">> %llu", pId);
 		if (current == pId)
 		{
-			assert(false);
+			//assert(false);
 
-			DEBUGLOG("Received event %llu twice!", pId);
+			LogW("Received event %llu twice!", pId);
 
 			mCallback(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 			return 0;

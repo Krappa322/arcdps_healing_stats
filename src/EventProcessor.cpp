@@ -323,16 +323,41 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		return;
 	}
 
-	if (pSourceAgent->self == 0 &&
-		pEvent->src_master_instid != mSelfInstanceId.load(std::memory_order_relaxed))
+	uint16_t selfInstanceId = static_cast<uint16_t>(mSelfInstanceId.load(std::memory_order_relaxed));
+	if (mEvtcLoggingEnabled.load(std::memory_order_relaxed) == true)
 	{
-		// Source is someone else - not interesting
-		return;
+		cbtevent logEvent = *pEvent;
+
+		// Flip event values so healed amount is negative
+		logEvent.value *= -1;
+		logEvent.buff_dmg *= -1;
+
+		if (logEvent.is_offcycle != 0)
+		{
+			logEvent.is_offcycle = 1; // Arcdps just says "non-zero"; truncate non-zero to explicitly 0x01
+		}
+		if (logEvent.src_instid == selfInstanceId || logEvent.src_master_instid == selfInstanceId)
+		{
+			logEvent.is_offcycle |= 1 << 7;
+		}
+		if (logEvent.dst_instid == selfInstanceId || logEvent.dst_master_instid == selfInstanceId)
+		{
+			logEvent.is_offcycle |= 1 << 6;
+		}
+
+		GlobalObjects::ARC_E9(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
 	}
 
 	if (pEvent->is_shields != 0)
 	{
 		// Shield application - not tracking for now
+		return;
+	}
+
+	if (pSourceAgent->self == 0 &&
+		pEvent->src_master_instid != selfInstanceId)
+	{
+		// Source is someone else - not interesting
 		return;
 	}
 
@@ -351,17 +376,6 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		assert(healedAmount != 0);
 	}
 	LOG("Registered heal event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
-
-	cbtevent logEvent = *pEvent;
-
-	// Flip event values so healed amount is negative
-	logEvent.value *= -1;
-	logEvent.buff_dmg *= -1;
-
-	if (mEvtcLoggingEnabled.load(std::memory_order_relaxed) == true)
-	{
-		GlobalObjects::ARC_E9(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
-	}
 }
 
 void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
@@ -429,11 +443,39 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		return;
 	}
 
-	if (pEvent->src_instid != pPeerInstanceId &&
-		pEvent->src_master_instid != pPeerInstanceId)
+	std::optional<uintptr_t> dstUniqueId = mAgentTable.GetUniqueId(pEvent->dst_instid, true);
+	if (dstUniqueId.has_value() == false)
 	{
-		// Source is someone else - not interesting
+		LOG("Dropping event to %hu since destination agent is unknown", pEvent->dst_instid);
 		return;
+	}
+
+	if (mEvtcLoggingEnabled.load(std::memory_order_relaxed) == true)
+	{
+		cbtevent logEvent = *pEvent;
+
+		// Fix unique ids (they are invalid when coming from a peer)
+		logEvent.src_agent = *peerUniqueId;
+		logEvent.dst_agent = *dstUniqueId;
+
+		// Flip event values so healed amount is negative
+		logEvent.value *= -1;
+		logEvent.buff_dmg *= -1;
+
+		if (logEvent.is_offcycle != 0)
+		{
+			logEvent.is_offcycle = 1; // Arcdps just says "non-zero"; truncate non-zero to explicitly 0x01
+		}
+		if (logEvent.src_instid == pPeerInstanceId || logEvent.src_master_instid == pPeerInstanceId)
+		{
+			logEvent.is_offcycle |= 1 << 7;
+		}
+		if (logEvent.dst_instid == pPeerInstanceId || logEvent.dst_master_instid == pPeerInstanceId)
+		{
+			logEvent.is_offcycle |= 1 << 6;
+		}
+
+		GlobalObjects::ARC_E9(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
 	}
 
 	if (pEvent->is_shields != 0)
@@ -442,10 +484,10 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		return;
 	}
 
-	std::optional<uintptr_t> dstUniqueId = mAgentTable.GetUniqueId(pEvent->dst_instid, true);
-	if (dstUniqueId.has_value() == false)
+	if (pEvent->src_instid != pPeerInstanceId &&
+		pEvent->src_master_instid != pPeerInstanceId)
 	{
-		LOG("Dropping heal event to %hu since destination agent is unknown", pEvent->dst_instid);
+		// Source is someone else - not interesting
 		return;
 	}
 
@@ -458,21 +500,6 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		assert(healedAmount != 0);
 	}
 	LOG("Registered heal event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
-
-	cbtevent logEvent = *pEvent;
-
-	// Fix unique ids (they are invalid when coming from a peer)
-	logEvent.src_agent = *peerUniqueId;
-	logEvent.dst_agent = *dstUniqueId;
-
-	// Flip event values so healed amount is negative
-	logEvent.value *= -1;
-	logEvent.buff_dmg *= -1;
-
-	if (mEvtcLoggingEnabled.load(std::memory_order_relaxed) == true)
-	{
-		GlobalObjects::ARC_E9(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
-	}
 }
 
 std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState()
