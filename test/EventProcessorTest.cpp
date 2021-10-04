@@ -302,81 +302,65 @@ TEST(EventProcessorTest, LogCombatEvent)
 	{
 		processor.SetEvtcLoggingEnabled(logging_enabled);
 
-		cbtevent ev = {};
-		ev.time = timeGetTime();
-		ev.src_agent = 2000;
-		ev.dst_agent = 2001;
-		ev.src_instid = 100;
-		ev.dst_instid = 101;
-		ev.value = 100;
-		if (logging_enabled == true)
 		{
-			EXPECTED_COMBAT_EVENT = std::make_unique<cbtevent>();
-			*EXPECTED_COMBAT_EVENT = ev;
-			EXPECTED_COMBAT_EVENT->value *= -1;
-			EXPECTED_COMBAT_EVENT->is_offcycle = HealingEventFlags_EventCameFromSource;
-		}
-		else
-		{
-			EXPECTED_COMBAT_EVENT = nullptr;
+			cbtevent ev = {};
+			ev.time = timeGetTime();
+			ev.src_agent = 2000;
+			ev.dst_agent = 2001;
+			ev.src_instid = 100;
+			ev.dst_instid = 101;
+			ev.value = 100;
+
+			cbtevent expected_event = ev;
+			expected_event.value *= -1;
+			expected_event.is_offcycle = HealingEventFlags_EventCameFromSource;
+			EXPECTED_COMBAT_EVENT = logging_enabled == true ? std::make_unique<cbtevent>(expected_event) : nullptr;
+
+			source_ag.id = 2000;
+			source_ag.self = true;
+			source_ag.name = "local";
+			dest_ag.id = 2001;
+			dest_ag.self = false;
+			source_ag.name = "peer1";
+
+			processor.mSelfInstanceId = 100;
+			processor.LocalCombat(&ev, &source_ag, &dest_ag, nullptr, 0, 0);
+			ASSERT_EQ(EXPECTED_COMBAT_EVENT, nullptr);
+
+			// Flip self instance id and try again, make sure log is still correct (as if it came from peer1)
+			expected_event.is_offcycle = HealingEventFlags_EventCameFromDestination;
+			EXPECTED_COMBAT_EVENT = logging_enabled == true ? std::make_unique<cbtevent>(expected_event) : nullptr;
+			processor.mSelfInstanceId = 101;
+			source_ag.self = false;
+			dest_ag.self = true;
+			processor.LocalCombat(&ev, &source_ag, &dest_ag, nullptr, 0, 0);
+			ASSERT_EQ(EXPECTED_COMBAT_EVENT, nullptr);	
 		}
 
-		source_ag.id = 2000;
-		source_ag.self = true;
-		source_ag.name = "local";
-		dest_ag.id = 2001;
-		dest_ag.self = false;
-		source_ag.name = "peer1";
-		processor.LocalCombat(&ev, &source_ag, &dest_ag, nullptr, 0, 0);
-		ASSERT_EQ(EXPECTED_COMBAT_EVENT, nullptr);
-		
-		// Make sure nothing crashes when a version event is sent :)
-		ev.is_statechange = CBTS_EXTENSION;
-		uint32_t sig = HEALING_STATS_ADDON_SIGNATURE;
-		memcpy(&ev.pad61, &sig, sizeof(sig));
-		processor.AreaCombat(&ev, nullptr, nullptr, nullptr, 0, 0);
-		processor.LocalCombat(&ev, nullptr, nullptr, nullptr, 0, 0);
-
-		cbtevent ev2 = {};
-		ev2.time = timeGetTime();
-		ev2.src_agent = 0;
-		ev2.dst_agent = 0;
-		ev2.src_instid = 101;
-		ev2.dst_instid = 100;
-		ev2.value = 200;
-		if (logging_enabled == true)
 		{
-			EXPECTED_COMBAT_EVENT = std::make_unique<cbtevent>();
-			*EXPECTED_COMBAT_EVENT = ev2;
-			EXPECTED_COMBAT_EVENT->src_agent = 2001;
-			EXPECTED_COMBAT_EVENT->dst_agent = 2000;
-			EXPECTED_COMBAT_EVENT->is_offcycle = HealingEventFlags_EventCameFromSource;
-			EXPECTED_COMBAT_EVENT->value *= -1;
-		}
-		else
-		{
-			EXPECTED_COMBAT_EVENT = nullptr;
-		}
+			cbtevent ev = {};
+			ev.time = timeGetTime();
+			ev.src_agent = 0;
+			ev.dst_agent = 0;
+			ev.src_instid = 101;
+			ev.dst_instid = 100;
+			ev.value = 200;
+			cbtevent expected_event = ev;
+			expected_event.src_agent = 2001;
+			expected_event.dst_agent = 2000;
+			expected_event.value *= -1;
+			expected_event.is_offcycle = HealingEventFlags_EventCameFromSource;
+			EXPECTED_COMBAT_EVENT = logging_enabled == true ? std::make_unique<cbtevent>(expected_event) : nullptr;
 
-		processor.PeerCombat(&ev2, 101);
-		ASSERT_EQ(EXPECTED_COMBAT_EVENT, nullptr);
+			processor.PeerCombat(&ev, 101);
+			ASSERT_EQ(EXPECTED_COMBAT_EVENT, nullptr);
 
-		if (logging_enabled == true)
-		{
-			EXPECTED_COMBAT_EVENT = std::make_unique<cbtevent>();
-			*EXPECTED_COMBAT_EVENT = ev2;
-			EXPECTED_COMBAT_EVENT->src_agent = 2001;
-			EXPECTED_COMBAT_EVENT->dst_agent = 2000;
-			EXPECTED_COMBAT_EVENT->is_offcycle = HealingEventFlags_EventCameFromDestination;
-			EXPECTED_COMBAT_EVENT->value *= -1;
+			// Flip pPeerInstanceId and try again, make sure log is still correct (as if it came from local)
+			expected_event.is_offcycle = HealingEventFlags_EventCameFromDestination;
+			EXPECTED_COMBAT_EVENT = logging_enabled == true ? std::make_unique<cbtevent>(expected_event) : nullptr;
+			processor.PeerCombat(&ev, 100);
+			ASSERT_EQ(EXPECTED_COMBAT_EVENT, nullptr);
 		}
-		else
-		{
-			EXPECTED_COMBAT_EVENT = nullptr;
-		}
-
-		processor.PeerCombat(&ev2, 100);
-		ASSERT_EQ(EXPECTED_COMBAT_EVENT, nullptr);
 	}
 
 	GlobalObjects::ARC_E9 = nullptr;
