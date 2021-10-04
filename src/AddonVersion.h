@@ -13,3 +13,10 @@ struct EvtcVersionHeader
 	uint32_t EvtcRevision : 24;
 	uint32_t VersionStringLength : 8;
 };
+
+enum HealingEventFlags
+{
+	HealingEventFlags_IsOffcycle = 1 << 0,
+	HealingEventFlags_EventCameFromDestination = 1 << 6,
+	HealingEventFlags_EventCameFromSource = 1 << 7
+};

@@ -268,6 +268,7 @@ static void e9_ExpectCombatEvent(cbtevent* pEvent, uint32_t pSignature)
 	ASSERT_EQ(pSignature, HEALING_STATS_ADDON_SIGNATURE);
 	ASSERT_NE(EXPECTED_COMBAT_EVENT, nullptr);
 	ASSERT_EQ(memcmp(EXPECTED_COMBAT_EVENT.get(), pEvent, sizeof(*pEvent)), 0);
+	EXPECTED_COMBAT_EVENT = nullptr;
 }
 
 TEST(EventProcessorTest, LogCombatEvent)
@@ -299,8 +300,10 @@ TEST(EventProcessorTest, LogCombatEvent)
 
 	for (bool logging_enabled : {false, true})
 	{
+		processor.SetEvtcLoggingEnabled(logging_enabled);
+
 		cbtevent ev = {};
-		ev.time = timeGetTime() - 1;
+		ev.time = timeGetTime();
 		ev.src_agent = 2000;
 		ev.dst_agent = 2001;
 		ev.src_instid = 100;
@@ -311,6 +314,7 @@ TEST(EventProcessorTest, LogCombatEvent)
 			EXPECTED_COMBAT_EVENT = std::make_unique<cbtevent>();
 			*EXPECTED_COMBAT_EVENT = ev;
 			EXPECTED_COMBAT_EVENT->value *= -1;
+			EXPECTED_COMBAT_EVENT->is_offcycle = HealingEventFlags_EventCameFromSource;
 		}
 		else
 		{
@@ -324,6 +328,7 @@ TEST(EventProcessorTest, LogCombatEvent)
 		dest_ag.self = false;
 		source_ag.name = "peer1";
 		processor.LocalCombat(&ev, &source_ag, &dest_ag, nullptr, 0, 0);
+		ASSERT_EQ(EXPECTED_COMBAT_EVENT, nullptr);
 		
 		// Make sure nothing crashes when a version event is sent :)
 		ev.is_statechange = CBTS_EXTENSION;
@@ -333,16 +338,19 @@ TEST(EventProcessorTest, LogCombatEvent)
 		processor.LocalCombat(&ev, nullptr, nullptr, nullptr, 0, 0);
 
 		cbtevent ev2 = {};
+		ev2.time = timeGetTime();
 		ev2.src_agent = 0;
 		ev2.dst_agent = 0;
 		ev2.src_instid = 101;
 		ev2.dst_instid = 100;
+		ev2.value = 200;
 		if (logging_enabled == true)
 		{
 			EXPECTED_COMBAT_EVENT = std::make_unique<cbtevent>();
 			*EXPECTED_COMBAT_EVENT = ev2;
 			EXPECTED_COMBAT_EVENT->src_agent = 2001;
 			EXPECTED_COMBAT_EVENT->dst_agent = 2000;
+			EXPECTED_COMBAT_EVENT->is_offcycle = HealingEventFlags_EventCameFromSource;
 			EXPECTED_COMBAT_EVENT->value *= -1;
 		}
 		else
@@ -351,6 +359,24 @@ TEST(EventProcessorTest, LogCombatEvent)
 		}
 
 		processor.PeerCombat(&ev2, 101);
+		ASSERT_EQ(EXPECTED_COMBAT_EVENT, nullptr);
+
+		if (logging_enabled == true)
+		{
+			EXPECTED_COMBAT_EVENT = std::make_unique<cbtevent>();
+			*EXPECTED_COMBAT_EVENT = ev2;
+			EXPECTED_COMBAT_EVENT->src_agent = 2001;
+			EXPECTED_COMBAT_EVENT->dst_agent = 2000;
+			EXPECTED_COMBAT_EVENT->is_offcycle = HealingEventFlags_EventCameFromDestination;
+			EXPECTED_COMBAT_EVENT->value *= -1;
+		}
+		else
+		{
+			EXPECTED_COMBAT_EVENT = nullptr;
+		}
+
+		processor.PeerCombat(&ev2, 100);
+		ASSERT_EQ(EXPECTED_COMBAT_EVENT, nullptr);
 	}
 
 	GlobalObjects::ARC_E9 = nullptr;

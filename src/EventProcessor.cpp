@@ -334,15 +334,15 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 
 		if (logEvent.is_offcycle != 0)
 		{
-			logEvent.is_offcycle = 1; // Arcdps just says "non-zero"; truncate non-zero to explicitly 0x01
+			logEvent.is_offcycle = HealingEventFlags_IsOffcycle; // Arcdps just says "non-zero"; truncate non-zero to explicitly 0x01
 		}
 		if (logEvent.src_instid == selfInstanceId || logEvent.src_master_instid == selfInstanceId)
 		{
-			logEvent.is_offcycle |= 1 << 7;
+			logEvent.is_offcycle |= HealingEventFlags_EventCameFromSource;
 		}
 		if (logEvent.dst_instid == selfInstanceId || logEvent.dst_master_instid == selfInstanceId)
 		{
-			logEvent.is_offcycle |= 1 << 6;
+			logEvent.is_offcycle |= HealingEventFlags_EventCameFromDestination;
 		}
 
 		GlobalObjects::ARC_E9(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
@@ -385,6 +385,7 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 	std::optional<uintptr_t> peerUniqueId = mAgentTable.GetUniqueId(pPeerInstanceId, false);
 	if (peerUniqueId.has_value() == false)
 	{
+		LogD("Dropping event since peer {} is unknown", pPeerInstanceId);
 		return;
 	}
 
@@ -443,39 +444,48 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		return;
 	}
 
+	std::optional<uintptr_t> srcUniqueId = mAgentTable.GetUniqueId(pEvent->src_instid, true);
 	std::optional<uintptr_t> dstUniqueId = mAgentTable.GetUniqueId(pEvent->dst_instid, true);
-	if (dstUniqueId.has_value() == false)
-	{
-		LOG("Dropping event to %hu since destination agent is unknown", pEvent->dst_instid);
-		return;
-	}
 
 	if (mEvtcLoggingEnabled.load(std::memory_order_relaxed) == true)
 	{
 		cbtevent logEvent = *pEvent;
 
 		// Fix unique ids (they are invalid when coming from a peer)
-		logEvent.src_agent = *peerUniqueId;
-		logEvent.dst_agent = *dstUniqueId;
+		logEvent.src_agent = srcUniqueId.value_or(0);
+		logEvent.dst_agent = dstUniqueId.value_or(0);
 
 		// Flip event values so healed amount is negative
 		logEvent.value *= -1;
 		logEvent.buff_dmg *= -1;
 
+
 		if (logEvent.is_offcycle != 0)
 		{
-			logEvent.is_offcycle = 1; // Arcdps just says "non-zero"; truncate non-zero to explicitly 0x01
+			logEvent.is_offcycle = HealingEventFlags_IsOffcycle; // Arcdps just says "non-zero"; truncate non-zero to explicitly 0x01
 		}
 		if (logEvent.src_instid == pPeerInstanceId || logEvent.src_master_instid == pPeerInstanceId)
 		{
-			logEvent.is_offcycle |= 1 << 7;
+			logEvent.is_offcycle |= HealingEventFlags_EventCameFromSource;
 		}
 		if (logEvent.dst_instid == pPeerInstanceId || logEvent.dst_master_instid == pPeerInstanceId)
 		{
-			logEvent.is_offcycle |= 1 << 6;
+			logEvent.is_offcycle |= HealingEventFlags_EventCameFromDestination;
 		}
 
 		GlobalObjects::ARC_E9(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
+	}
+
+	// No need to drop the event if src isn't known; we only use that translation for evtc logging
+	//if (srcUniqueId.has_value() == false)
+	//{
+	//	LOG("Dropping event to %hu since source agent is unknown", pEvent->src_instid);
+	//	return;
+	//}
+	if (dstUniqueId.has_value() == false)
+	{
+		LOG("Dropping event to %hu since destination agent is unknown", pEvent->dst_instid);
+		return;
 	}
 
 	if (pEvent->is_shields != 0)
