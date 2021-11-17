@@ -2,6 +2,8 @@
 
 #include "imgui.h"
 
+#include <nlohmann/json.hpp>
+
 #include <cstdint>
 #include <type_traits>
 
@@ -61,6 +63,9 @@ struct HealWindowOptions
 	ImGuiWindowFlags_ WindowFlags = ImGuiWindowFlags_None;
 
 	int Hotkey = 0;
+
+	void FromJson(const nlohmann::json& pJsonObject);
+	void ToJson(nlohmann::json& pJsonObject, const HealWindowOptions& pDefault) const;
 };
 static_assert(std::is_same<std::underlying_type<DataSource>::type, int>::value == true, "HealWindowOptions::DataSourceChoice size changed");
 static_assert(std::is_same<std::underlying_type<SortOrder>::type, int>::value == true, "HealWindowOptions::SortOrderChoice size changed");

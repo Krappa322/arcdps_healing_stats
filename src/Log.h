@@ -5,6 +5,35 @@
 
 #include <stdio.h>
 
+struct SimpleFormatter
+{
+	constexpr auto parse(fmt::format_parse_context& pContext) -> decltype(pContext.begin())
+	{
+		// [ctx.begin(), ctx.end()) is a character range that contains a part of
+		// the format string starting from the format specifications to be parsed,
+		// e.g. in
+		//
+		//   fmt::format("{:f} - point of interest", point{1, 2});
+		//
+		// the range will contain "f} - point of interest". The formatter should
+		// parse specifiers until '}' or the end of the range. In this example
+		// the formatter should parse the 'f' specifier and return an iterator
+		// pointing to '}'.
+
+		// Parse the presentation format and store it in the formatter:
+		auto it = pContext.begin(), end = pContext.end();
+
+		// Check if reached the end of the range:
+		if (it != end && *it != '}')
+		{
+			throw fmt::format_error("invalid format");
+		}
+
+		// Return an iterator past the end of the parsed range:
+		return it;
+	}
+};
+
 namespace Log_
 {
 	static constexpr const char* StripPath(const char* pPath)
@@ -74,9 +103,12 @@ namespace Log_
 	inline std::shared_ptr<spdlog::logger> LOGGER;
 }
 
+#define LogT(pFormatString, ...) Log_::LOGGER->trace(FMT_STRING("{}|{}|" pFormatString), Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
 #define LogD(pFormatString, ...) Log_::LOGGER->debug(FMT_STRING("{}|{}|" pFormatString), Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
 #define LogI(pFormatString, ...) Log_::LOGGER->info(FMT_STRING("{}|{}|" pFormatString), Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
 #define LogW(pFormatString, ...) Log_::LOGGER->warn(FMT_STRING("{}|{}|" pFormatString), Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
+#define LogE(pFormatString, ...) Log_::LOGGER->error(FMT_STRING("{}|{}|" pFormatString), Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
+#define LogC(pFormatString, ...) Log_::LOGGER->critical(FMT_STRING("{}|{}|" pFormatString), Log_::GetFileName(__FILE__).name, __func__, ##__VA_ARGS__)
 
 #define LOG(pFormatString, ...) Log_::LogImplementation_(Log_::GetFileName(__FILE__), __func__, pFormatString, ##__VA_ARGS__); if (false) { printf(pFormatString, ##__VA_ARGS__); }
 

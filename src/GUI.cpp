@@ -503,7 +503,7 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 
 		if (ImGui::Button("reset all settings") == true)
 		{
-			pHealingOptions = HealTableOptions{};
+			pHealingOptions.Reset();
 			LOG("Reset settings");
 		}
 		ImGuiEx::AddTooltipToLastItem("Resets all global and window specific settings to their default values.");

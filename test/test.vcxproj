@@ -46,6 +46,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="CombatMock.cpp" />
+    <ClCompile Include="ConfigTest.cpp" />
     <ClCompile Include="EnvironmentTest.cpp" />
     <ClCompile Include="EventProcessorTest.cpp" />
     <ClCompile Include="main.cpp" />

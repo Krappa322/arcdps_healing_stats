@@ -211,7 +211,7 @@ arcdps_exports* mod_init()
 
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
-		ReadIni(HEAL_TABLE_OPTIONS);
+		HEAL_TABLE_OPTIONS.Load(JSON_CONFIG_PATH);
 
 		Log_::SetLevel(HEAL_TABLE_OPTIONS.LogLevel);
 		GlobalObjects::EVENT_PROCESSOR->SetEvtcLoggingEnabled(HEAL_TABLE_OPTIONS.EvtcLoggingEnabled);
@@ -247,7 +247,7 @@ uintptr_t mod_release()
 
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
-		WriteIni(HEAL_TABLE_OPTIONS);
+		HEAL_TABLE_OPTIONS.Save(JSON_CONFIG_PATH);
 	}
 
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD->join();

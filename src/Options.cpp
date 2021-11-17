@@ -1,167 +1,31 @@
 #include "Options.h"
 
+#include "AddonVersion.h"
 #include "AggregatedStats.h"
 #include "Log.h"
 
 #include "SimpleIni.h"
 
+#include <filesystem>
+
+using nlohmann::detail::value_t;
+
 static CSimpleIniA healtable_ini(true /* isUtf8 */);
 
-void WriteIni(const HealTableOptions& pOptions)
+bool ReadIni(HealTableOptions& pOptions)
 {
-	// Store a version so that we can possibly translate ini file in the future (for example if some breaking change is made to enum values)
-	SI_Error error = healtable_ini.SetLongValue("ini", "version", 3);
-	if (error < 0)
-	{
-		LOG("SetValue version failed with %i", error);
-	}
-
-	error = healtable_ini.SetBoolValue("settings", "debug_mode", pOptions.DebugMode);
-	if (error < 0)
-	{
-		LOG("SetValue debug_mode failed with %i", error);
-	}
-
-	error = healtable_ini.SetLongValue("settings", "log_level", pOptions.LogLevel);
-	if (error < 0)
-	{
-		LOG("SetValue log_level failed with %i", error);
-	}
-
-	error = healtable_ini.SetValue("settings", "evtc_rpc_endpoint", pOptions.EvtcRpcEndpoint);
-	if (error < 0)
-	{
-		LOG("SetValue evtc_rpc_endpoint failed with %i", error);
-	}
-
-	error = healtable_ini.SetBoolValue("settings", "evtc_rpc_enabled", pOptions.EvtcRpcEnabled);
-	if (error < 0)
-	{
-		LOG("SetValue evtc_rpc_enabled failed with %i", error);
-	}
-
-	for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
-	{
-		char section[128];
-		snprintf(section, sizeof(section), "heal_window_%u", i);
-
-		error = healtable_ini.SetBoolValue(section, "show_window", pOptions.Windows[i].Shown);
-		if (error < 0)
-		{
-			LOG("SetValue show_window failed with %i", error);
-		}
-
-		error = healtable_ini.SetLongValue(section, "hotkey", pOptions.Windows[i].Hotkey);
-		if (error < 0)
-		{
-			LOG("SetValue hotkey failed with %i", error);
-		}
-
-		error = healtable_ini.SetLongValue(section, "data_source_choice", static_cast<long>(pOptions.Windows[i].DataSourceChoice));
-		if (error < 0)
-		{
-			LOG("SetValue data_source_choice failed with %i", error);
-		}
-
-		error = healtable_ini.SetLongValue(section, "sort_order_choice", static_cast<long>(pOptions.Windows[i].SortOrderChoice));
-		if (error < 0)
-		{
-			LOG("SetValue sort_order_choice failed with %i", error);
-		}
-
-		error = healtable_ini.SetLongValue(section, "combat_end_condition_choice", static_cast<long>(pOptions.Windows[i].CombatEndConditionChoice));
-		if (error < 0)
-		{
-			LOG("SetValue combat_end_condition_choice failed with %i", error);
-		}
-
-		error = healtable_ini.SetBoolValue(section, "exclude_group", pOptions.Windows[i].ExcludeGroup);
-		if (error < 0)
-		{
-			LOG("SetValue exclude_group failed with %i", error);
-		}
-
-		error = healtable_ini.SetBoolValue(section, "exclude_off_group", pOptions.Windows[i].ExcludeOffGroup);
-		if (error < 0)
-		{
-			LOG("SetValue exclude_off_group failed with %i", error);
-		}
-
-		error = healtable_ini.SetBoolValue(section, "exclude_off_squad", pOptions.Windows[i].ExcludeOffSquad);
-		if (error < 0)
-		{
-			LOG("SetValue exclude_off_squad failed with %i", error);
-		}
-
-		error = healtable_ini.SetBoolValue(section, "exclude_minions", pOptions.Windows[i].ExcludeMinions);
-		if (error < 0)
-		{
-			LOG("SetValue exclude_minions failed with %i", error);
-		}
-
-		error = healtable_ini.SetBoolValue(section, "exclude_unmapped", pOptions.Windows[i].ExcludeUnmapped);
-		if (error < 0)
-		{
-			LOG("SetValue exclude_unmapped failed with %i", error);
-		}
-
-		error = healtable_ini.SetBoolValue(section, "show_progress_bars", pOptions.Windows[i].ShowProgressBars);
-		if (error < 0)
-		{
-			LOG("SetValue show_progress_bars failed with %i", error);
-		}
-
-		error = healtable_ini.SetValue(section, "name", pOptions.Windows[i].Name);
-		if (error < 0)
-		{
-			LOG("SetValue name failed with %i", error);
-		}
-
-		error = healtable_ini.SetValue(section, "title_format", pOptions.Windows[i].TitleFormat);
-		if (error < 0)
-		{
-			LOG("SetValue title_format failed with %i", error);
-		}
-
-		error = healtable_ini.SetValue(section, "entry_format", pOptions.Windows[i].EntryFormat);
-		if (error < 0)
-		{
-			LOG("SetValue entry_format failed with %i", error);
-		}
-
-		error = healtable_ini.SetValue(section, "details_entry_format", pOptions.Windows[i].DetailsEntryFormat);
-		if (error < 0)
-		{
-			LOG("SetValue details_entry_format failed with %i", error);
-		}
-
-		error = healtable_ini.SetLongValue(section, "window_flags", pOptions.Windows[i].WindowFlags);
-		if (error < 0)
-		{
-			LOG("SetValue window_flags failed with %i", error);
-		}
-	}
-
-	error = healtable_ini.SaveFile("addons\\arcdps\\arcdps_healing_stats.ini");
-	if (error < 0)
-	{
-		LOG("SaveFile failed with %i", error);
-	}
-}
-
-void ReadIni(HealTableOptions& pOptions)
-{
-	SI_Error error = healtable_ini.LoadFile("addons\\arcdps\\arcdps_healing_stats.ini");
+	SI_Error error = healtable_ini.LoadFile(LEGACY_INI_CONFIG_PATH);
 	if (error < 0)
 	{
 		LOG("LoadFile failed with %i", error);
+		return false;
 	}
 
 	uint32_t version = healtable_ini.GetLongValue("ini", "version");
 	if (version <= 2)
 	{
 		healtable_ini.Reset(); // Remove everything from the old ini file
-		return;
+		return true;
 	}
 
 	pOptions.DebugMode = healtable_ini.GetBoolValue("settings", "debug_mode", pOptions.DebugMode);
@@ -226,6 +90,7 @@ void ReadIni(HealTableOptions& pOptions)
 	}
 
 	LOG("Read ini file debug_mode=%s", BOOL_STR(pOptions.DebugMode));
+	return true;
 }
 
 DetailsWindowState::DetailsWindowState(const AggregatedStatsEntry& pEntry)
@@ -267,4 +132,328 @@ HealTableOptions::HealTableOptions()
 	Windows[9].DataSourceChoice = DataSource::Combined;
 	snprintf(Windows[9].Name, sizeof(Windows[9].Name), "%s", "Combined");
 	snprintf(Windows[9].TitleFormat, sizeof(Windows[9].TitleFormat), "%s", "Combined {1} ({4}/s, {7}s in combat)");
+}
+
+void HealTableOptions::Load(const char* pConfigPath)
+{
+	std::string buffer;
+	buffer.reserve(128 * 1024);
+
+	FILE* file = fopen(pConfigPath, "r");
+	if (file == nullptr)
+	{
+		LogW("Opening '{}' failed - errno={} GetLastError={}. Attempting to read ini", pConfigPath, errno, GetLastError());
+
+		bool readIni = ReadIni(*this);
+		if (readIni == true)
+		{
+			LogI("Successfully read from legacy ini. Saving json");
+			bool savedJson = Save(pConfigPath);
+			if (savedJson == true)
+			{
+				LogI("Saving json succesful. Deleting ini");
+				std::error_code ec;
+				bool deleted = std::filesystem::remove(LEGACY_INI_CONFIG_PATH, ec);
+				LogI("Deleting ini result={} ec.value={} ec.message={} ec.category.name={}",
+					BOOL_STR(deleted), ec.value(), ec.message(), ec.category().name());
+			}
+		}
+
+		return;
+	}
+
+	size_t read = fread(buffer.data(), sizeof(char), 128 * 1024 - 1, file);
+	if (read == 128 * 1024 - 1)
+	{
+		LogW("Reading '{}' failed - insufficient buffer", pConfigPath);
+		return;
+	}
+	else if (ferror(file) != 0)
+	{
+		LogW("Reading '{}' failed - errno={} GetLastError={}", pConfigPath, errno, GetLastError());
+		return;
+	}
+
+	if (fclose(file) == EOF)
+	{
+		LogW("Closing '{}' failed - errno={} GetLastError={}", pConfigPath, errno, GetLastError());
+		return;
+	}
+
+	buffer.data()[read] = '\0';
+	LogT("Parsing {}", buffer.data());
+
+	nlohmann::json jsonObject = nlohmann::json::parse(buffer.data());
+	FromJson(jsonObject);
+}
+
+bool HealTableOptions::Save(const char* pConfigPath) const
+{
+	nlohmann::json jsonObject;
+	ToJson(jsonObject);
+
+	std::string serialized = jsonObject.dump();
+	FILE* file = fopen(pConfigPath, "w");
+	if (file == nullptr)
+	{
+		LogW("Opening '{}' failed - errno={} GetLastError={}", pConfigPath, errno, GetLastError());
+		return false;
+	}
+
+	size_t written = fwrite(serialized.c_str(), sizeof(char), serialized.size(), file);
+	if (written != serialized.size())
+	{
+		LogW("Writing to '{}' failed - written={} errno={} GetLastError={}", pConfigPath, written, errno, GetLastError());
+		return false;
+	}
+
+	if (fclose(file) == EOF)
+	{
+		LogW("Closing '{}' failed - errno={} GetLastError={}", pConfigPath, errno, GetLastError());
+		return false;
+	}
+
+	LogD("Saved to {}", pConfigPath);
+	return true;
+}
+
+constexpr static value_t NUMBER_TYPE = static_cast<value_t>(250);
+
+template<typename T>
+constexpr static value_t JsonTypeSelector()
+{
+	if constexpr (std::is_same_v<T, bool>)
+	{
+		return value_t::boolean;
+	}
+	else if constexpr (std::is_signed_v<T>)
+	{
+		return NUMBER_TYPE;
+	}
+	else if constexpr (std::is_enum_v<T>)
+	{
+		using RealT = std::underlying_type_t<T>;
+		if constexpr (std::is_signed_v<RealT>)
+		{
+			return NUMBER_TYPE;
+		}
+		else if constexpr (std::is_unsigned_v<RealT>)
+		{
+			return value_t::number_unsigned;
+		}
+		else
+		{
+			static_assert(false);
+		}
+	}
+	else if constexpr (std::is_unsigned_v<T>)
+	{
+		return value_t::number_unsigned;
+	}
+	else
+	{
+		static_assert(false);
+	}
+}
+
+template <typename ResultType>
+void GetJsonValue(const nlohmann::json& pJsonObject, const char* pFieldName, ResultType& pResult)
+{
+	constexpr value_t jsonType = JsonTypeSelector<ResultType>();
+
+	const auto iter = pJsonObject.find(pFieldName);
+	if (iter != pJsonObject.end())
+	{
+		if ((jsonType == NUMBER_TYPE && iter->is_number_integer() == false) ||
+			(jsonType != NUMBER_TYPE && iter->type() != jsonType))
+		{
+			LogW("Found '{}' but it has the wrong type {} (expected {})", pFieldName, iter->type(), jsonType);
+		}
+		else
+		{
+			iter->get_to(pResult);
+		}
+	}
+}
+
+template <size_t StringSize>
+void GetJsonValue(const nlohmann::json& pJsonObject, const char* pFieldName, char (&pResult)[StringSize])
+{
+	const auto iter = pJsonObject.find(pFieldName);
+	if (iter != pJsonObject.end())
+	{
+		if (iter->is_string())
+		{
+			std::string temp;
+			iter->get_to(temp);
+			snprintf(pResult, StringSize, "%s", temp.c_str());
+		}
+		else
+		{
+			LogW("(String) Found '{}' but it has the wrong type {}", pFieldName, iter->type());
+		}
+	}
+}
+
+void HealTableOptions::FromJson(const nlohmann::json& pJsonObject)
+{
+	uint32_t version = UINT32_MAX;
+	GetJsonValue(pJsonObject, "Version", version);
+	if (version != 1)
+	{
+		LogW("Invalid config version {}", version);
+	}
+
+	GetJsonValue(pJsonObject, "DebugMode", DebugMode);
+	GetJsonValue(pJsonObject, "LogLevel", LogLevel);
+	GetJsonValue(pJsonObject, "EvtcLoggingEnabled", EvtcLoggingEnabled);
+	GetJsonValue(pJsonObject, "EvtcRpcEndpoint", EvtcRpcEndpoint);
+	GetJsonValue(pJsonObject, "EvtcRpcEnabled", EvtcRpcEnabled);
+
+	const auto iter = pJsonObject.find("Windows");
+	if (iter != pJsonObject.end())
+	{
+		if (iter->is_object())
+		{
+			for (size_t i = 0; i < Windows.size(); i++)
+			{
+				std::string i_str = std::to_string(i);
+				const auto iter2 = iter->find(i_str);
+				if (iter2 != iter->end())
+				{
+					Windows[i].FromJson(iter2.value());
+				}
+				else
+				{
+					LogT("Didn't find '{}' in json", i_str);
+				}
+			}
+		}
+		else
+		{
+			LogW("Found 'Windows' but it's not an array (type {})", iter->type());
+		}
+	}
+
+	LogI("Parsed {}", *this);
+}
+
+void HealTableOptions::ToJson(nlohmann::json& pJsonObject) const
+{
+#define SET_JSON_VAL(pKey)\
+do {\
+	if (pKey != defaults.##pKey)\
+	{\
+		pJsonObject[#pKey] = pKey;\
+	}\
+} while(false)
+#define SET_JSON_VAL_CSTR_ARRAY(pKey)\
+do {\
+	if (strcmp(pKey, defaults.##pKey) != 0)\
+	{\
+		pJsonObject[#pKey] = std::string_view{pKey};\
+	}\
+} while(false)
+
+	HealTableOptions defaults;
+
+	pJsonObject["Version"] = 1U;
+
+	SET_JSON_VAL(DebugMode);
+	SET_JSON_VAL(LogLevel);
+	SET_JSON_VAL(EvtcLoggingEnabled);
+	SET_JSON_VAL_CSTR_ARRAY(EvtcRpcEndpoint);
+	SET_JSON_VAL(EvtcRpcEnabled);
+
+	nlohmann::json windows;
+	for (size_t i = 0; i < Windows.size(); i++)
+	{
+		nlohmann::json window;
+		Windows[i].ToJson(window, defaults.Windows[i]);
+
+		if (window.is_null() == false)
+		{
+			std::string i_str = std::to_string(i);
+			windows[i_str] = window;
+		}
+	}
+
+	if (windows.is_null() == false)
+	{
+		pJsonObject["Windows"] = windows;
+	}
+#undef SET_JSON_VAL
+#undef SET_JSON_VAL_CSTR_ARRAY
+}
+
+void HealTableOptions::Reset()
+{
+	// avoids having to maintain operator= for all sub-objects
+	this->~HealTableOptions();
+	new(this) HealTableOptions;
+}
+
+void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
+{
+	GetJsonValue(pJsonObject, "Shown", Shown);
+
+	GetJsonValue(pJsonObject, "DataSourceChoice", DataSourceChoice);
+	GetJsonValue(pJsonObject, "SortOrderChoice", SortOrderChoice);
+	GetJsonValue(pJsonObject, "CombatEndConditionChoice", CombatEndConditionChoice);
+
+	GetJsonValue(pJsonObject, "ExcludeGroup", ExcludeGroup);
+	GetJsonValue(pJsonObject, "ExcludeOffGroup", ExcludeOffGroup);
+	GetJsonValue(pJsonObject, "ExcludeOffSquad", ExcludeOffSquad);
+	GetJsonValue(pJsonObject, "ExcludeMinions", ExcludeMinions);
+	GetJsonValue(pJsonObject,  "ExcludeUnmapped", ExcludeUnmapped);
+
+	GetJsonValue(pJsonObject, "ShowProgressBars", ShowProgressBars);
+	GetJsonValue(pJsonObject, "Name", Name);
+	GetJsonValue(pJsonObject, "TitleFormat", TitleFormat);
+	GetJsonValue(pJsonObject, "EntryFormat", EntryFormat);
+	GetJsonValue(pJsonObject, "DetailsEntryFormat", DetailsEntryFormat);
+
+	GetJsonValue(pJsonObject, "WindowFlags", WindowFlags);
+	GetJsonValue(pJsonObject, "Hotkey", Hotkey);
+}
+
+void HealWindowOptions::ToJson(nlohmann::json& pJsonObject, const HealWindowOptions& pDefault) const
+{
+#define SET_JSON_VAL(pKey)\
+do {\
+	if (pKey != pDefault.##pKey)\
+	{\
+		pJsonObject[#pKey] = pKey;\
+	}\
+} while(false)
+#define SET_JSON_VAL_CSTR_ARRAY(pKey)\
+do {\
+	if (strcmp(pKey, pDefault.##pKey) != 0)\
+	{\
+		pJsonObject[#pKey] = std::string_view{pKey};\
+	}\
+} while(false)
+
+	SET_JSON_VAL(Shown);
+
+	SET_JSON_VAL(DataSourceChoice);
+	SET_JSON_VAL(SortOrderChoice);
+	SET_JSON_VAL(CombatEndConditionChoice);
+
+	SET_JSON_VAL(ExcludeGroup);
+	SET_JSON_VAL(ExcludeOffGroup);
+	SET_JSON_VAL(ExcludeOffSquad);
+	SET_JSON_VAL(ExcludeMinions);
+	SET_JSON_VAL(ExcludeUnmapped);
+
+	SET_JSON_VAL(ShowProgressBars);
+	SET_JSON_VAL_CSTR_ARRAY(Name);
+	SET_JSON_VAL_CSTR_ARRAY(TitleFormat);
+	SET_JSON_VAL_CSTR_ARRAY(EntryFormat);
+	SET_JSON_VAL_CSTR_ARRAY(DetailsEntryFormat);
+
+	SET_JSON_VAL(WindowFlags);
+	SET_JSON_VAL(Hotkey);
+#undef SET_JSON_VAL
+#undef SET_JSON_VAL_CSTR_ARRAY
 }

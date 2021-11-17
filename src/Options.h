@@ -4,6 +4,9 @@
 #include "Log.h"
 #include "State.h"
 
+#include <nlohmann/json.hpp>
+
+#include <array>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -11,6 +14,7 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+
 
 struct DetailsWindowState : AggregatedStatsEntry
 {
@@ -39,11 +43,35 @@ struct HealTableOptions
 	char EvtcRpcEndpoint[128] = "evtc-rpc.kappa322.com:443";
 	bool EvtcRpcEnabled = false;
 
-	HealWindowContext Windows[HEAL_WINDOW_COUNT];
+	std::array<HealWindowContext, HEAL_WINDOW_COUNT> Windows;
 
 	HealTableOptions();
+	~HealTableOptions() = default;
+
+	void Load(const char* pConfigPath);
+	bool Save(const char* pConfigPath) const;
+
+	void FromJson(const nlohmann::json& pJsonObject);
+	void ToJson(nlohmann::json& pJsonObject) const;
+
+	void Reset();
 };
 static_assert(std::is_same<std::underlying_type<spdlog::level::level_enum>::type, int>::value == true, "HealTableOptions::LogLevel size changed");
 
-void WriteIni(const HealTableOptions& pOptions);
-void ReadIni(HealTableOptions& pOptions);
+template<>
+struct fmt::formatter<HealTableOptions> : SimpleFormatter
+{
+	// Formats the point p using the parsed format specification (presentation)
+	// stored in this formatter.
+	template <typename FormatContext>
+	auto format(const HealTableOptions& pObject, FormatContext& pContext) -> decltype(pContext.out())
+	{
+		nlohmann::json jsonObject;
+		pObject.ToJson(jsonObject);
+
+		return format_to(
+			pContext.out(),
+			"{}",
+			jsonObject.dump());
+	}
+};
