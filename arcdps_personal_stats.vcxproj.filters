@@ -69,6 +69,9 @@
     <ClCompile Include="src\AggregatedStatsCollection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="arcdps_mock\arcdps-extension\Widgets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Log.h">
@@ -141,6 +144,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\AddonVersion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="arcdps_mock\arcdps-extension\Widgets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

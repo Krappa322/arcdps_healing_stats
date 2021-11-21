@@ -72,7 +72,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;imgui;json;simpleini;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;arcdps_mock\imgui;json;simpleini;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -95,7 +95,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;imgui;json;simpleini;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>arcdps_mock\arcdps-extension;arcdps_mock\imgui;json;simpleini;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -109,6 +109,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="arcdps_mock\arcdps-extension\Widgets.cpp" />
     <ClCompile Include="src\AgentTable.cpp" />
     <ClCompile Include="src\AggregatedStats.cpp" />
     <ClCompile Include="src\AggregatedStatsCollection.cpp" />
@@ -117,18 +118,17 @@
     <ClCompile Include="src\EventSequencer.cpp" />
     <ClCompile Include="src\GUI.cpp" />
     <ClCompile Include="src\ImGuiEx.cpp" />
-    <ClCompile Include="imgui\backends\imgui_impl_dx9.cpp" />
-    <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="imgui\imgui.cpp" />
-    <ClCompile Include="imgui\imgui_draw.cpp" />
-    <ClCompile Include="imgui\imgui_tables.cpp" />
-    <ClCompile Include="imgui\imgui_widgets.cpp" />
+    <ClCompile Include="arcdps_mock\imgui\imgui.cpp" />
+    <ClCompile Include="arcdps_mock\imgui\imgui_draw.cpp" />
+    <ClCompile Include="arcdps_mock\imgui\imgui_tables.cpp" />
+    <ClCompile Include="arcdps_mock\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\Options.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\PlayerStats.cpp" />
     <ClCompile Include="src\Skills.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="arcdps_mock\arcdps-extension\Widgets.h" />
     <ClInclude Include="src\AgentTable.h" />
     <ClInclude Include="src\AggregatedStats.h" />
     <ClInclude Include="src\AggregatedStatsCollection.h" />
@@ -137,14 +137,12 @@
     <ClInclude Include="src\Exports.h" />
     <ClInclude Include="src\GUI.h" />
     <ClInclude Include="src\ImGuiEx.h" />
-    <ClInclude Include="imgui\backends\imgui_impl_dx9.h" />
-    <ClInclude Include="imgui\backends\imgui_impl_win32.h" />
-    <ClInclude Include="imgui\imconfig.h" />
-    <ClInclude Include="imgui\imgui.h" />
-    <ClInclude Include="imgui\imgui_internal.h" />
-    <ClInclude Include="imgui\stb_rect_pack.h" />
-    <ClInclude Include="imgui\stb_textedit.h" />
-    <ClInclude Include="imgui\stb_truetype.h" />
+    <ClInclude Include="arcdps_mock\imgui\imconfig.h" />
+    <ClInclude Include="arcdps_mock\imgui\imgui.h" />
+    <ClInclude Include="arcdps_mock\imgui\imgui_internal.h" />
+    <ClInclude Include="arcdps_mock\imgui\stb_rect_pack.h" />
+    <ClInclude Include="arcdps_mock\imgui\stb_textedit.h" />
+    <ClInclude Include="arcdps_mock\imgui\stb_truetype.h" />
     <ClInclude Include="json\json.hpp" />
     <ClInclude Include="src\Options.h" />
     <ClInclude Include="src\Log.h" />
