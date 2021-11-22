@@ -3,6 +3,8 @@
 #pragma warning(pop)
 
 #include "Exports.h"
+#include "imgui.h"
+#include "imgui_internal.h"
 
 TEST(EnvironmentTest, shutdown_race)
 {

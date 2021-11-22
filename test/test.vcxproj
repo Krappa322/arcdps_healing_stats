@@ -49,6 +49,7 @@
     <ClCompile Include="ConfigTest.cpp" />
     <ClCompile Include="EnvironmentTest.cpp" />
     <ClCompile Include="EventProcessorTest.cpp" />
+    <ClCompile Include="GUITest.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NetworkTest.cpp" />
     <ClCompile Include="LocalStatsTest.cpp" />

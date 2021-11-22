@@ -5,6 +5,7 @@
 #include "ImGuiEx.h"
 #include "Log.h"
 #include "Utilities.h"
+#include "Widgets.h"
 
 #include <array>
 #include <Windows.h>
@@ -12,6 +13,11 @@
 static constexpr EnumStringArray<DataSource> DATA_SOURCE_ITEMS{"targets", "skills", "totals", "combined", "peers outgoing"};
 static constexpr EnumStringArray<SortOrder> SORT_ORDER_ITEMS{"alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending"};
 static constexpr EnumStringArray<CombatEndCondition> COMBAT_END_CONDITION_ITEMS{"combat exit", "last damage event", "last heal event", "last damage / heal event"};
+
+static constexpr EnumStringArray<Position, static_cast<size_t>(Position::FINAL_ENTRY)> POSITION_ITEMS{
+	"manual", "screen relative", "window relative"};
+static constexpr EnumStringArray<CornerPosition, static_cast<size_t>(CornerPosition::FINAL_ENTRY)> CORNER_POSITION_ITEMS{
+	"top-left", "top-right", "botttom-left", "bottom-right"};
 
 static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowState& pState, DataSource pDataSource)
 {
@@ -25,7 +31,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	// in turn means that the name of the window can change if necessary)
 	snprintf(buffer, sizeof(buffer), "%s###HEALDETAILS.%i.%llu", pState.Name.c_str(), static_cast<int>(pDataSource), pState.Id);
 	ImGui::SetNextWindowSize(ImVec2(600, 360), ImGuiCond_FirstUseEver);
-	ImGui::Begin(buffer, &pState.IsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+	ImGui::Begin(buffer, &pState.IsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
 
 	if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 	{
@@ -180,6 +186,222 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	}
 }
 
+static void Display_WindowOptions_Position(HealTableOptions& pHealingOptions, HealWindowContext& pContext)
+{
+	ImGuiEx::SmallEnumRadioButton("PositionEnum", pContext.PositionRule, POSITION_ITEMS);
+
+	switch (pContext.PositionRule)
+	{
+		case Position::ScreenRelative:
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("relative to corner");
+			ImGuiEx::SmallIndent();
+			ImGuiEx::SmallEnumRadioButton("ScreenCornerPositionEnum", pContext.RelativeScreenCorner, CORNER_POSITION_ITEMS);
+			ImGuiEx::SmallUnindent();
+
+			ImGui::PushItemWidth(39.0f);
+			ImGuiEx::SmallInputFloat("x", &pContext.RelativeX);
+			ImGuiEx::SmallInputFloat("y", &pContext.RelativeY);
+			ImGui::PopItemWidth();
+
+			break;
+		}
+		case Position::WindowRelative:
+		{
+			ImGui::Separator();
+			ImGui::TextUnformatted("from anchor panel corner");
+			ImGuiEx::SmallIndent();
+			ImGuiEx::SmallEnumRadioButton("AnchorCornerPositionEnum", pContext.RelativeAnchorWindowCorner, CORNER_POSITION_ITEMS);
+			ImGuiEx::SmallUnindent();
+
+			ImGui::TextUnformatted("to this panel corner");
+			ImGuiEx::SmallIndent();
+			ImGuiEx::SmallEnumRadioButton("SelfCornerPositionEnum", pContext.RelativeSelfCorner, CORNER_POSITION_ITEMS);
+			ImGuiEx::SmallUnindent();
+
+			ImGui::PushItemWidth(39.0f);
+			ImGuiEx::SmallInputFloat("x", &pContext.RelativeX);
+			ImGuiEx::SmallInputFloat("y", &pContext.RelativeY);
+			ImGui::PopItemWidth();
+
+			ImGuiWindow* selectedWindow = ImGui::FindWindowByID(pContext.AnchorWindowId);
+			const char* selectedWindowName = "";
+			if (selectedWindow != nullptr)
+			{
+				selectedWindowName = selectedWindow->Name;
+			}
+
+			ImGui::SetNextItemWidth(120.0f);
+			if (ImGui::BeginCombo("anchor window", selectedWindowName) == true)
+			{
+				// This doesn't return the same thing as RootWindow interestingly enough, RootWindow returns a "higher" parent
+				ImGuiWindow* parent = ImGui::GetCurrentWindowRead();
+				while (parent->ParentWindow != nullptr)
+				{
+					parent = parent->ParentWindow;
+				}
+
+				for (ImGuiWindow* window : ImGui::GetCurrentContext()->Windows)
+				{
+					if (window != parent && // Not the window we're currently in
+						window->ParentWindow == nullptr && // Not a child window of another window
+						window->Hidden == false && // Not hidden
+						window->WasActive == true && // Not closed (we check ->WasActive because ->Active might not be true yet if the window gets rendered after this one)
+						window->IsFallbackWindow == false && // Not default window ("Debug##Default")
+						(window->Flags & ImGuiWindowFlags_Tooltip) == 0) // Not a tooltip window ("##Tooltip_<id>")
+					{
+						std::string windowName = "(";
+						windowName += std::to_string(pHealingOptions.AnchoringHighlightedWindows.size());
+						windowName += ") ";
+						windowName += window->Name;
+
+						// Print the window with ##/### part still there - it doesn't really hurt (and with the presence
+						// of ### it's arguably more correct, even though it probably doesn't matter for a Selectable if
+						// the id is unique or not)
+						if (ImGui::Selectable(windowName.c_str()))
+						{
+							pContext.AnchorWindowId = window->ID;
+							FindAndResolveCyclicDependencies(pHealingOptions, std::distance(pHealingOptions.Windows.data(), &pContext));
+						}
+
+						pHealingOptions.AnchoringHighlightedWindows.emplace_back(window->ID);
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			break;
+		}
+		default:
+			break;
+	}
+}
+
+static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowContext& pContext)
+{
+	if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
+	{
+		ImGuiEx::SmallIndent();
+		ImGuiEx::ComboMenu("data source", pContext.DataSourceChoice, DATA_SOURCE_ITEMS);
+		ImGuiEx::AddTooltipToLastItem("Decides what data is shown in the window");
+
+		if (pContext.DataSourceChoice != DataSource::Totals)
+		{
+			ImGuiEx::ComboMenu("sort order", pContext.SortOrderChoice, SORT_ORDER_ITEMS);
+			ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
+
+			if (ImGui::BeginMenu("stats exclude") == true)
+			{
+				ImGuiEx::SmallCheckBox("group", &pContext.ExcludeGroup);
+				ImGuiEx::SmallCheckBox("off-group", &pContext.ExcludeOffGroup);
+				ImGuiEx::SmallCheckBox("off-squad", &pContext.ExcludeOffSquad);
+				ImGuiEx::SmallCheckBox("summons", &pContext.ExcludeMinions);
+				ImGuiEx::SmallCheckBox("unmapped", &pContext.ExcludeUnmapped);
+
+				ImGui::EndMenu();
+			}
+		}
+
+		ImGuiEx::ComboMenu("combat end", pContext.CombatEndConditionChoice, COMBAT_END_CONDITION_ITEMS);
+		ImGuiEx::AddTooltipToLastItem("Decides what should be used for determining combat\n"
+										"end (and consequently time in combat)");
+
+		ImGuiEx::SmallUnindent();
+		ImGui::Separator();
+
+		if (ImGui::BeginMenu("Display") == true)
+		{
+			ImGuiEx::SmallCheckBox("draw bars", &pContext.ShowProgressBars);
+			ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
+				"that entry is in proportion to the largest entry");
+
+			ImGuiEx::SmallInputText("short name", pContext.Name, sizeof(pContext.Name));
+			ImGuiEx::AddTooltipToLastItem("The name used to represent this window in the \"heal stats\" menu");
+
+			ImGuiEx::SmallInputText("title bar format", pContext.TitleFormat, sizeof(pContext.TitleFormat));
+			if (pContext.DataSourceChoice != DataSource::Totals)
+			{
+				ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
+					"{1}: Total healing\n"
+					"{2}: Total hits\n"
+					"{3}: Total casts (not implemented yet)\n"
+					"{4}: Healing per second\n"
+					"{5}: Healing per hit\n"
+					"{6}: Healing per cast (not implemented yet)\n"
+					"{7}: Time in combat");
+			}
+			else
+			{
+				ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
+					"{1}: Time in combat");
+			}
+
+			ImGuiEx::SmallInputText("stats format", pContext.EntryFormat, sizeof(pContext.EntryFormat));
+			if (pContext.DataSourceChoice != DataSource::Totals)
+			{
+				ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
+					"{1}: Healing\n"
+					"{2}: Hits\n"
+					"{3}: Casts (not implemented yet)\n"
+					"{4}: Healing per second\n"
+					"{5}: Healing per hit\n"
+					"{6}: Healing per cast (not implemented yet)\n"
+					"{7}: Percent of total healing");
+			}
+			else
+			{
+				ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
+					"{1}: Healing\n"
+					"{2}: Hits\n"
+					"{3}: Casts (not implemented yet)\n"
+					"{4}: Healing per second\n"
+					"{5}: Healing per hit\n"
+					"{6}: Healing per cast (not implemented yet)");
+			}
+
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Style") == true)
+		{
+			ImGuiEx::SmallEnumCheckBox("title bar", &pContext.WindowFlags, ImGuiWindowFlags_NoTitleBar, true);
+			ImGuiEx::SmallEnumCheckBox("scroll bar", &pContext.WindowFlags, ImGuiWindowFlags_NoScrollbar, true);
+			ImGuiEx::SmallEnumCheckBox("background", &pContext.WindowFlags, ImGuiWindowFlags_NoBackground, true);
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Position") == true)
+		{
+			Display_WindowOptions_Position(pHealingOptions, pContext);
+			ImGui::EndMenu();
+		}
+
+		ImGui::Separator();
+
+		float oldPosY = ImGui::GetCursorPosY();
+		ImGui::BeginGroup();
+
+		ImGui::SetCursorPosY(oldPosY + ImGui::GetStyle().FramePadding.y);
+		ImGui::Text("Hotkey");
+
+		ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
+		ImGui::SetCursorPosY(oldPosY);
+
+		ImGui::PushItemWidth(ImGui::CalcTextSize("-----").x);
+		ImGui::InputInt("##HOTKEY", &pContext.Hotkey, 0);
+
+		ImGui::SameLine();
+		ImGui::Text("(%s)", VirtualKeyToString(pContext.Hotkey).c_str());
+
+		ImGui::EndGroup();
+		ImGuiEx::AddTooltipToLastItem("Numerical value (virtual key code) for the key\n"
+										"used to open and close this window");
+
+		ImGui::EndPopup();
+	}
+}
+
 void SetContext(void* pImGuiContext)
 {
 	ImGui::SetCurrentContext((ImGuiContext*)pImGuiContext);
@@ -233,127 +455,19 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		}
 
 		ImGuiWindowFlags window_flags = curWindow.WindowFlags | ImGuiWindowFlags_NoCollapse;
+		if (curWindow.PositionRule != Position::Manual &&
+			(curWindow.PositionRule != Position::WindowRelative || curWindow.AnchorWindowId != 0))
+		{
+			window_flags |= ImGuiWindowFlags_NoMove;
+		}
 
 		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
 		ImGui::Begin(buffer, &curWindow.Shown, window_flags);
 
+		curWindow.WindowId = ImGui::GetCurrentWindow()->ID;
+
 		ImGui::SetNextWindowSize(ImVec2(170, 0));
-		if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
-		{
-			ImGui::Text(" "); ImGui::SameLine();
-			ImGuiEx::ComboMenu("data source", curWindow.DataSourceChoice, DATA_SOURCE_ITEMS);
-			ImGuiEx::AddTooltipToLastItem("Decides what data is shown in the window");
-
-			if (curWindow.DataSourceChoice != DataSource::Totals)
-			{
-				ImGui::Text(" "); ImGui::SameLine();
-				ImGuiEx::ComboMenu("sort order", curWindow.SortOrderChoice, SORT_ORDER_ITEMS);
-				ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
-
-				ImGui::Text(" "); ImGui::SameLine();
-				if (ImGui::BeginMenu("stats exclude") == true)
-				{
-					ImGuiEx::SmallCheckBox("group", &curWindow.ExcludeGroup);
-					ImGuiEx::SmallCheckBox("off-group", &curWindow.ExcludeOffGroup);
-					ImGuiEx::SmallCheckBox("off-squad", &curWindow.ExcludeOffSquad);
-					ImGuiEx::SmallCheckBox("summons", &curWindow.ExcludeMinions);
-					ImGuiEx::SmallCheckBox("unmapped", &curWindow.ExcludeUnmapped);
-
-					ImGui::EndMenu();
-				}
-			}
-
-			ImGui::Text(" "); ImGui::SameLine();
-			ImGuiEx::ComboMenu("combat end", curWindow.CombatEndConditionChoice, COMBAT_END_CONDITION_ITEMS);
-			ImGuiEx::AddTooltipToLastItem("Decides what should be used for determining combat\n"
-			                              "end (and consequently time in combat)");
-
-			ImGui::Separator();
-
-			if (ImGui::BeginMenu("Display") == true)
-			{
-				ImGuiEx::SmallCheckBox("draw bars", &curWindow.ShowProgressBars);
-				ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
-					"that entry is in proportion to the largest entry");
-
-				ImGuiEx::SmallInputText("short name", curWindow.Name, sizeof(curWindow.Name));
-				ImGuiEx::AddTooltipToLastItem("The name used to represent this window in the \"heal stats\" menu");
-
-				ImGuiEx::SmallInputText("title bar format", curWindow.TitleFormat, sizeof(curWindow.TitleFormat));
-				if (curWindow.DataSourceChoice != DataSource::Totals)
-				{
-					ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
-						"{1}: Total healing\n"
-						"{2}: Total hits\n"
-						"{3}: Total casts (not implemented yet)\n"
-						"{4}: Healing per second\n"
-						"{5}: Healing per hit\n"
-						"{6}: Healing per cast (not implemented yet)\n"
-						"{7}: Time in combat");
-				}
-				else
-				{
-					ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
-						"{1}: Time in combat");
-				}
-
-				ImGuiEx::SmallInputText("stats format", curWindow.EntryFormat, sizeof(curWindow.EntryFormat));
-				if (curWindow.DataSourceChoice != DataSource::Totals)
-				{
-					ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
-						"{1}: Healing\n"
-						"{2}: Hits\n"
-						"{3}: Casts (not implemented yet)\n"
-						"{4}: Healing per second\n"
-						"{5}: Healing per hit\n"
-						"{6}: Healing per cast (not implemented yet)\n"
-						"{7}: Percent of total healing");
-				}
-				else
-				{
-					ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
-						"{1}: Healing\n"
-						"{2}: Hits\n"
-						"{3}: Casts (not implemented yet)\n"
-						"{4}: Healing per second\n"
-						"{5}: Healing per hit\n"
-						"{6}: Healing per cast (not implemented yet)");
-				}
-
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("Style") == true)
-			{
-				ImGuiEx::SmallEnumCheckBox("title bar", &curWindow.WindowFlags, ImGuiWindowFlags_NoTitleBar, true);
-				ImGuiEx::SmallEnumCheckBox("scroll bar", &curWindow.WindowFlags, ImGuiWindowFlags_NoScrollbar, true);
-				ImGuiEx::SmallEnumCheckBox("background", &curWindow.WindowFlags, ImGuiWindowFlags_NoBackground, true);
-				ImGui::EndMenu();
-			}
-
-			ImGui::Separator();
-
-			float oldPosY = ImGui::GetCursorPosY();
-			ImGui::BeginGroup();
-
-			ImGui::SetCursorPosY(oldPosY + ImGui::GetStyle().FramePadding.y);
-			ImGui::Text("Hotkey");
-
-			ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
-			ImGui::SetCursorPosY(oldPosY);
-
-			ImGui::PushItemWidth(ImGui::CalcTextSize("-----").x);
-			ImGui::InputInt("##HOTKEY", &curWindow.Hotkey, 0);
-
-			ImGui::SameLine();
-			ImGui::Text("(%s)", VirtualKeyToString(curWindow.Hotkey).c_str());
-
-			ImGui::EndGroup();
-			ImGuiEx::AddTooltipToLastItem("Numerical value (virtual key code) for the key\n"
-			                              "used to open and close this window");
-
-			ImGui::EndPopup();
-		}
+		Display_WindowOptions(pHealingOptions, curWindow);
 
 		if (curWindow.DataSourceChoice != DataSource::Combined)
 		{
@@ -510,6 +624,129 @@ void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
 
 		ImGui::EndMenu();
 	}
+}
+
+void FindAndResolveCyclicDependencies(HealTableOptions& pHealingOptions, size_t pStartIndex)
+{
+	std::unordered_map<ImGuiID, size_t> windowIdToWindowIndex;
+	for (size_t i = 0; i < pHealingOptions.Windows.size(); i++)
+	{
+		HealWindowContext& window = pHealingOptions.Windows[i];
+		if (window.WindowId != 0)
+		{
+			windowIdToWindowIndex.emplace(window.WindowId, i);
+		}
+	}
+
+	std::vector<size_t> traversedNodes;
+	size_t curIndex = pStartIndex;
+	while (pHealingOptions.Windows[curIndex].AnchorWindowId != 0)
+	{
+		if (std::find(traversedNodes.begin(), traversedNodes.end(), curIndex) != traversedNodes.end())
+		{
+			traversedNodes.emplace_back(curIndex); // add the node to the list so the printed string is more useful
+			std::string loop_string =
+				std::accumulate(traversedNodes.begin(), traversedNodes.end(), std::string{},
+					[](const std::string& pLeft, const size_t& pRight) -> std::string
+					{
+						std::string separator = (pLeft.length() > 0 ? " -> " : "");
+						return pLeft + separator + std::to_string(pRight);
+					});
+
+			LogW("Found cyclic loop {}, removing link from {}", loop_string, pStartIndex);
+
+			pHealingOptions.Windows[pStartIndex].AnchorWindowId = 0;
+			return;
+		}
+
+		traversedNodes.emplace_back(curIndex);
+
+		auto iter = windowIdToWindowIndex.find(pHealingOptions.Windows[curIndex].AnchorWindowId);
+		if (iter == windowIdToWindowIndex.end())
+		{
+			LogD("Chain starting at {} points to window {} which is not a window we have control over, can't determine if it's cyclic or not",
+				pStartIndex, pHealingOptions.Windows[curIndex].AnchorWindowId);
+			return;
+		}
+		curIndex = iter->second;
+	}
+
+	LogD("Chain starting at {} ends at 0, not cyclic", pStartIndex);
+}
+
+static void RepositionWindows(HealTableOptions& pHealingOptions)
+{
+	size_t iterations = 0;
+	size_t lastChangedPos = 0;
+
+	// Loop windows and try to reposition them. Whenever a window was moved, try to reposition all windows again (to
+	// solve possible dependencies between windows). Maximum loop count is equal to the window count, otherwise the
+	// windows probably have a circular dependency
+	for (; iterations < pHealingOptions.Windows.size(); iterations++)
+	{
+		for (size_t i = 0; i < pHealingOptions.Windows.size(); i++)
+		{
+			if (iterations > 0 && i == lastChangedPos)
+			{
+				LogT("Aborting repositioning on position {} after {} iterations", lastChangedPos, iterations);
+				return;
+			}
+
+			const HealWindowContext& curWindow = pHealingOptions.Windows[i];
+			ImVec2 posVector{curWindow.RelativeX, curWindow.RelativeY};
+
+			ImGuiWindow* window = ImGui::FindWindowByID(curWindow.WindowId);
+			if (window != nullptr)
+			{
+				if (ImGuiEx::WindowReposition(
+						window,
+						curWindow.PositionRule,
+						posVector,
+						curWindow.RelativeScreenCorner,
+						curWindow.AnchorWindowId,
+						curWindow.RelativeAnchorWindowCorner,
+						curWindow.RelativeSelfCorner) == true)
+				{
+					LogT("Window {} moved!", i);
+					lastChangedPos = i;
+				}
+			}
+		}
+	}
+
+	LogW("Aborted repositioning after {} iterations - recursive window relationships?", iterations);
+}
+
+void Display_PostNewFrame(ImGuiContext* pImguiContext, HealTableOptions& pHealingOptions)
+{
+	// Repositioning windows at the start of the frame prevents lag when moving windows
+	RepositionWindows(pHealingOptions);
+}
+
+void Display_PreEndFrame(ImGuiContext* pImguiContext, HealTableOptions& pHealingOptions)
+{
+	float font_size = pImguiContext->FontSize * 2.0f;
+
+	for (size_t i = 0; i < pHealingOptions.AnchoringHighlightedWindows.size(); i++)
+	{
+		ImGuiWindow* window = ImGui::FindWindowByID(pHealingOptions.AnchoringHighlightedWindows[i]);
+
+		if (window != nullptr)
+		{
+			std::string text = std::to_string(i);
+
+			ImVec2 regionSize{32.0f, 32.0f};
+			ImVec2 regionPos = DrawListEx::CalcCenteredPosition(window->Pos, window->Size, regionSize);
+
+			ImVec2 textSize = pImguiContext->Font->CalcTextSizeA(font_size, FLT_MAX, -1.0f, text.c_str());
+			ImVec2 textPos = DrawListEx::CalcCenteredPosition(regionPos, regionSize, textSize);
+
+			window->DrawList->AddRectFilled(regionPos, regionPos + regionSize, IM_COL32(0, 0, 0, 255));
+			window->DrawList->AddText(pImguiContext->Font, font_size, textPos, ImGui::GetColorU32(ImGuiCol_Text), text.c_str());
+		}
+	}
+	//
+	//RepositionWindows(pHealingOptions);
 }
 
 void ImGui_ProcessKeyEvent(HWND /*pWindowHandle*/, UINT pMessage, WPARAM pAdditionalW, LPARAM /*pAdditionalL*/)

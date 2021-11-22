@@ -31,6 +31,8 @@ struct HealWindowContext : HealWindowOptions
 	std::vector<DetailsWindowState> OpenSkillWindows; // In-Memory only
 	std::vector<DetailsWindowState> OpenAgentWindows; // In-Memory only
 	std::vector<DetailsWindowState> OpenPeersOutgoingWindows; // In-Memory only
+
+	ImGuiID WindowId = 0;
 };
 
 struct HealTableOptions
@@ -44,6 +46,8 @@ struct HealTableOptions
 	bool EvtcRpcEnabled = false;
 
 	std::array<HealWindowContext, HEAL_WINDOW_COUNT> Windows;
+		
+	std::vector<ImGuiID> AnchoringHighlightedWindows; // In-Memory only
 
 	HealTableOptions();
 	~HealTableOptions() = default;

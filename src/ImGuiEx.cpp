@@ -1,21 +1,60 @@
 #include "ImGuiEx.h"
 
+namespace
+{
+class RemoveFramePadding
+{
+public:
+	RemoveFramePadding()
+	{
+		ImVec2 padding = ImGui::GetStyle().FramePadding;
+		padding.y = 1;
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, padding);
+	}
+
+	~RemoveFramePadding()
+	{
+		ImGui::PopStyleVar();
+	}
+};
+}; // anonymous namespace
+
 bool ImGuiEx::SmallCheckBox(const char* pLabel, bool* pIsPressed)
 {
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+	RemoveFramePadding pad;
 	bool result = ImGui::Checkbox(pLabel, pIsPressed);
-	ImGui::PopStyleVar();
+	return result;
+}
+
+bool ImGuiEx::SmallInputFloat(const char* pLabel, float* pFloat)
+{
+	RemoveFramePadding pad;
+	bool result = ImGui::InputFloat(pLabel, pFloat, 0.0f, 0.0f, "%.1f");
 	return result;
 }
 
 bool ImGuiEx::SmallInputText(const char* pLabel, char* pBuffer, size_t pBufferSize)
 {
-	ImVec2 padding = ImGui::GetStyle().FramePadding;
-	padding.y = 1;
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, padding);
+	RemoveFramePadding pad;
 	bool result = ImGui::InputText(pLabel, pBuffer, pBufferSize);
-	ImGui::PopStyleVar();
 	return result;
+}
+
+bool ImGuiEx::SmallRadioButton(const char* pLabel, bool pIsPressed)
+{
+	RemoveFramePadding pad;
+	bool result = ImGui::RadioButton(pLabel, pIsPressed);
+	return result;
+}
+
+void ImGuiEx::SmallIndent()
+{
+	ImGui::Indent(ImGui::GetCurrentContext()->FontSize);
+}
+
+void ImGuiEx::SmallUnindent()
+{
+	ImGui::Unindent(ImGui::GetCurrentContext()->FontSize);
 }
 
 void ImGuiEx::StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio)

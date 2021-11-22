@@ -1,5 +1,6 @@
 #pragma once
 
+#include "arcdps_structs.h"
 #include "imgui.h"
 
 #include <nlohmann/json.hpp>
@@ -63,6 +64,14 @@ struct HealWindowOptions
 	ImGuiWindowFlags_ WindowFlags = ImGuiWindowFlags_None;
 
 	int Hotkey = 0;
+
+	Position PositionRule = Position::Manual;
+	CornerPosition RelativeScreenCorner = CornerPosition::TopLeft;
+	CornerPosition RelativeSelfCorner = CornerPosition::TopLeft;
+	CornerPosition RelativeAnchorWindowCorner = CornerPosition::TopLeft;
+	float RelativeX = 0.0f;
+	float RelativeY = 0.0f;
+	ImGuiID AnchorWindowId = 0;
 
 	void FromJson(const nlohmann::json& pJsonObject);
 	void ToJson(nlohmann::json& pJsonObject, const HealWindowOptions& pDefault) const;

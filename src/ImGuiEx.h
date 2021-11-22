@@ -1,7 +1,9 @@
 #pragma once
 #include "Utilities.h"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
+#include "imgui_internal.h"
 
 #include <optional>
 #include <type_traits>
@@ -10,7 +12,13 @@
 namespace ImGuiEx
 {
 	bool SmallCheckBox(const char* pLabel, bool* pIsPressed);
+	bool SmallInputFloat(const char* pLabel, float* pFloat);
 	bool SmallInputText(const char* pLabel, char* pBuffer, size_t pBufferSize);
+	bool SmallRadioButton(const char* pLabel, bool pIsPressed);
+
+	void SmallIndent();
+	void SmallUnindent();
+
 	void StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio);
 
 	template <typename... Args>
@@ -56,7 +64,7 @@ namespace ImGuiEx
 	template <typename EnumType, size_t Size = static_cast<size_t>(EnumType::Max)>
 	void ComboMenu(const char* pLabel, EnumType& pCurrentItem, const EnumStringArray<EnumType, Size>& pItems)
 	{
-		static_assert(std::is_enum<EnumType>::value == true, "Accidental loss of type safety?");
+		static_assert(std::is_enum_v<EnumType>, "Accidental loss of type safety?");
 
 		ImVec2 size{0, 0};
 		for (const char* item : pItems)
@@ -86,6 +94,25 @@ namespace ImGuiEx
 		}
 	}
 
+	template <typename EnumType, size_t Size = static_cast<size_t>(EnumType::Max)>
+	void SmallEnumRadioButton(const char* pInvisibleLabel, EnumType& pCurrentItem, const EnumStringArray<EnumType, Size>& pItems)
+	{
+		ImGui::PushID(pInvisibleLabel);
+		for (size_t i = 0; i < pItems.size(); i++)
+		{
+			ImGui::PushID(static_cast<int>(i));
+
+			bool selected = (pCurrentItem == static_cast<EnumType>(i));
+			if (SmallRadioButton(pItems[i], selected) == true)
+			{
+				pCurrentItem = static_cast<EnumType>(i);
+			}
+
+			ImGui::PopID();
+		}
+		ImGui::PopID();
+	}
+
 	template <typename EnumType>
 	void SmallEnumCheckBox(const char* pLabel, EnumType* pSavedLocation, EnumType pStyleFlag, bool pCheckBoxIsInverseOfFlag)
 	{
@@ -101,5 +128,16 @@ namespace ImGuiEx
 		{
 			*pSavedLocation = static_cast<EnumType>(*pSavedLocation ^ pStyleFlag);
 		}
+	}
+}
+
+namespace DrawListEx
+{
+	static inline ImVec2 CalcCenteredPosition(const ImVec2& pBoundsPosition, const ImVec2& pBoundsSize, const ImVec2& pItemSize)
+	{
+		return ImVec2{
+			pBoundsPosition.x + (std::max)((pBoundsSize.x - pItemSize.x) * 0.5f, 0.0f),
+			pBoundsPosition.y + (std::max)((pBoundsSize.y - pItemSize.y) * 0.5f, 0.0f)
+		};
 	}
 }

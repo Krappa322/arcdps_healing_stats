@@ -415,6 +415,14 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 
 	GetJsonValue(pJsonObject, "WindowFlags", WindowFlags);
 	GetJsonValue(pJsonObject, "Hotkey", Hotkey);
+
+	GetJsonValue(pJsonObject, "PositionRule", PositionRule);
+	GetJsonValue(pJsonObject, "RelativeScreenCorner", RelativeScreenCorner);
+	GetJsonValue(pJsonObject, "RelativeSelfCorner", RelativeSelfCorner);
+	GetJsonValue(pJsonObject, "RelativeAnchorWindowCorner", RelativeAnchorWindowCorner);
+	GetJsonValue(pJsonObject, "RelativeX", RelativeX);
+	GetJsonValue(pJsonObject, "RelativeY", RelativeY);
+	GetJsonValue(pJsonObject, "AnchorWindowId", AnchorWindowId);
 }
 
 void HealWindowOptions::ToJson(nlohmann::json& pJsonObject, const HealWindowOptions& pDefault) const
@@ -454,6 +462,14 @@ do {\
 
 	SET_JSON_VAL(WindowFlags);
 	SET_JSON_VAL(Hotkey);
+
+	SET_JSON_VAL(PositionRule);
+	SET_JSON_VAL(RelativeScreenCorner);
+	SET_JSON_VAL(RelativeSelfCorner);
+	SET_JSON_VAL(RelativeAnchorWindowCorner);
+	SET_JSON_VAL(RelativeX);
+	SET_JSON_VAL(RelativeY);
+	SET_JSON_VAL(AnchorWindowId);
 #undef SET_JSON_VAL
 #undef SET_JSON_VAL_CSTR_ARRAY
 }

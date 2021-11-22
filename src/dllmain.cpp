@@ -7,6 +7,7 @@
 #include "Utilities.h"
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "../resource.h"
 
 #include <atomic>
@@ -29,6 +30,9 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 
 uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 void ProcessPeerEvent(cbtevent* pEvent, uint16_t pPeerInstanceId);
+
+void Hook_PostNewFrame(ImGuiContext* pImguiContext, ImGuiContextHook*);
+void Hook_PreEndFrame(ImGuiContext* pImguiContext, ImGuiContextHook*);
 
 static MallocSignature ARCDPS_MALLOC = nullptr;
 static FreeSignature ARCDPS_FREE = nullptr;
@@ -122,7 +126,7 @@ static void FreeWrapper(void* pPointer, void* /*pUserData*/)
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
-extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, IDirect3DDevice9*, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
+extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, void*, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
 	GlobalObjects::ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(GlobalObjects::ARC_E3 != nullptr);
@@ -137,6 +141,18 @@ extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArc
 	ARCDPS_MALLOC = pArcdpsMalloc;
 	ARCDPS_FREE = pArcdpsFree;
 	ImGui::SetAllocatorFunctions(MallocWrapper, FreeWrapper);
+
+	if (pImguiContext != nullptr)
+	{
+		ImGuiContextHook contextHook;
+		contextHook.Type = ImGuiContextHookType_NewFramePost;
+		contextHook.Callback = Hook_PostNewFrame;
+		ImGui::AddContextHook(reinterpret_cast<ImGuiContext*>(pImguiContext), &contextHook);
+
+		contextHook.Type = ImGuiContextHookType_EndFramePost;
+		contextHook.Callback = Hook_PreEndFrame;
+		ImGui::AddContextHook(reinterpret_cast<ImGuiContext*>(pImguiContext), &contextHook);
+	}
 
 	return mod_init;
 }
@@ -284,6 +300,7 @@ uintptr_t mod_imgui(uint32_t pNotCharSelectionOrLoading)
 
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		HEAL_TABLE_OPTIONS.AnchoringHighlightedWindows.clear();
 		Display_GUI(HEAL_TABLE_OPTIONS);
 	}
 
@@ -413,4 +430,34 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 	}
 
 	return pMessage;
+}
+
+void Hook_PostNewFrame(ImGuiContext* pImguiContext, ImGuiContextHook*)
+{
+	std::shared_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+	if (GlobalObjects::IS_SHUTDOWN == true)
+	{
+		DEBUGLOG("already shutdown");
+		return;
+	}
+
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		Display_PostNewFrame(pImguiContext, HEAL_TABLE_OPTIONS);
+	}
+}
+
+void Hook_PreEndFrame(ImGuiContext* pImguiContext, ImGuiContextHook*)
+{
+	std::shared_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
+	if (GlobalObjects::IS_SHUTDOWN == true)
+	{
+		DEBUGLOG("already shutdown");
+		return;
+	}
+
+	{
+		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		Display_PreEndFrame(pImguiContext, HEAL_TABLE_OPTIONS);
+	}
 }

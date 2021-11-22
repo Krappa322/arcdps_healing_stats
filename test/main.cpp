@@ -80,8 +80,6 @@ int main(int pArgumentCount, char** pArgumentVector)
 
 	int result = RUN_ALL_TESTS();
 
-	LogW("{}", grpc::Version());
-
 	Log_::LOGGER = nullptr;
 	spdlog::shutdown();
 
