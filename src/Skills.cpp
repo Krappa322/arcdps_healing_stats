@@ -36,7 +36,9 @@ SkillTable::SkillTable()
 	ENTRY(10191); // Mind Wrack (Restorative Illusions)
 	ENTRY(10560); // Life Leech
 	ENTRY(10563); // Life Siphon
+	ENTRY(10594); // Life Transfer (Transfusion)
 	ENTRY(10619); // Deadly Feast
+	ENTRY(10643); // Gathering Plague (Transfusion)
 	ENTRY(12424); // Blood Frenzy
 	ENTRY(15259); // Nourishment (Omnomberry Ghost)
 	ENTRY(21656); // Arcane Brilliance
@@ -49,6 +51,7 @@ SkillTable::SkillTable()
 	ENTRY(30359); // Gravity Well (All's Well That Ends Well)
 	ENTRY(30285); // Vampiric Aura
 	ENTRY(30488); // "Your Soul is Mine!"
+	ENTRY(30504); // Soul Spiral (Transfusion)
 	ENTRY(30525); // Well of Calamity (All's Well That Ends Well)
 	ENTRY(30814); // Well of Action (All's Well That Ends Well)
 	ENTRY(30864); // Tidal Surge
@@ -59,6 +62,7 @@ SkillTable::SkillTable()
 	ENTRY(41052); // Sieche
 	ENTRY(43199); // Breaking Wave
 	ENTRY(44405); // Riptide
+	ENTRY(44428); // Garish Pillar (Transfusion)
 	ENTRY(45026); // Soulcleave's Summit
 	ENTRY(45983); // Claptosis
 	ENTRY(51646); // Transmute Frost
