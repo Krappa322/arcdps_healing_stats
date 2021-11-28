@@ -318,7 +318,7 @@ uintptr_t mod_options_end()
 
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
-		Display_ArcDpsOptions(HEAL_TABLE_OPTIONS);
+		Display_AddonOptions(HEAL_TABLE_OPTIONS);
 	}
 
 	return 0;

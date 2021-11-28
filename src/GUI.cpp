@@ -617,84 +617,77 @@ static void Display_EvtcRpcStatus(const HealTableOptions& pHealingOptions)
 	}
 }
 
-void Display_ArcDpsOptions(HealTableOptions& pHealingOptions)
+void Display_AddonOptions(HealTableOptions& pHealingOptions)
 {
-	if (ImGui::BeginMenu("Heal Stats##HEAL") == true)
+	ImGui::TextUnformatted("Heal Stats");
+	ImGuiEx::SmallIndent();
+	for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
 	{
-		for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
-		{
-			char buffer[128];
-			snprintf(buffer, sizeof(buffer), "(%u) %s", i, pHealingOptions.Windows[i].Name);
-			ImGuiEx::SmallCheckBox(buffer, &pHealingOptions.Windows[i].Shown);
-		}
-		ImGui::EndMenu();
+		char buffer[128];
+		snprintf(buffer, sizeof(buffer), "(%u) %s", i, pHealingOptions.Windows[i].Name);
+		ImGuiEx::SmallCheckBox(buffer, &pHealingOptions.Windows[i].Shown);
+	}
+	ImGuiEx::SmallUnindent();
+
+	ImGuiEx::SmallCheckBox("debug mode", &pHealingOptions.DebugMode);
+	ImGuiEx::AddTooltipToLastItem(
+		"Includes debug data in target and skill names.\n"
+		"Turn this on before taking screenshots of potential calculation issues.");
+
+	const char* log_level_items[] = SPDLOG_LEVEL_NAMES;
+	int choice = pHealingOptions.LogLevel;
+	if (ImGui::Combo("debug logging", &choice, log_level_items, sizeof(log_level_items) / sizeof(log_level_items[0])) == true)
+	{
+		pHealingOptions.LogLevel = static_cast<spdlog::level::level_enum>(choice);
+		Log_::SetLevel(pHealingOptions.LogLevel);
+	}
+	ImGuiEx::AddTooltipToLastItem(
+		"If not set to off, enables logging at the specified log level.\n"
+		"Logs are saved in addons\\logs\\arcdps_healing_stats\\. Logging\n"
+		"will have a small impact on performance.");
+
+	ImGui::Separator();
+
+	if (ImGuiEx::SmallCheckBox("log healing to EVTC logs", &pHealingOptions.EvtcLoggingEnabled) == true)
+	{
+		GlobalObjects::EVENT_PROCESSOR->SetEvtcLoggingEnabled(pHealingOptions.EvtcLoggingEnabled);
 	}
 
-	if (ImGui::BeginMenu("Heal Stats Options##HEAL") == true)
+	if (ImGuiEx::SmallCheckBox("enable live stats sharing", &pHealingOptions.EvtcRpcEnabled) == true)
 	{
-		ImGuiEx::SmallCheckBox("debug mode", &pHealingOptions.DebugMode);
-		ImGuiEx::AddTooltipToLastItem(
-			"Includes debug data in target and skill names.\n"
-			"Turn this on before taking screenshots of potential calculation issues.");
-
-		const char* log_level_items[] = SPDLOG_LEVEL_NAMES;
-		int choice = pHealingOptions.LogLevel;
-		if (ImGui::Combo("debug logging", &choice, log_level_items, sizeof(log_level_items) / sizeof(log_level_items[0])) == true)
-		{
-			pHealingOptions.LogLevel = static_cast<spdlog::level::level_enum>(choice);
-			Log_::SetLevel(pHealingOptions.LogLevel);
-		}
-		ImGuiEx::AddTooltipToLastItem(
-			"If not set to off, enables logging at the specified log level.\n"
-			"Logs are saved in addons\\logs\\arcdps_healing_stats\\. Logging\n"
-			"will have a small impact on performance. The log can reach a\n"
-			"maximum size of 1 GiB");
-
-		ImGui::Separator();
-
-		if (ImGuiEx::SmallCheckBox("log healing to EVTC logs", &pHealingOptions.EvtcLoggingEnabled) == true)
-		{
-			GlobalObjects::EVENT_PROCESSOR->SetEvtcLoggingEnabled(pHealingOptions.EvtcLoggingEnabled);
-		}
-
-		if (ImGuiEx::SmallCheckBox("enable live stats sharing", &pHealingOptions.EvtcRpcEnabled) == true)
-		{
-			GlobalObjects::EVTC_RPC_CLIENT->SetEnabledStatus(pHealingOptions.EvtcRpcEnabled);
-		}
-		ImGuiEx::AddTooltipToLastItem(
-			"Enables live sharing of healing statistics with other\n"
-			"players in your squad. This is done through a central server\n"
-			"(see option below). After enabling live sharing, it might not\n"
-			"work properly until after changing map instance so all squad\n"
-			"members are properly detected.\n"
-			"\n"
-			"The stats shared from other players can be viewed through a\n"
-			"heal stats window with its data source set to \"%s\"\n"
-			"\n"
-			"Enabling this option has a small impact on performance, and\n"
-			"will put some additional load on your connection (a maximum\n"
-			"of about 10 kiB/s up and 100 kiB/s down)"
-			, DATA_SOURCE_ITEMS[DataSource::PeersOutgoing]);
-
-		ImGuiEx::SmallInputText("evtc rpc server", pHealingOptions.EvtcRpcEndpoint, sizeof(pHealingOptions.EvtcRpcEndpoint));
-		ImGuiEx::AddTooltipToLastItem(
-			"The server to communicate with for evtc_rpc communication\n"
-			"(allowing other squad members to see your healing stats).\n"
-			"All local combat events will be sent to this server. Make\n"
-			"sure you trust it.");
-		Display_EvtcRpcStatus(pHealingOptions);
-
-		ImGui::Separator();
-
-		if (ImGui::Button("reset all settings") == true)
-		{
-			pHealingOptions.Reset();
-			LOG("Reset settings");
-		}
-		ImGuiEx::AddTooltipToLastItem("Resets all global and window specific settings to their default values.");
-
-		ImGui::EndMenu();
+		GlobalObjects::EVTC_RPC_CLIENT->SetEnabledStatus(pHealingOptions.EvtcRpcEnabled);
 	}
+	ImGuiEx::AddTooltipToLastItem(
+		"Enables live sharing of healing statistics with other\n"
+		"players in your squad. This is done through a central server\n"
+		"(see option below). After enabling live sharing, it might not\n"
+		"work properly until after changing map instance so all squad\n"
+		"members are properly detected.\n"
+		"\n"
+		"The stats shared from other players can be viewed through a\n"
+		"heal stats window with its data source set to \"%s\"\n"
+		"\n"
+		"Enabling this option has a small impact on performance, and\n"
+		"will put some additional load on your connection (a maximum\n"
+		"of about 10 kiB/s up and 100 kiB/s down)"
+		, DATA_SOURCE_ITEMS[DataSource::PeersOutgoing]);
+
+	ImGuiEx::SmallInputText("evtc rpc server", pHealingOptions.EvtcRpcEndpoint, sizeof(pHealingOptions.EvtcRpcEndpoint));
+	ImGuiEx::AddTooltipToLastItem(
+		"The server to communicate with for evtc_rpc communication\n"
+		"(allowing other squad members to see your healing stats).\n"
+		"All local combat events will be sent to this server. Make\n"
+		"sure you trust it.");
+	Display_EvtcRpcStatus(pHealingOptions);
+
+	ImGui::Separator();
+
+	if (ImGui::Button("reset all settings") == true)
+	{
+		pHealingOptions.Reset();
+		LogD("Reset settings");
+	}
+	ImGuiEx::AddTooltipToLastItem("Resets all global and window specific settings to their default values.");
 }
 
 void FindAndResolveCyclicDependencies(HealTableOptions& pHealingOptions, size_t pStartIndex)
