@@ -117,13 +117,14 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	if (pDataSource == DataSource::PeersOutgoing && pEvtcRpcEnabled == false)
 	{
 		ImGui::TextWrapped("Live stats sharing is disabled. Enable \"live stats sharing\" under \"Heal Stats Options\" in order to see the healing done by other players in the squad.");
+		pContext.CurrentFrameLineCount += 1;
 		return;
 	}
 
 	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal(pDataSource);
 
 	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetStats(pDataSource);
-	for (int i = 0; i < stats.Entries.size(); i++)
+	for (size_t i = 0; i < stats.Entries.size(); i++)
 	{
 		const auto& entry = stats.Entries[i];
 
@@ -138,7 +139,9 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
 
 		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
-		ImGuiEx::StatsEntry(entry.Name.c_str(), buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
+		float minSize = ImGuiEx::StatsEntry(entry.Name.c_str(), buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
+		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
+		pContext.CurrentFrameLineCount += 1;
 
 		DetailsWindowState* state = nullptr;
 		std::vector<DetailsWindowState>* vec;
@@ -371,6 +374,27 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::SmallEnumCheckBox("title bar", &pContext.WindowFlags, ImGuiWindowFlags_NoTitleBar, true);
 			ImGuiEx::SmallEnumCheckBox("scroll bar", &pContext.WindowFlags, ImGuiWindowFlags_NoScrollbar, true);
 			ImGuiEx::SmallEnumCheckBox("background", &pContext.WindowFlags, ImGuiWindowFlags_NoBackground, true);
+			
+			ImGui::Separator();
+
+			ImGuiEx::SmallCheckBox("auto resize window", &pContext.AutoResize);
+			if (pContext.AutoResize == true)
+			{
+				ImGuiEx::SmallIndent();
+
+				ImGuiEx::SmallInputInt("min entries", &pContext.MinLinesDisplayed);
+				ImGuiEx::AddTooltipToLastItem(
+					"The minimum amount of lines of data to show in this window.");
+				ImGuiEx::SmallInputInt("max entries", &pContext.MaxLinesDisplayed);
+				ImGuiEx::AddTooltipToLastItem(
+					"The maximum amount of lines of data to show in this window. Set to 0 for no limit");
+				ImGuiEx::SmallInputInt("window width", &pContext.FixedWindowWidth);
+				ImGuiEx::AddTooltipToLastItem(
+					"Set to 0 for dynamic resizing of width");
+
+				ImGuiEx::SmallUnindent();
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -467,6 +491,32 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
 		ImGui::Begin(buffer, &curWindow.Shown, window_flags);
 
+		// Adjust x size. This is based on last frame width and has to happen before we draw anything since some items are
+		// aligned to the right edge of the window.
+		if (curWindow.AutoResize == true)
+		{
+			ImVec2 size = ImGui::GetCurrentWindowRead()->SizeFull;
+			if (curWindow.FixedWindowWidth == 0)
+			{
+				if (curWindow.LastFrameMinWidth != 0)
+				{
+					size.x = curWindow.LastFrameMinWidth + ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
+				}
+				// else size.x = current size x
+			}
+			else
+			{
+				size.x = static_cast<float>(curWindow.FixedWindowWidth);
+			}
+
+			LogT("FixedWindowWidth={} LastFrameMinWidth={} x={}",
+				curWindow.FixedWindowWidth, curWindow.LastFrameMinWidth, size.x);
+			ImGui::SetWindowSize(size);
+		}
+
+		curWindow.LastFrameMinWidth = 0;
+		curWindow.CurrentFrameLineCount = 0;
+
 		curWindow.WindowId = ImGui::GetCurrentWindow()->ID;
 
 		ImGui::SetNextWindowSize(ImVec2(170, 0));
@@ -478,6 +528,8 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 		}
 		else
 		{
+			curWindow.CurrentFrameLineCount += 3; // For the 3 headers
+
 			ImGui::PushID(static_cast<int>(DataSource::Totals));
 			ImGuiEx::TextColoredCentered(ImColor(0, 209, 165), "Totals");
 			Display_Content(curWindow, DataSource::Totals, i, pHealingOptions.EvtcRpcEnabled);
@@ -526,7 +578,23 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				iter++;
 			}
 		}
+		
+		// Adjust y size. This is based on the current frame line count, so we do it at the end of the frame (meaning
+		// the resize has no lag)
+		if (curWindow.AutoResize == true)
+		{
+			ImVec2 size = ImGui::GetCurrentWindowRead()->SizeFull;
 
+			size_t lineCount = (std::max)(curWindow.CurrentFrameLineCount, curWindow.MinLinesDisplayed);
+			lineCount = (std::min)(lineCount, curWindow.MaxLinesDisplayed);
+			
+			size.y = ImGuiEx::CalcWindowHeight(lineCount);
+
+			LogT("lineCount={} CurrentFrameLineCount={} MinLinesDisplayed={} MaxLinesDisplayed={} y={}",
+				lineCount, curWindow.CurrentFrameLineCount, curWindow.MinLinesDisplayed, curWindow.MaxLinesDisplayed, size.y);
+
+			ImGui::SetWindowSize(size);
+		}
 		ImGui::End();
 	}
 }
@@ -720,7 +788,7 @@ static void RepositionWindows(HealTableOptions& pHealingOptions)
 	LogW("Aborted repositioning after {} iterations - recursive window relationships?", iterations);
 }
 
-void Display_PostNewFrame(ImGuiContext* pImguiContext, HealTableOptions& pHealingOptions)
+void Display_PostNewFrame(ImGuiContext* /*pImguiContext*/, HealTableOptions& pHealingOptions)
 {
 	// Repositioning windows at the start of the frame prevents lag when moving windows
 	RepositionWindows(pHealingOptions);

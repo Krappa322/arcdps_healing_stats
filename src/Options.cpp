@@ -423,6 +423,11 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "RelativeX", RelativeX);
 	GetJsonValue(pJsonObject, "RelativeY", RelativeY);
 	GetJsonValue(pJsonObject, "AnchorWindowId", AnchorWindowId);
+
+	GetJsonValue(pJsonObject, "AutoResize", AutoResize);
+	GetJsonValue(pJsonObject, "MinLinesDisplayed", MinLinesDisplayed);
+	GetJsonValue(pJsonObject, "MaxLinesDisplayed", MaxLinesDisplayed);
+	GetJsonValue(pJsonObject, "FixedWindowWidth", FixedWindowWidth);
 }
 
 void HealWindowOptions::ToJson(nlohmann::json& pJsonObject, const HealWindowOptions& pDefault) const
@@ -470,6 +475,11 @@ do {\
 	SET_JSON_VAL(RelativeX);
 	SET_JSON_VAL(RelativeY);
 	SET_JSON_VAL(AnchorWindowId);
+
+	SET_JSON_VAL(AutoResize);
+	SET_JSON_VAL(MinLinesDisplayed);
+	SET_JSON_VAL(MaxLinesDisplayed);
+	SET_JSON_VAL(FixedWindowWidth);
 #undef SET_JSON_VAL
 #undef SET_JSON_VAL_CSTR_ARRAY
 }

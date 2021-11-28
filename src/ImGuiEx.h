@@ -27,6 +27,8 @@ namespace ImGuiEx
 		}
 	};
 
+	float CalcWindowHeight(size_t pLineCount, ImGuiWindow* pWindow = nullptr);
+
 	bool SmallCheckBox(const char* pLabel, bool* pIsPressed);
 	bool SmallInputFloat(const char* pLabel, float* pFloat);
 	bool SmallInputText(const char* pLabel, char* pBuffer, size_t pBufferSize);
@@ -35,7 +37,9 @@ namespace ImGuiEx
 	void SmallIndent();
 	void SmallUnindent();
 
-	void StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio);
+	// returns minimum size needed to display the entry
+	float StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio);
+
 	template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
 	bool SmallInputInt(const char* pLabel, T* pInt)
 	{

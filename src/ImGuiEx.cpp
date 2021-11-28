@@ -1,23 +1,23 @@
 #include "ImGuiEx.h"
 
-namespace
+float ImGuiEx::CalcWindowHeight(size_t pLineCount, ImGuiWindow* pWindow)
 {
-class RemoveFramePadding
-{
-public:
-	RemoveFramePadding()
+	if (pWindow == nullptr)
 	{
-		ImVec2 padding = ImGui::GetStyle().FramePadding;
-		padding.y = 1;
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, padding);
+		pWindow = ImGui::GetCurrentWindowRead();
 	}
 
-	~RemoveFramePadding()
+	//return pWindow->TitleBarHeight() + ImGui::GetStyle().WindowPadding.y * 2 + pLineCount * ImGui::GetTextLineHeightWithSpacing() - ImGui::GetStyle().ItemSpacing.y;
+
+	float decorationsSize = pWindow->TitleBarHeight() + pWindow->MenuBarHeight();
+	float padding = pWindow->WindowPadding.y * 2.0f;
+	float contentSize = 0;
+	if (pLineCount > 0)
 	{
-		ImGui::PopStyleVar();
+		contentSize = pLineCount * ImGui::GetTextLineHeight() + (pLineCount - 1) * ImGui::GetStyle().ItemSpacing.y;
 	}
-};
-}; // anonymous namespace
+	return decorationsSize + padding + contentSize;
+}
 
 bool ImGuiEx::SmallCheckBox(const char* pLabel, bool* pIsPressed)
 {
@@ -57,7 +57,7 @@ void ImGuiEx::SmallUnindent()
 	ImGui::Unindent(ImGui::GetCurrentContext()->FontSize);
 }
 
-void ImGuiEx::StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio)
+float ImGuiEx::StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio)
 {
 	ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(204, 204, 212, 255));
 	ImGui::BeginGroup();
@@ -66,6 +66,9 @@ void ImGuiEx::StatsEntry(const char* pLeftText, const char* pRightText, std::opt
 	//float startX = ImGui::GetCursorPosX();
 	//ImGui::Selectable("", false, ImGuiSelectableFlags_SpanAllColumns);
 	//ImGui::PopID();
+
+	ImVec2 leftTextSize = ImGui::CalcTextSize(pLeftText);
+	ImVec2 rightTextSize = ImGui::CalcTextSize(pRightText);
 
 	if (pFillRatio.has_value() == true)
 	{
@@ -78,9 +81,12 @@ void ImGuiEx::StatsEntry(const char* pLeftText, const char* pRightText, std::opt
 	ImGui::TextUnformatted(pLeftText);
 
 	ImGui::SameLine();
-	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(pRightText).x - ImGui::GetStyle().ItemInnerSpacing.x); // Sending x in SameLine messes with alignment when inside of a group
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - rightTextSize.x - ImGui::GetStyle().ItemInnerSpacing.x); // Sending x in SameLine messes with alignment when inside of a group
 	ImGui::TextUnformatted(pRightText);
 
 	ImGui::EndGroup();
 	ImGui::PopStyleColor();
+
+	// window padding - inner spacing - left text - item spacing * 2 - right text - inner spacing - window padding
+	return leftTextSize.x + rightTextSize.x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetStyle().ItemInnerSpacing.x * 2.0f + ImGui::GetCurrentWindowRead()->WindowPadding.x * 2.0f;
 }

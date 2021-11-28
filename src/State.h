@@ -73,6 +73,11 @@ struct HealWindowOptions
 	int64_t RelativeY = 0;
 	ImGuiID AnchorWindowId = 0;
 
+	bool AutoResize = false;
+	size_t MinLinesDisplayed = 0;
+	size_t MaxLinesDisplayed = 10;
+	size_t FixedWindowWidth = 400;
+
 	void FromJson(const nlohmann::json& pJsonObject);
 	void ToJson(nlohmann::json& pJsonObject, const HealWindowOptions& pDefault) const;
 };

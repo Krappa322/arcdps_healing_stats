@@ -81,6 +81,11 @@ TEST(ConfigTest, Serialize_Deserialize)
 		window.RelativeX = rand_t<int64_t>();
 		window.RelativeY = rand_t<int64_t>();
 		window.AnchorWindowId = rand_t<ImGuiID>();
+
+		window.AutoResize = rand_t<bool>();
+		window.MinLinesDisplayed = rand_t<size_t>();
+		window.MaxLinesDisplayed = rand_t<size_t>();
+		window.FixedWindowWidth = rand_t<size_t>();
 	}
 
 	HealTableOptions options2;
@@ -132,6 +137,11 @@ TEST(ConfigTest, Serialize_Deserialize)
 		ASSERT_EQ(windowLeft.RelativeX, windowRight.RelativeX);
 		ASSERT_EQ(windowLeft.RelativeY, windowRight.RelativeY);
 		ASSERT_EQ(windowLeft.AnchorWindowId, windowRight.AnchorWindowId);
+
+		ASSERT_EQ(windowLeft.AutoResize, windowRight.AutoResize);
+		ASSERT_EQ(windowLeft.MinLinesDisplayed, windowRight.MinLinesDisplayed);
+		ASSERT_EQ(windowLeft.MaxLinesDisplayed, windowRight.MaxLinesDisplayed);
+		ASSERT_EQ(windowLeft.FixedWindowWidth, windowRight.FixedWindowWidth);
 	}
 }
 

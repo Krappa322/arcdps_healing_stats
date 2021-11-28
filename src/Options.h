@@ -33,6 +33,9 @@ struct HealWindowContext : HealWindowOptions
 	std::vector<DetailsWindowState> OpenPeersOutgoingWindows; // In-Memory only
 
 	ImGuiID WindowId = 0; // In-Memory only
+
+	float LastFrameMinWidth = 0.0f; // In-Memory only
+	size_t CurrentFrameLineCount = 0; // In-Memory only
 };
 
 struct HealTableOptions
