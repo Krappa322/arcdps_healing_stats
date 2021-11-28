@@ -73,6 +73,14 @@ TEST(ConfigTest, Serialize_Deserialize)
 		window.WindowFlags = rand_t<ImGuiWindowFlags_>();
 
 		window.Hotkey = rand_t<int>();
+
+		window.PositionRule = rand_t<Position>();
+		window.RelativeScreenCorner = rand_t<CornerPosition>();
+		window.RelativeSelfCorner = rand_t<CornerPosition>();
+		window.RelativeAnchorWindowCorner = rand_t<CornerPosition>();
+		window.RelativeX = rand_t<int64_t>();
+		window.RelativeY = rand_t<int64_t>();
+		window.AnchorWindowId = rand_t<ImGuiID>();
 	}
 
 	HealTableOptions options2;
@@ -116,6 +124,14 @@ TEST(ConfigTest, Serialize_Deserialize)
 		ASSERT_EQ(windowLeft.WindowFlags, windowRight.WindowFlags);
 
 		ASSERT_EQ(windowLeft.Hotkey, windowRight.Hotkey);
+
+		ASSERT_EQ(windowLeft.PositionRule, windowRight.PositionRule);
+		ASSERT_EQ(windowLeft.RelativeScreenCorner, windowRight.RelativeScreenCorner);
+		ASSERT_EQ(windowLeft.RelativeSelfCorner, windowRight.RelativeSelfCorner);
+		ASSERT_EQ(windowLeft.RelativeAnchorWindowCorner, windowRight.RelativeAnchorWindowCorner);
+		ASSERT_EQ(windowLeft.RelativeX, windowRight.RelativeX);
+		ASSERT_EQ(windowLeft.RelativeY, windowRight.RelativeY);
+		ASSERT_EQ(windowLeft.AnchorWindowId, windowRight.AnchorWindowId);
 	}
 }
 

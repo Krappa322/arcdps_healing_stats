@@ -69,8 +69,8 @@ struct HealWindowOptions
 	CornerPosition RelativeScreenCorner = CornerPosition::TopLeft;
 	CornerPosition RelativeSelfCorner = CornerPosition::TopLeft;
 	CornerPosition RelativeAnchorWindowCorner = CornerPosition::TopLeft;
-	float RelativeX = 0.0f;
-	float RelativeY = 0.0f;
+	int64_t RelativeX = 0;
+	int64_t RelativeY = 0;
 	ImGuiID AnchorWindowId = 0;
 
 	void FromJson(const nlohmann::json& pJsonObject);

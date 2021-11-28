@@ -10,9 +10,12 @@
 #include <array>
 #include <Windows.h>
 
-static constexpr EnumStringArray<DataSource> DATA_SOURCE_ITEMS{"targets", "skills", "totals", "combined", "peers outgoing"};
-static constexpr EnumStringArray<SortOrder> SORT_ORDER_ITEMS{"alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending"};
-static constexpr EnumStringArray<CombatEndCondition> COMBAT_END_CONDITION_ITEMS{"combat exit", "last damage event", "last heal event", "last damage / heal event"};
+static constexpr EnumStringArray<DataSource> DATA_SOURCE_ITEMS{
+	"targets", "skills", "totals", "combined", "peers outgoing"};
+static constexpr EnumStringArray<SortOrder> SORT_ORDER_ITEMS{
+	"alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending"};
+static constexpr EnumStringArray<CombatEndCondition> COMBAT_END_CONDITION_ITEMS{
+	"combat exit", "last damage event", "last heal event", "last damage / heal event"};
 
 static constexpr EnumStringArray<Position, static_cast<size_t>(Position::FINAL_ENTRY)> POSITION_ITEMS{
 	"manual", "screen relative", "window relative"};
@@ -201,8 +204,8 @@ static void Display_WindowOptions_Position(HealTableOptions& pHealingOptions, He
 			ImGuiEx::SmallUnindent();
 
 			ImGui::PushItemWidth(39.0f);
-			ImGuiEx::SmallInputFloat("x", &pContext.RelativeX);
-			ImGuiEx::SmallInputFloat("y", &pContext.RelativeY);
+			ImGuiEx::SmallInputInt("x", &pContext.RelativeX);
+			ImGuiEx::SmallInputInt("y", &pContext.RelativeY);
 			ImGui::PopItemWidth();
 
 			break;
@@ -221,8 +224,8 @@ static void Display_WindowOptions_Position(HealTableOptions& pHealingOptions, He
 			ImGuiEx::SmallUnindent();
 
 			ImGui::PushItemWidth(39.0f);
-			ImGuiEx::SmallInputFloat("x", &pContext.RelativeX);
-			ImGuiEx::SmallInputFloat("y", &pContext.RelativeY);
+			ImGuiEx::SmallInputInt("x", &pContext.RelativeX);
+			ImGuiEx::SmallInputInt("y", &pContext.RelativeY);
 			ImGui::PopItemWidth();
 
 			ImGuiWindow* selectedWindow = ImGui::FindWindowByID(pContext.AnchorWindowId);
@@ -693,7 +696,7 @@ static void RepositionWindows(HealTableOptions& pHealingOptions)
 			}
 
 			const HealWindowContext& curWindow = pHealingOptions.Windows[i];
-			ImVec2 posVector{curWindow.RelativeX, curWindow.RelativeY};
+			ImVec2 posVector{static_cast<float>(curWindow.RelativeX), static_cast<float>(curWindow.RelativeY)};
 
 			ImGuiWindow* window = ImGui::FindWindowByID(curWindow.WindowId);
 			if (window != nullptr)

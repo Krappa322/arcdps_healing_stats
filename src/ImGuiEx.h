@@ -11,6 +11,22 @@
 // Helpers for ImGui functions
 namespace ImGuiEx
 {
+	class RemoveFramePadding
+	{
+	public:
+		RemoveFramePadding()
+		{
+			ImVec2 padding = ImGui::GetStyle().FramePadding;
+			padding.y = 1;
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, padding);
+		}
+
+		~RemoveFramePadding()
+		{
+			ImGui::PopStyleVar();
+		}
+	};
+
 	bool SmallCheckBox(const char* pLabel, bool* pIsPressed);
 	bool SmallInputFloat(const char* pLabel, float* pFloat);
 	bool SmallInputText(const char* pLabel, char* pBuffer, size_t pBufferSize);
@@ -20,6 +36,30 @@ namespace ImGuiEx
 	void SmallUnindent();
 
 	void StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio);
+	template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+	bool SmallInputInt(const char* pLabel, T* pInt)
+	{
+		ImGuiDataType dataType;
+		if constexpr (std::is_same_v<T, int32_t>)
+		{
+			dataType = ImGuiDataType_S32;
+		}
+		else if constexpr (std::is_same_v<T, uint64_t>)
+		{
+			dataType = ImGuiDataType_U64;
+		}
+		else if constexpr (std::is_same_v<T, int64_t>)
+		{
+			dataType = ImGuiDataType_S64;
+		}
+		else
+		{
+			static_assert(false, "unhandled type");
+		}
+
+		RemoveFramePadding pad;
+		return ImGui::InputScalar(pLabel, ImGuiDataType_S32, pInt);
+	}
 
 	template <typename... Args>
 	void TextRightAlignedSameLine(const char* pFormatString, Args... pArgs)

@@ -32,7 +32,7 @@ struct HealWindowContext : HealWindowOptions
 	std::vector<DetailsWindowState> OpenAgentWindows; // In-Memory only
 	std::vector<DetailsWindowState> OpenPeersOutgoingWindows; // In-Memory only
 
-	ImGuiID WindowId = 0;
+	ImGuiID WindowId = 0; // In-Memory only
 };
 
 struct HealTableOptions
