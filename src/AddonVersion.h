@@ -2,13 +2,13 @@
 
 #include <cstdint>
 
-#define HEALING_STATS_ADDON_SIGNATURE 0x9c9b3c99
-#define HEALING_STATS_EVTC_REVISION 2
+#define HEALING_STATS_ADDON_SIGNATURE 0x9c9b3c99U
+#define HEALING_STATS_EVTC_REVISION 2U
 #define HEALING_STATS_VERSION "2.2rc2"
 #define LEGACY_INI_CONFIG_PATH "addons\\arcdps\\arcdps_healing_stats.ini"
 #define JSON_CONFIG_PATH "addons\\arcdps\\arcdps_healing_stats.json"
 
-#define VERSION_EVENT_SIGNATURE 0x00000000
+#define VERSION_EVENT_SIGNATURE 0x00000000U
 struct EvtcVersionHeader
 {
 	uint32_t Signature;

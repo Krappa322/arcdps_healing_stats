@@ -1,4 +1,4 @@
-#pragma warning(push, 0)
+﻿#pragma warning(push, 0)
 #include <gtest/gtest.h>
 #pragma warning(pop)
 
@@ -26,7 +26,7 @@ protected:
 
 		{
 			arcdps_exports* temp_exports = mod_init();
-			ASSERT_NE(temp_exports->sig, 0);
+			ASSERT_NE(temp_exports->sig, 0U);
 			memcpy(&Exports, temp_exports, sizeof(Exports)); // Maybe do some deep copy at some point but we're not using the strings in there anyways
 		}
 	}
@@ -63,11 +63,11 @@ TEST_P(XevtcLogTestFixture, druid_solo)
 	EXPECT_FLOAT_EQ(std::floor(combatTime), 47.0f);
 
 	const AggregatedStatsEntry& totalEntry = stats.GetTotal();
-	EXPECT_EQ(totalEntry.Healing, 121095);
-	EXPECT_EQ(totalEntry.Hits, 204);
+	EXPECT_EQ(totalEntry.Healing, 121095U);
+	EXPECT_EQ(totalEntry.Hits, 204U);
 
 	const AggregatedVector& agentStats = stats.GetStats(DataSource::Agents);
-	ASSERT_EQ(agentStats.Entries.size(), 1);
+	ASSERT_EQ(agentStats.Entries.size(), 1U);
 	EXPECT_EQ(agentStats.Entries[0].GetTie(),
 		AggregatedStatsEntry(2000, "Zarwae", combatTime, 121095, 204, std::nullopt).GetTie());
 
@@ -116,7 +116,7 @@ TEST_P(XevtcLogTestFixture, druid_MO)
 	auto [parallelCallbacks, fuzzWidth] = GetParam();
 
 	uint32_t result = Mock.ExecuteFromXevtc("xevtc_logs\\druid_MO.xevtc", parallelCallbacks, fuzzWidth);
-	ASSERT_EQ(result, 0);
+	ASSERT_EQ(result, 0U);
 	ASSERT_TRUE(GlobalObjects::EVENT_SEQUENCER->QueueIsEmpty());
 
 	HealTableOptions options;
@@ -156,7 +156,7 @@ TEST_P(XevtcLogTestFixture, druid_MO)
 	expectedAgents.Add(3151, "Janna Larion", combatTime, 21902, 71, std::nullopt);
 	expectedAgents.Add(3137, "Lady Manyak", combatTime, 20637, 52, std::nullopt);
 	expectedAgents.Add(3146, "Akashi Vi Britannia", combatTime, 20084, 55, std::nullopt);
-	expectedAgents.Add(3147, u8"Moa Fh�mhair", combatTime, 8220, 29, std::nullopt);
+	expectedAgents.Add(3147, u8"Moa Fhómhair", combatTime, 8220, 29, std::nullopt);
 
 	const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
 	ASSERT_EQ(agents.Entries.size(), expectedAgents.Entries.size());
@@ -173,7 +173,7 @@ TEST_P(XevtcLogTestFixture, null_names)
 	auto [parallelCallbacks, fuzzWidth] = GetParam();
 
 	uint32_t result = Mock.ExecuteFromXevtc("xevtc_logs\\null_names.xevtc", parallelCallbacks, fuzzWidth);
-	ASSERT_EQ(result, 0);
+	ASSERT_EQ(result, 0U);
 	ASSERT_TRUE(GlobalObjects::EVENT_SEQUENCER->QueueIsEmpty());
 
 	HealWindowOptions options;

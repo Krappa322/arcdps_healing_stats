@@ -1,7 +1,10 @@
 #pragma once
 #include "arcdps_structs_slim.h"
 
-#ifdef _WIN32
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Weverything"
+#elif _WIN32
 #pragma warning(disable : 4702)
 #pragma warning(push, 0)
 #endif
@@ -12,7 +15,9 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
-#ifdef _WIN32
+#ifdef __clang__
+#pragma clang diagnostic pop
+#elif _WIN32
 #pragma warning(pop)
 #pragma warning(default : 4702)
 #endif

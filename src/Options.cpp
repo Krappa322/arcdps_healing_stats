@@ -243,7 +243,8 @@ constexpr static value_t JsonTypeSelector()
 		}
 		else
 		{
-			static_assert(false);
+			assert(false);
+			//static_assert(false);
 		}
 	}
 	else if constexpr (std::is_unsigned_v<T>)
@@ -252,7 +253,8 @@ constexpr static value_t JsonTypeSelector()
 	}
 	else
 	{
-		static_assert(false);
+		assert(false);
+		//static_assert(false);
 	}
 }
 
@@ -342,14 +344,14 @@ void HealTableOptions::ToJson(nlohmann::json& pJsonObject) const
 {
 #define SET_JSON_VAL(pKey)\
 do {\
-	if (pKey != defaults.##pKey)\
+	if (pKey != defaults.pKey)\
 	{\
 		pJsonObject[#pKey] = pKey;\
 	}\
 } while(false)
 #define SET_JSON_VAL_CSTR_ARRAY(pKey)\
 do {\
-	if (strcmp(pKey, defaults.##pKey) != 0)\
+	if (strcmp(pKey, defaults.pKey) != 0)\
 	{\
 		pJsonObject[#pKey] = std::string_view{pKey};\
 	}\
@@ -434,14 +436,14 @@ void HealWindowOptions::ToJson(nlohmann::json& pJsonObject, const HealWindowOpti
 {
 #define SET_JSON_VAL(pKey)\
 do {\
-	if (pKey != pDefault.##pKey)\
+	if (pKey != pDefault.pKey)\
 	{\
 		pJsonObject[#pKey] = pKey;\
 	}\
 } while(false)
 #define SET_JSON_VAL_CSTR_ARRAY(pKey)\
 do {\
-	if (strcmp(pKey, pDefault.##pKey) != 0)\
+	if (strcmp(pKey, pDefault.pKey) != 0)\
 	{\
 		pJsonObject[#pKey] = std::string_view{pKey};\
 	}\

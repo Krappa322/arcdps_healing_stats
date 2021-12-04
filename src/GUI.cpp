@@ -470,14 +470,14 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				divide_safe(aggregatedTotal.Healing, aggregatedTotal.Hits),
 				aggregatedTotal.Casts.has_value() == true ? std::optional{divide_safe(aggregatedTotal.Healing, *aggregatedTotal.Casts)} : std::nullopt,
 				timeInCombat };
-			size_t written = ReplaceFormatted(buffer, 128, curWindow.TitleFormat, titleValues);
+			size_t written = ReplaceFormatted(buffer, 128ULL, curWindow.TitleFormat, titleValues);
 			snprintf(buffer + written, sizeof(buffer) - written, "###HEALWINDOW%u", i);
 		}
 		else
 		{
 			std::array<std::optional<std::variant<uint64_t, double>>, 7> titleValues{
 			timeInCombat };
-			size_t written = ReplaceFormatted(buffer, 128, curWindow.TitleFormat, titleValues);
+			size_t written = ReplaceFormatted(buffer, 128ULL, curWindow.TitleFormat, titleValues);
 			snprintf(buffer + written, sizeof(buffer) - written, "###HEALWINDOW%u", i);
 		}
 
@@ -609,7 +609,7 @@ static void Display_EvtcRpcStatus(const HealTableOptions& pHealingOptions)
 	}
 	else if (pHealingOptions.EvtcRpcEnabled == false)
 	{
-		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.2f, 1.0f), "Not connected since live stats sharing is disabled", status.Endpoint.c_str());
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.2f, 1.0f), "Not connected since live stats sharing is disabled");
 	}
 	else
 	{

@@ -277,7 +277,7 @@ void evtc_rpc_client::Serve()
 					}
 					case CallDataType::Connect:
 					{
-						ConnectCallData* message = static_cast<ConnectCallData*>(base);
+						//ConnectCallData* message = static_cast<ConnectCallData*>(base);
 						
 						if (base->Context == mConnectionContext)
 						{

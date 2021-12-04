@@ -324,7 +324,6 @@ uintptr_t mod_options_end()
 	return 0;
 }
 
-static std::atomic<uint32_t> SELF_INSTANCE_ID = UINT32_MAX;
 /* combat callback -- may be called asynchronously. return ignored */
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
@@ -410,7 +409,7 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 			for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
 			{
 				if (HEAL_TABLE_OPTIONS.Windows[i].Hotkey > 0 &&
-					HEAL_TABLE_OPTIONS.Windows[i].Hotkey < sizeof(io.KeysDown) &&
+					static_cast<size_t>(HEAL_TABLE_OPTIONS.Windows[i].Hotkey) < sizeof(io.KeysDown) &&
 					virtualKey == HEAL_TABLE_OPTIONS.Windows[i].Hotkey)
 				{
 					assert(io.KeysDown[HEAL_TABLE_OPTIONS.Windows[i].Hotkey] == true);

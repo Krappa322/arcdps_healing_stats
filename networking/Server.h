@@ -1,5 +1,8 @@
 #pragma once
-#ifdef _WIN32
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Weverything"
+#elif _WIN32
 #pragma warning(disable : 4702)
 #pragma warning(push, 0)
 #endif
@@ -11,7 +14,9 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/security/tls_credentials_options.h>
-#ifdef _WIN32
+#ifdef __clang__
+#pragma clang diagnostic pop
+#elif _WIN32
 #pragma warning(pop)
 #pragma warning(default : 4702)
 #endif

@@ -37,6 +37,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vcpkg_install_dependencies"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Address Sanitizer|x64 = Address Sanitizer|x64
+		Address Sanitizer|x86 = Address Sanitizer|x86
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
 		Mock|x64 = Mock|x64
@@ -45,6 +47,9 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Address Sanitizer|x64.ActiveCfg = Address Sanitizer|x64
+		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Address Sanitizer|x64.Build.0 = Address Sanitizer|x64
+		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Address Sanitizer|x86.ActiveCfg = Address Sanitizer|x64
 		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Debug|x64.ActiveCfg = Debug|x64
 		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Debug|x64.Build.0 = Debug|x64
 		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Debug|x86.ActiveCfg = Debug|x64
@@ -55,6 +60,9 @@ Global
 		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Release|x64.ActiveCfg = Release|x64
 		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Release|x64.Build.0 = Release|x64
 		{3AE52975-FC4E-4804-8838-F230A5F1E79C}.Release|x86.ActiveCfg = Release|x64
+		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Address Sanitizer|x64.ActiveCfg = Address Sanitizer|x64
+		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Address Sanitizer|x64.Build.0 = Address Sanitizer|x64
+		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Address Sanitizer|x86.ActiveCfg = Address Sanitizer|x64
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Debug|x64.ActiveCfg = Debug|x64
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Debug|x64.Build.0 = Debug|x64
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Debug|x86.ActiveCfg = Debug|x64
@@ -63,15 +71,20 @@ Global
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Release|x64.ActiveCfg = Release|x64
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Release|x64.Build.0 = Release|x64
 		{E83EF108-B0EE-40C1-AB5A-F6D3E09FCDB5}.Release|x86.ActiveCfg = Release|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Address Sanitizer|x64.ActiveCfg = Address Sanitizer|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Address Sanitizer|x64.Build.0 = Address Sanitizer|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Address Sanitizer|x86.ActiveCfg = Address Sanitizer|x64
 		{967D7743-D77B-466A-8645-94F9812AECAD}.Debug|x64.ActiveCfg = Debug|x64
 		{967D7743-D77B-466A-8645-94F9812AECAD}.Debug|x64.Build.0 = Debug|x64
 		{967D7743-D77B-466A-8645-94F9812AECAD}.Debug|x86.ActiveCfg = Debug|x64
-		{967D7743-D77B-466A-8645-94F9812AECAD}.Mock|x64.ActiveCfg = Mock|x64
-		{967D7743-D77B-466A-8645-94F9812AECAD}.Mock|x64.Build.0 = Mock|x64
-		{967D7743-D77B-466A-8645-94F9812AECAD}.Mock|x86.ActiveCfg = Mock|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Mock|x64.ActiveCfg = Release|x64
+		{967D7743-D77B-466A-8645-94F9812AECAD}.Mock|x86.ActiveCfg = Release|x64
 		{967D7743-D77B-466A-8645-94F9812AECAD}.Release|x64.ActiveCfg = Release|x64
 		{967D7743-D77B-466A-8645-94F9812AECAD}.Release|x64.Build.0 = Release|x64
 		{967D7743-D77B-466A-8645-94F9812AECAD}.Release|x86.ActiveCfg = Release|x64
+		{68F4B081-08A4-4F37-A22B-035B738FBA15}.Address Sanitizer|x64.ActiveCfg = Address Sanitizer|x64
+		{68F4B081-08A4-4F37-A22B-035B738FBA15}.Address Sanitizer|x64.Build.0 = Address Sanitizer|x64
+		{68F4B081-08A4-4F37-A22B-035B738FBA15}.Address Sanitizer|x86.ActiveCfg = Address Sanitizer|x64
 		{68F4B081-08A4-4F37-A22B-035B738FBA15}.Debug|x64.ActiveCfg = Debug|x64
 		{68F4B081-08A4-4F37-A22B-035B738FBA15}.Debug|x64.Build.0 = Debug|x64
 		{68F4B081-08A4-4F37-A22B-035B738FBA15}.Debug|x86.ActiveCfg = Debug|x64
@@ -82,6 +95,9 @@ Global
 		{68F4B081-08A4-4F37-A22B-035B738FBA15}.Release|x64.ActiveCfg = Release|x64
 		{68F4B081-08A4-4F37-A22B-035B738FBA15}.Release|x64.Build.0 = Release|x64
 		{68F4B081-08A4-4F37-A22B-035B738FBA15}.Release|x86.ActiveCfg = Release|x64
+		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Address Sanitizer|x64.ActiveCfg = Address Sanitizer|x64
+		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Address Sanitizer|x64.Build.0 = Address Sanitizer|x64
+		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Address Sanitizer|x86.ActiveCfg = Address Sanitizer|x64
 		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Debug|x64.ActiveCfg = Debug|x64
 		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Debug|x64.Build.0 = Debug|x64
 		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Debug|x86.ActiveCfg = Debug|Win32
@@ -94,18 +110,18 @@ Global
 		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Release|x64.Build.0 = Release|x64
 		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Release|x86.ActiveCfg = Release|Win32
 		{0B2E3DF8-41C1-49ED-A9B6-2B8BEDBFB5B2}.Release|x86.Build.0 = Release|Win32
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Address Sanitizer|x64.ActiveCfg = Address Sanitizer|x64
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Address Sanitizer|x64.Build.0 = Address Sanitizer|x64
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Address Sanitizer|x86.ActiveCfg = Address Sanitizer|x64
 		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Debug|x64.ActiveCfg = Debug|x64
 		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Debug|x64.Build.0 = Debug|x64
-		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Debug|x86.ActiveCfg = Debug|Win32
-		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Debug|x86.Build.0 = Debug|Win32
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Debug|x86.ActiveCfg = Debug|x64
 		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Mock|x64.ActiveCfg = Debug|x64
 		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Mock|x64.Build.0 = Debug|x64
-		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Mock|x86.ActiveCfg = Debug|Win32
-		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Mock|x86.Build.0 = Debug|Win32
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Mock|x86.ActiveCfg = Address Sanitizer|x64
 		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Release|x64.ActiveCfg = Release|x64
 		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Release|x64.Build.0 = Release|x64
-		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Release|x86.ActiveCfg = Release|Win32
-		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Release|x86.Build.0 = Release|Win32
+		{8E446279-F584-484B-AECB-9E98E51D4B6F}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

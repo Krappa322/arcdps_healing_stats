@@ -138,7 +138,8 @@ static inline int snprint_magnitude(char* pResultBuffer, size_t pResultBufferLen
 		}
 		else
 		{
-			static_assert(false, "Bad type");
+			assert(false);
+			//static_assert(false, "unhandled type");
 		}
 	}
 
@@ -150,7 +151,7 @@ static inline int snprint_magnitude(char* pResultBuffer, size_t pResultBufferLen
 
 // Replaces "{1}", "{2}", etc. with pArgs[0], pArgs[1], etc. If that argument is nullopt, the entry is not replaced.
 // Returns the amount of bytes written
-template<int ArgCount>
+template<size_t ArgCount>
 static inline size_t ReplaceFormatted(char* pResultBuffer, size_t pResultBufferLength, const char* pFormatString, std::array<std::optional<std::variant<uint64_t, double>>, ArgCount> pArgs)
 {
 	char* startBuffer = pResultBuffer;
@@ -171,15 +172,15 @@ static inline size_t ReplaceFormatted(char* pResultBuffer, size_t pResultBufferL
 					int count;
 					if (std::holds_alternative<uint64_t>(*pArgs[num]) == true)
 					{
-						count = snprint_magnitude(pResultBuffer, pResultBufferLength, std::get<uint64_t>(*pArgs[num]));
+						count = snprint_magnitude<uint64_t>(pResultBuffer, pResultBufferLength, std::get<uint64_t>(*pArgs[num]));
 					}
 					else
 					{
 						assert(std::holds_alternative<double>(*pArgs[num]) == true);
-						count = snprint_magnitude(pResultBuffer, pResultBufferLength, std::get<double>(*pArgs[num]));
+						count = snprint_magnitude<double>(pResultBuffer, pResultBufferLength, std::get<double>(*pArgs[num]));
 					}
 
-					if (count >= pResultBufferLength)
+					if (static_cast<size_t>(count) >= pResultBufferLength)
 					{
 						// Value was truncated. Break the loop, which will insert a null character at the start of the
 						// printed value (thus not showing the truncated value)

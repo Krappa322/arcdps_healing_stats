@@ -8,6 +8,10 @@
 #include <optional>
 #include <type_traits>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-security"
+#endif
 // Helpers for ImGui functions
 namespace ImGuiEx
 {
@@ -58,7 +62,8 @@ namespace ImGuiEx
 		}
 		else
 		{
-			static_assert(false, "unhandled type");
+			assert(false);
+			//static_assert(false, "unhandled type");
 		}
 
 		RemoveFramePadding pad;
@@ -185,3 +190,6 @@ namespace DrawListEx
 		};
 	}
 }
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif

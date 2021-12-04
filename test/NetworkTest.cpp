@@ -1,4 +1,4 @@
-#pragma warning(push, 0)
+﻿#pragma warning(push, 0)
 #include <gtest/gtest.h>
 #pragma warning(pop)
 
@@ -272,7 +272,7 @@ protected:
 		server_credentials_options.pem_key_cert_pairs.push_back(UNIT_TEST_CERT_PAIR);
 		Server = std::make_unique<evtc_rpc_server>("localhost:50051", &server_credentials_options);
 
-		auto eventhandler = [this](cbtevent* /*pEvent*/, uint16_t /*pInstanceId*/)
+		auto eventhandler = [](cbtevent* /*pEvent*/, uint16_t /*pInstanceId*/)
 		{
 			// Do nothing
 		};
@@ -375,7 +375,7 @@ TEST_F(SimpleNetworkTestFixture, RegisterSelf)
 		{
 			std::lock_guard lock(Server->mRegisteredAgentsLock);
 
-			EXPECT_EQ(Server->mRegisteredAgents.size(), 1);
+			EXPECT_EQ(Server->mRegisteredAgents.size(), 1U);
 			auto iter = Server->mRegisteredAgents.find("testagent.1234");
 			ASSERT_NE(iter, Server->mRegisteredAgents.end());
 			EXPECT_EQ(iter->first, "testagent.1234");
@@ -676,7 +676,7 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 	PeerClient->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
 
 	uint32_t result = Mock.ExecuteFromXevtc("xevtc_logs\\druid_MO.xevtc", parallelCallbacks, 0);
-	ASSERT_EQ(result, 0);
+	ASSERT_EQ(result, 0U);
 
 	Client->FlushEvents();
 	PeerClient->FlushEvents();
@@ -690,7 +690,7 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 	HealingStats* localState = &states[localId].second;
 	HealingStats* peerState = &states[2000].second;
 
-	ASSERT_EQ(states.size(), 2);
+	ASSERT_EQ(states.size(), 2U);
 	ASSERT_EQ(localState->Events.size(), peerState->Events.size());
 	for (size_t i = 0; i < localState->Events.size(); i++)
 	{
@@ -741,7 +741,7 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 		expectedAgents.Add(3151, "Janna Larion", combatTime, 21902, 71, std::nullopt);
 		expectedAgents.Add(3137, "Lady Manyak", combatTime, 20637, 52, std::nullopt);
 		expectedAgents.Add(3146, "Akashi Vi Britannia", combatTime, 20084, 55, std::nullopt);
-		expectedAgents.Add(3147, u8"Moa Fh�mhair", combatTime, 8220, 29, std::nullopt);
+		expectedAgents.Add(3147, u8"Moa Fhómhair", combatTime, 8220, 29, std::nullopt);
 
 		const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
 		ASSERT_EQ(agents.Entries.size(), expectedAgents.Entries.size());

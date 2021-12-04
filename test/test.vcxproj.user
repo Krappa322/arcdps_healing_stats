@@ -4,6 +4,10 @@
     <LocalDebuggerCommandArguments>--gtest_catch_exceptions=0 --gtest_break_on_failure</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Address Sanitizer|x64'">
+    <LocalDebuggerCommandArguments>--gtest_catch_exceptions=0 --gtest_break_on_failure</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
   <PropertyGroup>
     <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>

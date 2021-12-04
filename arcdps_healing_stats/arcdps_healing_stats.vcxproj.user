@@ -3,9 +3,4 @@
   <PropertyGroup>
     <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Mock|x64'">
-    <LocalDebuggerCommand>$(SolutionDir)$(Platform)\Debug\arcdps_mock.exe</LocalDebuggerCommand>
-    <LocalDebuggerCommandArguments>"$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName).dll"</LocalDebuggerCommandArguments>
-    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-  </PropertyGroup>
 </Project>

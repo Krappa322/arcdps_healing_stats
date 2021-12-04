@@ -26,10 +26,10 @@ AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, std::string&& pName, fl
 AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealWindowOptions& pOptions, bool pDebugMode)
 	: mySourceData(std::move(pSourceData))
 	, myOptions(pOptions)
+	, myDebugMode(pDebugMode)
 	, myFilteredAgents(nullptr)
 	, mySkills(nullptr)
 	, myGroupFilterTotals(nullptr)
-	, myDebugMode(pDebugMode)
 {
 	assert(myOptions.SortOrderChoice < SortOrder::Max);
 	assert(myOptions.DataSourceChoice < DataSource::Max);
@@ -441,7 +441,7 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 		bool isIndirectHealing = false;
 		if (mySourceData.Skills->IsSkillIndirectHealing(skillId, skillName) == true)
 		{
-			LOG("Translating skill %hu %s to indirect healing", skillId, skillName);
+			LogD("Translating skill {} {} to indirect healing", skillId, skillName);
 
 			totalIndirectHealing += skill.Healing;
 			totalIndirectTicks += skill.Ticks;
