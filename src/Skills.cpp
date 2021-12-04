@@ -53,6 +53,7 @@ SkillTable::SkillTable()
 	ENTRY(30488); // "Your Soul is Mine!"
 	ENTRY(30504); // Soul Spiral (Transfusion)
 	ENTRY(30525); // Well of Calamity (All's Well That Ends Well)
+	ENTRY(30783); // Wings of Resolve (Soaring Devastation) 
 	ENTRY(30814); // Well of Action (All's Well That Ends Well)
 	ENTRY(30864); // Tidal Surge
 	ENTRY(33792); // Slice of Allspice Cake
