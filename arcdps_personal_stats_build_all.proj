@@ -1,0 +1,13 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <ItemGroup>
+        <ProjectsBuild Include="arcdps_personal_stats.sln">
+            <Properties>Configuration=Debug</Properties>
+        </ProjectsBuild>
+        <ProjectsBuild Include="arcdps_personal_stats.sln">
+            <Properties>Configuration=Release</Properties>
+        </ProjectsBuild>
+    </ItemGroup>
+    <Target Name="Build">
+        <MSBuild Projects="@(ProjectsBuild)" BuildInParallel="true" />
+    </Target>
+</Project>

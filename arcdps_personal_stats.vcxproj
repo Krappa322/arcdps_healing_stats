@@ -186,9 +186,6 @@
     <ClInclude Include="arcdps_mock\imgui\imconfig.h" />
     <ClInclude Include="arcdps_mock\imgui\imgui.h" />
     <ClInclude Include="arcdps_mock\imgui\imgui_internal.h" />
-    <ClInclude Include="arcdps_mock\imgui\stb_rect_pack.h" />
-    <ClInclude Include="arcdps_mock\imgui\stb_textedit.h" />
-    <ClInclude Include="arcdps_mock\imgui\stb_truetype.h" />
     <ClInclude Include="json\json.hpp" />
     <ClInclude Include="src\Options.h" />
     <ClInclude Include="src\Log.h" />
