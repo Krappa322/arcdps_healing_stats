@@ -113,8 +113,7 @@ target("server")
 
 	end
 
-	add_linkdirs("spdlog/build_linux")
-	add_links("grpc++", "protobuf", "gpr", "spdlog")
+	add_links("grpc++", "protobuf", "gpr", "spdlog", "fmt", "absl_synchronization")
 
 	add_files("src/Log.cpp", {cxxflags = compilerflags})
 	add_files("evtc_rpc_server/**.cpp", {cxxflags = compilerflags})

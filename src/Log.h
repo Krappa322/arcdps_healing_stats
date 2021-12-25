@@ -1,5 +1,6 @@
 #pragma once
 #define SPDLOG_COMPILED_LIB
+#define SPDLOG_FMT_EXTERNAL
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 
