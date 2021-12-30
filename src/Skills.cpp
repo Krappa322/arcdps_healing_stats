@@ -11,6 +11,7 @@ SkillTable::SkillTable()
 {
 #define ENTRY(pId) myHybridSkills[pId / 64] |= (1ULL << (pId % 64))
 	ENTRY(2654);  // Crashing Waves
+	ENTRY(5510);  // Water Trident
 	ENTRY(5549);  // Water Blast (Elementalist)
 	ENTRY(5570);  // Signet of Water
 	ENTRY(5595);  // Water Arrow
