@@ -41,6 +41,7 @@ SkillTable::SkillTable()
 	ENTRY(10619); // Deadly Feast
 	ENTRY(10643); // Gathering Plague (Transfusion)
 	ENTRY(12424); // Blood Frenzy
+	ENTRY(13684); // Lesser Symbol of Protection (Writ of Persistence)
 	ENTRY(15259); // Nourishment (Omnomberry Ghost)
 	ENTRY(21656); // Arcane Brilliance
 	ENTRY(24800); // Nourishment (Prickly Pear Pie AND Bowl of Cactus Fruit Salad)
