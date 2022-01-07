@@ -52,45 +52,40 @@ class evtc_rpc_server
 		WriteEvent,
 		Disconnect,
 		Max,
-
-		Invalid = Max,
 	};
 
 	struct CallDataBase
 	{
-		CallDataBase(std::shared_ptr<ConnectionContext>&& pContext)
-			: Context{pContext}
+		CallDataBase(CallDataType pType, std::shared_ptr<ConnectionContext>&& pContext)
+			: Type{pType}, Context{pContext}
 		{
 		}
 
-		CallDataType Type = CallDataType::Invalid;
+		const CallDataType Type;
 		std::shared_ptr<ConnectionContext> Context;
 	};
 
 	struct FinishCallData : public CallDataBase
 	{
 		FinishCallData(std::shared_ptr<ConnectionContext>&& pContext)
-			: CallDataBase{std::move(pContext)}
+			: CallDataBase{CallDataType::Finish, std::move(pContext)}
 		{
-			Type = CallDataType::Finish;
 		}
 	};
 
 	struct ConnectCallData : public CallDataBase
 	{
 		ConnectCallData(std::shared_ptr<ConnectionContext>&& pContext)
-			: CallDataBase{std::move(pContext)}
+			: CallDataBase{CallDataType::Connect, std::move(pContext)}
 		{
-			Type = CallDataType::Connect;
 		}
 	};
 
 	struct ReadMessageCallData : public CallDataBase
 	{
 		ReadMessageCallData(std::shared_ptr<ConnectionContext>&& pContext)
-			: CallDataBase{std::move(pContext)}
+			: CallDataBase{CallDataType::ReadMessage, std::move(pContext)}
 		{
-			Type = CallDataType::ReadMessage;
 		}
 
 		evtc_rpc::Message Message;
@@ -99,18 +94,16 @@ class evtc_rpc_server
 	struct WriteEventCallData : public CallDataBase
 	{
 		WriteEventCallData(std::shared_ptr<ConnectionContext>&& pContext)
-			: CallDataBase{std::move(pContext)}
+			: CallDataBase{CallDataType::WriteEvent, std::move(pContext)}
 		{
-			Type = CallDataType::WriteEvent;
 		}
 	};
 
 	struct DisconnectCallData : public CallDataBase
 	{
 		DisconnectCallData(std::shared_ptr<ConnectionContext>&& pContext)
-			: CallDataBase{std::move(pContext)}
+			: CallDataBase{CallDataType::Disconnect, std::move(pContext)}
 		{
-			Type = CallDataType::Disconnect;
 		}
 	};
 
@@ -132,6 +125,7 @@ public:
 #ifndef TEST
 private:
 #endif
+	constexpr const char* CallDataTypeToString(CallDataType pType);
 	void TryDumpStatistics(bool pForced);
 
 	void HandleConnect(ConnectCallData* pCallData);
@@ -150,8 +144,9 @@ private:
 	std::mutex mRegisteredAgentsLock;
 	std::map<std::string, std::shared_ptr<ConnectionContext>> mRegisteredAgents;
 
-	std::mutex mStatisticsLock;
+	std::mutex mLastDumpedStatisticsLock;
 	std::chrono::steady_clock::time_point mLastDumpedStatistics = {};
+
 	Statistics mStatistics = {};
 
 	evtc_rpc::evtc_rpc::AsyncService mService;

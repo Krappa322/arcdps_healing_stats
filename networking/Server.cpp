@@ -4,6 +4,32 @@
 
 const auto STATISTICS_DUMP_INTERVAL = std::chrono::minutes(5);
 
+namespace
+{
+constexpr const char* EvtcRpcMessageTypeToString(evtc_rpc::messages::Type pType)
+{
+	using evtc_rpc::messages::Type;
+
+	switch (pType)
+	{
+	case Type::Invalid:
+		return "Invalid";
+	case Type::RegisterSelf:
+		return "RegisterSelf";
+	case Type::SetSelfId:
+		return "SetSelfId";
+	case Type::AddPeer:
+		return "AddPeer";
+	case Type::RemovePeer:
+		return "RemovePeer";
+	case Type::CombatEvent:
+		return "CombatEvent";
+	default:
+		return "<invalid>";
+	};
+}
+}; // anonymous namespace
+
 evtc_rpc_server::evtc_rpc_server(const char* pListeningEndpoint, const grpc::SslServerCredentialsOptions* pCredentialsOptions)
 {
 	grpc::ServerBuilder builder;
@@ -166,12 +192,31 @@ void evtc_rpc_server::Shutdown()
 	mIsShutdown = true;
 }
 
+constexpr const char* evtc_rpc_server::CallDataTypeToString(CallDataType pType)
+{
+	switch (pType)
+	{
+	case CallDataType::Connect:
+		return "Connect";
+	case CallDataType::Finish:
+		return "Finish";
+	case CallDataType::ReadMessage:
+		return "ReadMessage";
+	case CallDataType::WriteEvent:
+		return "WriteEvent";
+	case CallDataType::Disconnect:
+		return "Disconnect";
+	default:
+		return "<invalid>";
+	};
+}
+
 // All the potential divides by zero in here are fine since the divisor is a double
 void evtc_rpc_server::TryDumpStatistics(bool pForced)
 {
 	using namespace std::chrono;
 
-	std::unique_lock statistics_lock{mStatisticsLock, std::try_to_lock};
+	std::unique_lock statistics_lock{mLastDumpedStatisticsLock, std::try_to_lock};
 	if (pForced && statistics_lock.owns_lock() == false)
 	{
 		statistics_lock.lock();
@@ -223,14 +268,16 @@ void evtc_rpc_server::TryDumpStatistics(bool pForced)
 	for (size_t i = 0; i < mStatistics.CallData.size(); i++)
 	{
 		size_t val = mStatistics.CallData[i].exchange(0, std::memory_order_relaxed);
-		LogI("\t{} - {} calls ({:.2f} per minute)", i, val, static_cast<double>(val) / minute_count);
+		LogI("\t{} - {} calls ({:.2f} per minute)",
+			CallDataTypeToString(static_cast<CallDataType>(i)), val, static_cast<double>(val) / minute_count);
 	}
 
 	LogI("MessageType statistics:");
 	for (size_t i = 0; i < mStatistics.MessageType.size(); i++)
 	{
 		size_t val = mStatistics.MessageType[i].exchange(0, std::memory_order_relaxed);
-		LogI("\t{} - {} calls ({:.2f} per minute)", i, val, static_cast<double>(val) / minute_count);
+		LogI("\t{} - {} calls ({:.2f} per minute)",
+			EvtcRpcMessageTypeToString(static_cast<evtc_rpc::messages::Type>(i)), val, static_cast<double>(val) / minute_count);
 	}
 
 	mLastDumpedStatistics = now;
