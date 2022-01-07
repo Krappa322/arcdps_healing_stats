@@ -86,6 +86,31 @@ void Log_::Init(bool pRotateOnOpen, const char* pLogPath)
 	spdlog::flush_every(std::chrono::seconds(5));
 }
 
+// SetLevel can still be used after calling this, the sink levels and logger levels are different things - e.g if logger
+// level is debug and sink level is trace then trace lines will not be shown
+void Log_::InitMultiSink(bool pRotateOnOpen, const char* pLogPathTrace, const char* pLogPathInfo)
+{
+	if (Log_::LOGGER != nullptr)
+	{
+		LogW("Skipping logger initialization since logger is not nullptr");
+		return;
+	}
+
+	spdlog::init_thread_pool(8192, 1);
+
+	auto debug_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(pLogPathTrace, 128*1024*1024, 8, pRotateOnOpen);
+	debug_sink->set_level(spdlog::level::trace);
+	auto info_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(pLogPathInfo, 128*1024*1024, 8, pRotateOnOpen);
+	info_sink->set_level(spdlog::level::info);
+
+	std::vector<spdlog::sink_ptr> sinks{debug_sink, info_sink};
+	Log_::LOGGER = std::make_shared<spdlog::async_logger>("arcdps_healing_stats", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+	Log_::LOGGER->set_pattern("%b %d %H:%M:%S.%f %t %L %v");
+	spdlog::register_logger(Log_::LOGGER);
+
+	spdlog::flush_every(std::chrono::seconds(5));
+}
+
 static std::atomic_bool LoggerLocked = false;
 void Log_::SetLevel(spdlog::level::level_enum pLevel)
 {

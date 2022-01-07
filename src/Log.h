@@ -98,6 +98,7 @@ namespace Log_
 
 	void FlushLogFile();
 	void Init(bool pRotateOnOpen, const char* pLogPath);
+	void InitMultiSink(bool pRotateOnOpen, const char* pLogPathTrace, const char* pLogPathInfo);
 	void SetLevel(spdlog::level::level_enum pLevel);
 	void LockLogger();
 
