@@ -256,7 +256,7 @@ void evtc_rpc_server::TryDumpStatistics(bool pForced)
 
 	LogI("Total peer count {} (average of {:.2f} per registered player)",
 		total_peer_count, static_cast<double>(total_peer_count) / static_cast<double>(mRegisteredAgents.size()));
-	LogI("Registered peer count {} (average of {:.2f} per registered peer, {:.2f} per registered player)",
+	LogI("Registered peer count {} (average of {:.2f} per peer, {:.2f} per registered player)",
 		registered_peer_count,
 		static_cast<double>(registered_peer_count) / static_cast<double>(total_peer_count),
 		static_cast<double>(registered_peer_count) / static_cast<double>(mRegisteredAgents.size()));
