@@ -8,7 +8,7 @@
 TEST(stress, DISABLED_server_stress)
 {
 	const size_t client_count = 10;
-	const size_t event_count = 100'000;
+	const size_t event_count = 1'000'000;
 
 	extern const char* LoadRootCertificatesFromResource();
 	const char* res = LoadRootCertificatesFromResource();
@@ -36,7 +36,7 @@ TEST(stress, DISABLED_server_stress)
 			memcpy(&event_num, pEvent, sizeof(event_num));
 			if (event_num != next_event[i])
 			{
-				LogW("Client {} got event {} when it was expecting {}", i, event_num, next_event[i]);
+				LogE("Client {} got event {} when it was expecting {}", i, event_num, next_event[i]);
 				failed = true;
 			}
 
@@ -70,6 +70,12 @@ TEST(stress, DISABLED_server_stress)
 		}
 	}
 
+	for (uint32_t i = 0; i < client_count; i++)
+	{
+		// Make sure server receives the client registration before sending any events
+		clients[i]->FlushEvents(0);
+	}
+
 	cbtevent ev;
 	memset(&ev, 0x00, sizeof(ev));
 	for (uint32_t i = 0; i < event_count; i++)
@@ -82,6 +88,11 @@ TEST(stress, DISABLED_server_stress)
 		if (i % 10000 == 0)
 		{
 			printf("loop %u\n", i);
+			if (failed.load() == true)
+			{
+				printf("Flagged as failed, stopping\n");
+				break;
+			}
 		}
 	}
 
@@ -117,7 +128,7 @@ TEST(stress, DISABLED_server_stress)
 	{
 		if (next_event[i] != event_count)
 		{
-			LogW("Client {} only received {} events when it was expecting {}", i, next_event[i], event_count);
+			LogE("Client {} only received {} events when it was expecting {}", i, next_event[i], event_count);
 			EXPECT_EQ(next_event[i], event_count); // Just log with values
 		}
 	}
