@@ -47,16 +47,15 @@ void evtc_rpc_server::Serve()
 	}
 	mService.RequestConnect(&queuedData->Context->ServerContext, &queuedData->Context->Stream, mCompletionQueue.get(), mCompletionQueue.get(), queuedData);
 
-	LOG("(tag %p) Queued Connect", queuedData);
+	LogT("(tag {}) Queued Connect", fmt::ptr(queuedData));
 
 	while (true)
 	{
-		LOG("Server loop");
 		void* tag;
 		bool ok;
 		if (mCompletionQueue->Next(&tag, &ok) == false)
 		{
-			LOG("mCompletionQueue->Next returned false, returning");
+			LogI("mCompletionQueue->Next returned false, returning");
 			return;
 		}
 
@@ -64,7 +63,7 @@ void evtc_rpc_server::Serve()
 
 		if (ok == false || mIsShutdown == true)
 		{
-			LOG("(tag %p) Got not-ok or shutdown(%s) (type %u)", tag, BOOL_STR(mIsShutdown), static_cast<CallDataBase*>(tag)->Type);
+			LogI("(tag {}) Got not-ok or shutdown({}) (type {})", fmt::ptr(tag), BOOL_STR(mIsShutdown), static_cast<CallDataBase*>(tag)->Type);
 
 			switch (static_cast<CallDataBase*>(tag)->Type)
 			{
@@ -77,7 +76,7 @@ void evtc_rpc_server::Serve()
 			case CallDataType::ReadMessage:
 			{
 				ReadMessageCallData* message = static_cast<ReadMessageCallData*>(tag);
-				LOG("(client %p tag %p) ReadMessage got not-ok, closing connection", message->Context.get(), tag);
+				LogI("(client {} tag {}) ReadMessage got not-ok, closing connection", fmt::ptr(message->Context.get()), fmt::ptr(tag));
 
 				ForceDisconnect("shutdown by client", message->Context);
 
@@ -97,7 +96,7 @@ void evtc_rpc_server::Serve()
 				break;
 			}
 			default:
-				LOG("Invalid CallDataType %i", static_cast<CallDataBase*>(tag)->Type);
+				LogC("Invalid CallDataType {}", static_cast<CallDataBase*>(tag)->Type);
 				assert(false);
 			}
 
@@ -141,7 +140,7 @@ void evtc_rpc_server::Serve()
 			break;
 		}
 		default:
-			LOG("Invalid CallDataType %i", static_cast<CallDataBase*>(tag)->Type);
+			LogC("Invalid CallDataType {}", static_cast<CallDataBase*>(tag)->Type);
 			assert(false);
 		}
 	}
@@ -164,8 +163,8 @@ void evtc_rpc_server::HandleConnect(ConnectCallData* pCallData)
 		queuedData->Context->Stream.Read(&queuedData->Message, queuedData);
 	}
 
-	LOG("(client %p tag %p) new connection from %s",
-		pCallData->Context.get(), pCallData, pCallData->Context->ServerContext.peer().c_str());
+	LogI("(client {} tag {}) new connection from {}",
+		fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), pCallData->Context->ServerContext.peer().c_str());
 }
 
 void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
@@ -178,8 +177,8 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 
 	if (dataSize < sizeof(Header))
 	{
-		LOG("(client %p tag %p) data too short for header (%zu vs %zu)",
-			pCallData->Context.get(), pCallData, dataSize, sizeof(Header));
+		LogE("(client {} tag {}) data too short for header ({} vs {})",
+			fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), dataSize, sizeof(Header));
 		ForceDisconnect("short message header", pCallData->Context);
 		return;
 	}
@@ -191,7 +190,7 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 
 	if (header.MessageVersion != 1)
 	{
-		LOG("(client %p tag %p) incorrect version %u", pCallData->Context.get(), pCallData, header.MessageVersion);
+		LogE("(client {} tag {}) incorrect version {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), header.MessageVersion);
 		ForceDisconnect("incorrect version", pCallData->Context);
 		return;
 	}
@@ -202,8 +201,8 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 	{
 		if (dataSize < sizeof(RegisterSelf))
 		{
-			LOG("(client %p tag %p) data too short for RegisterSelf message (%zu vs %zu)",
-				pCallData->Context.get(), pCallData, dataSize, sizeof(RegisterSelf));
+			LogE("(client {} tag {}) data too short for RegisterSelf message ({} vs {})",
+				fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), dataSize, sizeof(RegisterSelf));
 			ForceDisconnect("short RegisterSelf content", pCallData->Context);
 			return;
 		}
@@ -215,8 +214,8 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 
 		if (dataSize != message.SelfAccountNameLength)
 		{
-			LOG("(client %p tag %p) incorrect RegisterSelf name length (%zu vs %hhu)",
-				pCallData->Context.get(), pCallData, dataSize, message.SelfAccountNameLength);
+			LogE("(client {} tag {}) incorrect RegisterSelf name length ({} vs {})",
+				fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), dataSize, message.SelfAccountNameLength);
 			ForceDisconnect("mismatched RegisterSelf length", pCallData->Context);
 			return;
 		}
@@ -224,7 +223,7 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 		const char* error = HandleRegisterSelf(message.SelfId, std::string_view{data, message.SelfAccountNameLength}, pCallData->Context);
 		if (error != nullptr)
 		{
-			LOG("(client %p tag %p) HandleRegisterSelf failed - %s", pCallData->Context.get(), pCallData, error);
+			LogE("(client {} tag {}) HandleRegisterSelf failed - {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), error);
 			ForceDisconnect(error, pCallData->Context);
 			return;
 		}
@@ -234,8 +233,8 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 	{
 		if (dataSize != sizeof(SetSelfId))
 		{
-			LOG("(client %p tag %p) data length mismatch for SetSelfId message (%zu vs %zu)",
-				pCallData->Context.get(), pCallData, dataSize, sizeof(SetSelfId));
+			LogE("(client {} tag {}) data length mismatch for SetSelfId message ({} vs {})",
+				fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), dataSize, sizeof(SetSelfId));
 			ForceDisconnect("short SetSelfId content", pCallData->Context);
 			return;
 		}
@@ -248,7 +247,7 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 		const char* error = HandleSetSelfId(message.SelfId, pCallData->Context);
 		if (error != nullptr)
 		{
-			LOG("(client %p tag %p) HandleSetSelfId failed - %s", pCallData->Context.get(), pCallData, error);
+			LogW("(client {} tag {}) HandleSetSelfId failed - {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), error);
 			ForceDisconnect(error, pCallData->Context);
 			return;
 		}
@@ -258,8 +257,8 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 	{
 		if (dataSize < sizeof(AddPeer))
 		{
-			LOG("(client %p tag %p) data too short for AddPeer message (%zu vs %zu)",
-				pCallData->Context.get(), pCallData, dataSize, sizeof(AddPeer));
+			LogE("(client {} tag {}) data too short for AddPeer message ({} vs {})",
+				fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), dataSize, sizeof(AddPeer));
 			ForceDisconnect("short AddPeer content", pCallData->Context);
 			return;
 		}
@@ -271,8 +270,8 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 
 		if (dataSize != message.PeerAccountNameLength)
 		{
-			LOG("(client %p tag %p) incorrect AddPeer name length (%zu vs %hhu)",
-				pCallData->Context.get(), pCallData, dataSize, message.PeerAccountNameLength);
+			LogE("(client {} tag {}) incorrect AddPeer name length ({} vs {})",
+				fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), dataSize, message.PeerAccountNameLength);
 			ForceDisconnect("mismatched AddPeer length", pCallData->Context);
 			return;
 		}
@@ -280,7 +279,7 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 		const char* error = HandleAddPeer(message.PeerId, std::string_view{data, message.PeerAccountNameLength}, pCallData->Context);
 		if (error != nullptr)
 		{
-			LOG("(client %p tag %p) HandleAddPeer failed - %s", pCallData->Context.get(), pCallData, error);
+			LogW("(client {} tag {}) HandleAddPeer failed - {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), error);
 			ForceDisconnect(error, pCallData->Context);
 			return;
 		}
@@ -290,8 +289,8 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 	{
 		if (dataSize != sizeof(RemovePeer))
 		{
-			LOG("(client %p tag %p) data length mismatch for RemovePeer message (%zu vs %zu)",
-				pCallData->Context.get(), pCallData, dataSize, sizeof(RemovePeer));
+			LogE("(client {} tag {}) data length mismatch for RemovePeer message ({} vs {})",
+				fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), dataSize, sizeof(RemovePeer));
 			ForceDisconnect("RemovePeer size mismatch", pCallData->Context);
 			return;
 		}
@@ -304,7 +303,7 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 		const char* error = HandleRemovePeer(message.PeerId, pCallData->Context);
 		if (error != nullptr)
 		{
-			LOG("(client %p tag %p) HandleRemovePeer failed - %s", pCallData->Context.get(), pCallData, error);
+			LogW("(client {} tag {}) HandleRemovePeer failed - {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), error);
 			ForceDisconnect(error, pCallData->Context);
 			return;
 		}
@@ -314,8 +313,8 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 	{
 		if (dataSize != sizeof(CombatEvent))
 		{
-			LOG("(client %p tag %p) data length mismatch for CombatEvent message (%zu vs %zu)",
-				pCallData->Context.get(), pCallData, dataSize, sizeof(CombatEvent));
+			LogE("(client {} tag {}) data length mismatch for CombatEvent message ({} vs {})",
+				fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), dataSize, sizeof(CombatEvent));
 			ForceDisconnect("CombatEvent size mismatch", pCallData->Context);
 			return;
 		}
@@ -328,7 +327,7 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 		const char* error = HandleCombatEvent(message.Event, pCallData->Context);
 		if (error != nullptr)
 		{
-			LOG("(client %p tag %p) HandleCombatEvent failed - %s", pCallData->Context.get(), pCallData, error);
+			LogW("(client {} tag {}) HandleCombatEvent failed - {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), error);
 			ForceDisconnect(error, pCallData->Context);
 			return;
 		}
@@ -336,11 +335,9 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 	}
 
 	default:
-		LOG("(client %p tag %p) incorrect type %u", pCallData->Context.get(), pCallData, header.MessageType);
+		LogE("(client {} tag {}) incorrect type {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), header.MessageType);
 		return;
 	}
-
-	LOG("(client %p tag %p) <<", pCallData->Context.get(), pCallData);
 }
 
 void evtc_rpc_server::HandleWriteEvent(WriteEventCallData* pCallData)
@@ -357,7 +354,7 @@ void evtc_rpc_server::HandleWriteEvent(WriteEventCallData* pCallData)
 	}
 	else
 	{
-		LOG("(client %p tag %p) No more events queued", pCallData->Context.get(), pCallData);
+		LogT("(client {} tag {}) No more events queued", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData));
 		delete pCallData;
 	}
 }
@@ -369,7 +366,7 @@ const char* evtc_rpc_server::HandleRegisterSelf(uint16_t pInstanceId, std::strin
 	// Check this under lock, mRegisteredAgentsLock also guards the ReceivedAccountName flag
 	if (pClient->Iterator != mRegisteredAgents.end())
 	{
-		LOG("(client %p) this connection already has a registered account name", pClient.get());
+		LogE("(client {}) this connection already has a registered account name", fmt::ptr(pClient.get()));
 		return "already registered account name on this connection";
 	}
 
@@ -377,14 +374,14 @@ const char* evtc_rpc_server::HandleRegisterSelf(uint16_t pInstanceId, std::strin
 	auto [newEntry, inserted] = mRegisteredAgents.try_emplace(std::move(accountName), std::shared_ptr{pClient});
 	if (inserted == false)
 	{
-		LOG("(client %p) account name %s is already registered from another connection", pClient.get(), accountName.c_str());
+		LogW("(client {}) account name {} is already registered from another connection", fmt::ptr(pClient.get()), accountName.c_str());
 		return "account name collision";
 	}
 
 	pClient->Iterator = newEntry;
 	pClient->InstanceId = pInstanceId;
 
-	LOG("(client %p) registered account %s %hu", pClient.get(), newEntry->first.c_str(), newEntry->second->InstanceId);
+	LogI("(client {}) registered account {} {}", fmt::ptr(pClient.get()), newEntry->first.c_str(), newEntry->second->InstanceId);
 	return nullptr;
 }
 
@@ -395,13 +392,13 @@ const char* evtc_rpc_server::HandleSetSelfId(uint16_t pInstanceId, std::shared_p
 	// Check this under lock, mRegisteredAgentsLock also guards the ReceivedAccountName flag
 	if (pClient->Iterator == mRegisteredAgents.end())
 	{
-		LOG("(client %p) this connection is not registered yet", pClient.get());
+		LogE("(client {}) this connection is not registered yet", fmt::ptr(pClient.get()));
 		return "not registered yet";
 	}
 
 	pClient->InstanceId = pInstanceId;
 
-	LOG("(client %p) set self id to %hu", pClient.get(), pInstanceId);
+	LogI("(client {}) set self id to {}", fmt::ptr(pClient.get()), pInstanceId);
 	return nullptr;
 }
 
@@ -412,7 +409,7 @@ const char* evtc_rpc_server::HandleAddPeer(uint16_t pInstanceId, std::string_vie
 	// Check this under lock, mRegisteredAgentsLock also guards the ReceivedAccountName flag
 	if (pClient->Iterator == mRegisteredAgents.end())
 	{
-		LOG("(client %p) this connection is not registered yet", pClient.get());
+		LogE("(client {}) this connection is not registered yet", fmt::ptr(pClient.get()));
 		return "not registered yet";
 	}
 
@@ -420,11 +417,11 @@ const char* evtc_rpc_server::HandleAddPeer(uint16_t pInstanceId, std::string_vie
 	auto [newEntry, inserted] = pClient->Peers.try_emplace(std::move(accountName), pInstanceId);
 	if (inserted == false)
 	{
-		LOG("(client %p) peer %s is already registered (instance id %hu, new instance id is %hu)", pClient.get(), accountName.c_str(), newEntry->second, pInstanceId);
+		LogW("(client {}) peer {} is already registered (instance id {}, new instance id is {})", fmt::ptr(pClient.get()), accountName.c_str(), newEntry->second, pInstanceId);
 		return "peer already registered";
 	}
 
-	LOG("(client %p) added peer %s %hu", pClient.get(), newEntry->first.c_str(), newEntry->second);
+	LogI("(client {}) added peer {} {}", fmt::ptr(pClient.get()), newEntry->first.c_str(), newEntry->second);
 	return nullptr;
 }
 
@@ -435,7 +432,7 @@ const char* evtc_rpc_server::HandleRemovePeer(uint16_t pInstanceId, std::shared_
 	// Check this under lock, mRegisteredAgentsLock also guards the ReceivedAccountName flag
 	if (pClient->Iterator == mRegisteredAgents.end())
 	{
-		LOG("(client %p) this connection is not registered yet", pClient.get());
+		LogE("(client {}) this connection is not registered yet", fmt::ptr(pClient.get()));
 		return "not registered yet";
 	}
 
@@ -452,11 +449,11 @@ const char* evtc_rpc_server::HandleRemovePeer(uint16_t pInstanceId, std::shared_
 	
 	if (removed_name == "")
 	{
-		LOG("(client %p) can't find peer with instance id %hu", pClient.get(), pInstanceId);
+		LogI("(client {}) can't find peer with instance id %hu", fmt::ptr(pClient.get()), pInstanceId);
 		return nullptr;
 	}
 
-	LOG("(client %p) removed peer %s %hu", pClient.get(), removed_name.c_str(), pInstanceId);
+	LogI("(client {}) removed peer {} {}", fmt::ptr(pClient.get()), removed_name.c_str(), pInstanceId);
 	return nullptr;
 }
 
@@ -469,7 +466,7 @@ const char* evtc_rpc_server::HandleCombatEvent(const cbtevent& pEvent, std::shar
 		// Check this under lock, mRegisteredAgentsLock also guards the ReceivedAccountName flag
 		if (pClient->Iterator == mRegisteredAgents.end())
 		{
-			LOG("(client %p) this connection is not registered yet", pClient.get());
+			LogE("(client {}) this connection is not registered yet", fmt::ptr(pClient.get()));
 			return "not registered yet";
 		}
 
@@ -482,7 +479,7 @@ const char* evtc_rpc_server::HandleCombatEvent(const cbtevent& pEvent, std::shar
 			{
 				if (iter->second->InstanceId != peerId)
 				{
-					LOG("(client %p) peer %p has incorrect instance id (expected %hu, found %hu)", pClient.get(), iter->second.get(), iter->second->InstanceId, peerId);
+					LogW("(client {}) peer {} has incorrect instance id (expected {}, found {})", fmt::ptr(pClient.get()), fmt::ptr(iter->second.get()), iter->second->InstanceId, peerId);
 					continue;
 				}
 
@@ -507,11 +504,11 @@ const char* evtc_rpc_server::HandleCombatEvent(const cbtevent& pEvent, std::shar
 		else
 		{
 			peer->QueuedEvents.emplace_back(std::move(message));
-			LOG("(client %p) Queued CombatEvent from %p", peer.get(), pClient.get());
+			LogT("(client {}) Queued CombatEvent from {}", fmt::ptr(peer.get()), fmt::ptr(pClient.get()));
 		}
 	}
 
-	LOG("(client %p) Queued CombatEvents to %zu peers", pClient.get(), peers.size());
+	LogD("(client {}) Queued CombatEvents to {} peers", fmt::ptr(pClient.get()), peers.size());
 
 	return nullptr;
 }
@@ -534,14 +531,14 @@ void evtc_rpc_server::SendEvent(const evtc_rpc::messages::CombatEvent& pEvent, W
 
 	pClient->WritePending = true;
 
-	LOG("(client %p tag %p) Sending CombatEvent from %hu source %hu target %hu skill %u value %i", pClient.get(), pCallData, pEvent.SenderInstanceId, pEvent.Event.src_instid, pEvent.Event.dst_instid, pEvent.Event.skillid, pEvent.Event.value);
+	LogD("(client {} tag {}) Sending CombatEvent from {} source {} target {} skill {} value {}", fmt::ptr(pClient.get()), fmt::ptr(pCallData), pEvent.SenderInstanceId, pEvent.Event.src_instid, pEvent.Event.dst_instid, pEvent.Event.skillid, pEvent.Event.value);
 }
 
 void evtc_rpc_server::ForceDisconnect(const char* pErrorMessage, const std::shared_ptr<ConnectionContext>& pClient)
 {
 	if (pClient->ForceDisconnected == true)
 	{
-		LOG("Ignoring ForceDisconnect since client is already disconnected");
+		LogD("Ignoring ForceDisconnect since client is already disconnected");
 		return;
 	}
 
@@ -561,13 +558,13 @@ void evtc_rpc_server::ForceDisconnect(const char* pErrorMessage, const std::shar
 
 	if (mIsShutdown == true)
 	{
-		LOG("(client %p) force disconnected (removedFromTable=%s) - '%s'. Server is shutting down so not queueing a Finish",
-			pClient.get(), BOOL_STR(removedFromTable), pErrorMessage);
+		LogI("(client {}) force disconnected (removedFromTable={}) - '{}'. Server is shutting down so not queueing a Finish",
+			fmt::ptr(pClient.get()), BOOL_STR(removedFromTable), pErrorMessage);
 		return;
 	}
 
 	DisconnectCallData* queuedData = new DisconnectCallData{std::shared_ptr(pClient)};
 	pClient->Stream.Finish(grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, pErrorMessage}, queuedData);
 	
-	LOG("(client %p tag %p) force disconnected (removedFromTable=%s) - '%s'", pClient.get(), queuedData, BOOL_STR(removedFromTable), pErrorMessage);
+	LogI("(client {} tag {}) force disconnected (removedFromTable={}) - '{}'", fmt::ptr(pClient.get()), fmt::ptr(queuedData), BOOL_STR(removedFromTable), pErrorMessage);
 }
