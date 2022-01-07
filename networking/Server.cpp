@@ -2,6 +2,8 @@
 
 #include "../src/Log.h"
 
+const auto STATISTICS_DUMP_INTERVAL = std::chrono::minutes(5);
+
 evtc_rpc_server::evtc_rpc_server(const char* pListeningEndpoint, const grpc::SslServerCredentialsOptions* pCredentialsOptions)
 {
 	grpc::ServerBuilder builder;
@@ -31,6 +33,7 @@ evtc_rpc_server::evtc_rpc_server(const char* pListeningEndpoint, const grpc::Ssl
 evtc_rpc_server::~evtc_rpc_server()
 {
 	assert(mRegisteredAgents.size() == 0);
+	TryDumpStatistics(true);
 }
 
 void evtc_rpc_server::ThreadStartServe(void* pThis)
@@ -51,6 +54,8 @@ void evtc_rpc_server::Serve()
 
 	while (true)
 	{
+		TryDumpStatistics(false);
+
 		void* tag;
 		bool ok;
 		if (mCompletionQueue->Next(&tag, &ok) == false)
@@ -61,11 +66,17 @@ void evtc_rpc_server::Serve()
 
 		std::shared_lock lock{mShutdownLock};
 
+		CallDataType tag_type = static_cast<CallDataBase*>(tag)->Type;
+		if (tag_type < CallDataType::Max)
+		{
+			mStatistics.CallData[static_cast<size_t>(tag_type)].fetch_add(1, std::memory_order_relaxed);
+		}
+
 		if (ok == false || mIsShutdown == true)
 		{
-			LogI("(tag {}) Got not-ok or shutdown({}) (type {})", fmt::ptr(tag), BOOL_STR(mIsShutdown), static_cast<CallDataBase*>(tag)->Type);
+			LogI("(tag {}) Got not-ok or shutdown({}) (type {})", fmt::ptr(tag), BOOL_STR(mIsShutdown), tag_type);
 
-			switch (static_cast<CallDataBase*>(tag)->Type)
+			switch (tag_type)
 			{
 			case CallDataType::Connect:
 			{
@@ -96,14 +107,14 @@ void evtc_rpc_server::Serve()
 				break;
 			}
 			default:
-				LogC("Invalid CallDataType {}", static_cast<CallDataBase*>(tag)->Type);
+				LogC("Invalid CallDataType {}", tag_type);
 				assert(false);
 			}
 
 			continue;
 		}
 
-		switch (static_cast<CallDataBase*>(tag)->Type)
+		switch (tag_type)
 		{
 		case CallDataType::Connect:
 		{
@@ -140,7 +151,7 @@ void evtc_rpc_server::Serve()
 			break;
 		}
 		default:
-			LogC("Invalid CallDataType {}", static_cast<CallDataBase*>(tag)->Type);
+			LogC("Invalid CallDataType {}", tag_type);
 			assert(false);
 		}
 	}
@@ -153,6 +164,76 @@ void evtc_rpc_server::Shutdown()
 	mServer->Shutdown();
 	mCompletionQueue->Shutdown();
 	mIsShutdown = true;
+}
+
+// All the potential divides by zero in here are fine since the divisor is a double
+void evtc_rpc_server::TryDumpStatistics(bool pForced)
+{
+	using namespace std::chrono;
+
+	std::unique_lock statistics_lock{mStatisticsLock, std::try_to_lock};
+	if (pForced && statistics_lock.owns_lock() == false)
+	{
+		statistics_lock.lock();
+	}
+
+	if (statistics_lock.owns_lock() == false)
+	{
+		return;
+	}
+
+	steady_clock::time_point now = steady_clock::now();
+	if (pForced == false && mLastDumpedStatistics + STATISTICS_DUMP_INTERVAL > now)
+	{
+		return;
+	}
+
+	// For arithmetic below, make sure now is at least equal to mLastDumpedStatistics (so subtraction doesn't go negative)
+	now = (std::max)(mLastDumpedStatistics, now);
+
+	std::lock_guard agents_lock{mRegisteredAgentsLock};
+	LogI("Total of {} registered players", mRegisteredAgents.size());
+
+	size_t total_peer_count = 0;
+	size_t registered_peer_count = 0;
+	for (const auto& agent : mRegisteredAgents)
+	{
+		total_peer_count += agent.second->Peers.size();
+		for (const auto& peer : agent.second->Peers)
+		{
+			const auto iter = mRegisteredAgents.find(peer.first);
+			if (iter != mRegisteredAgents.end())
+			{
+				registered_peer_count += 1;
+			}
+		}
+	}
+
+	LogI("Total peer count {} (average of {:.2f} per registered player)",
+		total_peer_count, static_cast<double>(total_peer_count) / static_cast<double>(mRegisteredAgents.size()));
+	LogI("Registered peer count {} (average of {:.2f} per registered peer, {:.2f} per registered player)",
+		registered_peer_count,
+		static_cast<double>(registered_peer_count) / static_cast<double>(total_peer_count),
+		static_cast<double>(registered_peer_count) / static_cast<double>(mRegisteredAgents.size()));
+
+	// std::chrono doesn't have any functions for getting fractional count, so manual multiplication of tick count it is
+	const double minute_count = static_cast<double>(duration_cast<nanoseconds>(now - mLastDumpedStatistics).count()) / 60'000'000'000.0;
+
+	LogI("CallData statistics:");
+	for (size_t i = 0; i < mStatistics.CallData.size(); i++)
+	{
+		size_t val = mStatistics.CallData[i].exchange(0, std::memory_order_relaxed);
+		LogI("\t{} - {} calls ({:.2f} per minute)", i, val, static_cast<double>(val) / minute_count);
+	}
+
+	LogI("MessageType statistics:");
+	for (size_t i = 0; i < mStatistics.MessageType.size(); i++)
+	{
+		size_t val = mStatistics.MessageType[i].exchange(0, std::memory_order_relaxed);
+		LogI("\t{} - {} calls ({:.2f} per minute)", i, val, static_cast<double>(val) / minute_count);
+	}
+
+	mLastDumpedStatistics = now;
 }
 
 void evtc_rpc_server::HandleConnect(ConnectCallData* pCallData)
@@ -193,6 +274,11 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 		LogE("(client {} tag {}) incorrect version {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), header.MessageVersion);
 		ForceDisconnect("incorrect version", pCallData->Context);
 		return;
+	}
+
+	if (header.MessageType < evtc_rpc::messages::Type::Max)
+	{
+		mStatistics.MessageType[static_cast<size_t>(header.MessageType)].fetch_add(1, std::memory_order_relaxed);
 	}
 
 	switch (header.MessageType)

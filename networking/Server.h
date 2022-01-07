@@ -44,15 +44,16 @@ class evtc_rpc_server
 		std::deque<evtc_rpc::messages::CombatEvent> QueuedEvents; // Protected by WriteLock
 	};
 
-	enum class CallDataType
+	enum class CallDataType : uint32_t
 	{
 		Connect,
 		Finish,
 		ReadMessage,
 		WriteEvent,
 		Disconnect,
+		Max,
 
-		Invalid
+		Invalid = Max,
 	};
 
 	struct CallDataBase
@@ -113,6 +114,13 @@ class evtc_rpc_server
 		}
 	};
 
+	struct Statistics
+	{
+		// TODO: Implement usage of these (don't forget to check that value is not higher than ::Max)
+		std::array<std::atomic_size_t, static_cast<size_t>(CallDataType::Max)> CallData = {};
+		std::array<std::atomic_size_t, static_cast<size_t>(evtc_rpc::messages::Type::Max)> MessageType = {};
+	};
+
 public:
 	evtc_rpc_server(const char* pListeningEndpoint, const grpc::SslServerCredentialsOptions* pCredentialsOptions);
 	~evtc_rpc_server();
@@ -124,6 +132,8 @@ public:
 #ifndef TEST
 private:
 #endif
+	void TryDumpStatistics(bool pForced);
+
 	void HandleConnect(ConnectCallData* pCallData);
 	void HandleReadMessage(ReadMessageCallData* pCallData);
 	void HandleWriteEvent(WriteEventCallData* pCallData);
@@ -139,7 +149,11 @@ private:
 
 	std::mutex mRegisteredAgentsLock;
 	std::map<std::string, std::shared_ptr<ConnectionContext>> mRegisteredAgents;
-	
+
+	std::mutex mStatisticsLock;
+	std::chrono::steady_clock::time_point mLastDumpedStatistics = {};
+	Statistics mStatistics = {};
+
 	evtc_rpc::evtc_rpc::AsyncService mService;
 	std::unique_ptr<grpc::Server> mServer;
 	std::unique_ptr<grpc::ServerCompletionQueue> mCompletionQueue;

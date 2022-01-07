@@ -14,6 +14,7 @@ enum class Type : uint32_t
 	AddPeer = 3,
 	RemovePeer = 4,
 	CombatEvent = 5,
+	Max
 };
 
 struct Header
