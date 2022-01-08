@@ -5,19 +5,28 @@
 #include "Exports.h"
 #include "Log.h"
 
-TEST(stress, DISABLED_server_stress)
+#include "spdlog/stopwatch.h"
+
+#include <numeric>
+
+TEST(Stress, Stress)
 {
-	const size_t client_count = 10;
-	const size_t event_count = 1'000'000;
+	constexpr static size_t CLIENT_COUNT = 10;
+	constexpr static size_t SENDER_COUNT = 10;
+	constexpr static uint64_t EVENT_COUNT = 100'000;
+	constexpr static uint64_t REPORT_INTERVAL = 10'000;
 
 	extern const char* LoadRootCertificatesFromResource();
 	const char* res = LoadRootCertificatesFromResource();
 	ASSERT_EQ(res, nullptr);
 
 	std::atomic_bool failed = false;
-	std::unique_ptr<evtc_rpc_client> clients[client_count];
-	std::unique_ptr<std::thread> client_threads[client_count];
-	uint32_t next_event[client_count] = {};
+
+	std::array<std::unique_ptr<evtc_rpc_client>, CLIENT_COUNT> clients;
+	std::array<std::unique_ptr<std::thread>, CLIENT_COUNT> client_threads;
+	std::array<std::unique_ptr<std::thread>, SENDER_COUNT> sender_threads;
+
+	std::array<std::array<size_t, SENDER_COUNT>, CLIENT_COUNT> next_event = {};
 
 	auto getEndpoint = []() -> std::string
 	{
@@ -28,27 +37,37 @@ TEST(stress, DISABLED_server_stress)
 		return std::string{GlobalObjects::ROOT_CERTIFICATES};
 	}; 
 
-	for (uint32_t i = 0; i < client_count; i++)
+	for (size_t i = 0; i < CLIENT_COUNT; i++)
 	{
 		auto eventHandler = [&next_event, &failed, i](cbtevent* pEvent, uint16_t /*pInstanceId*/)
 		{
-			uint32_t event_num;
-			memcpy(&event_num, pEvent, sizeof(event_num));
-			if (event_num != next_event[i])
+			size_t sender_num;
+			memcpy(&sender_num, pEvent, sizeof(sender_num));
+			size_t event_num;
+			memcpy(&event_num, reinterpret_cast<const byte*>(pEvent) + sizeof(sender_num), sizeof(event_num));
+
+			if (sender_num > next_event[i].size())
 			{
-				LogE("Client {} got event {} when it was expecting {}", i, event_num, next_event[i]);
+				LogE("Client {} got event from sender {} which is invalid", i, sender_num);
+				failed = true;
+				return;
+			}
+
+			if (event_num != next_event[i][sender_num])
+			{
+				LogE("Client {} got event {} from {} when it was expecting {}", i, event_num, sender_num, next_event[i][sender_num]);
 				failed = true;
 			}
 
-			next_event[i] += 1;
+			next_event[i][sender_num] += 1;
 		};
 
 		clients[i] = std::make_unique<evtc_rpc_client>(std::function{getEndpoint}, std::function{getCertificates}, std::move(eventHandler));
 		client_threads[i] = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, clients[i].get());
-		for (uint32_t j = 0; j < client_count; j++)
+		for (size_t j = 0; j < CLIENT_COUNT; j++)
 		{
 			char nameBuffer[128];
-			snprintf(nameBuffer, sizeof(nameBuffer), "testagent%u.1234", j);
+			snprintf(nameBuffer, sizeof(nameBuffer), "testagent%zu.1234", j);
 
 			ag ag1{};
 			ag ag2{};
@@ -70,67 +89,114 @@ TEST(stress, DISABLED_server_stress)
 		}
 	}
 
-	for (uint32_t i = 0; i < client_count; i++)
+	for (size_t i = 0; i < CLIENT_COUNT; i++)
 	{
 		// Make sure server receives the client registration before sending any events
 		clients[i]->FlushEvents(0);
 	}
 
-	cbtevent ev;
-	memset(&ev, 0x00, sizeof(ev));
-	for (uint32_t i = 0; i < event_count; i++)
+	for (size_t i = 0; i < SENDER_COUNT; i++)
 	{
-		memcpy(&ev, &i, sizeof(i));
-
-		clients[0]->FlushEvents(4999);
-		clients[0]->ProcessLocalEvent(&ev, nullptr, nullptr, nullptr, 0, 0);
-
-		if (i % 10000 == 0)
-		{
-			printf("loop %u\n", i);
-			if (failed.load() == true)
+		sender_threads[i] = std::make_unique<std::thread>([](size_t pSenderNum, evtc_rpc_client& pClient, size_t pEventCount, std::atomic_bool& pFailedFlag)
 			{
-				printf("Flagged as failed, stopping\n");
-				break;
-			}
-		}
+				cbtevent ev;
+				memset(&ev, 0x00, sizeof(ev));
+				for (uint64_t i = 0; i < pEventCount; i++)
+				{
+					memcpy(&ev, &pSenderNum, sizeof(pSenderNum));
+					memcpy(reinterpret_cast<byte*>(&ev) + sizeof(pSenderNum), &i, sizeof(i));
+
+					pClient.FlushEvents(4999);
+					pClient.ProcessLocalEvent(&ev, nullptr, nullptr, nullptr, 0, 0);
+
+					if (i % REPORT_INTERVAL == 0)
+					{
+						printf("%zu: loop %llu\n", pSenderNum, i);
+						if (pFailedFlag.load() == true)
+						{
+							printf("%zu: Flagged as failed, stopping\n", pSenderNum);
+							break;
+						}
+					}
+				}
+				pClient.FlushEvents(0);
+			}, i, std::ref(*clients[i]), EVENT_COUNT, std::ref(failed));
+	}
+	for (size_t i = 0; i < SENDER_COUNT; i++)
+	{
+		sender_threads[i]->join();
 	}
 
-	std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+	spdlog::stopwatch complete_timer;
+
 	bool completed = false;
-	while (failed.load() == false && (std::chrono::system_clock::now() - start) < std::chrono::milliseconds(30000))
+	std::chrono::steady_clock::time_point last_received_event = std::chrono::steady_clock::now();
+	std::array<uint64_t, SENDER_COUNT> lastCount = {};
+	while (failed.load() == false && last_received_event + std::chrono::milliseconds(1000) > std::chrono::steady_clock::now())
 	{
-		uint64_t count = 0;
-		for (uint32_t i = 1; i < client_count; i++)
+		for (size_t sender_index = 0; sender_index < SENDER_COUNT; sender_index++)
 		{
-			count += next_event[i]; // not atomic, but whatever :)
+			uint64_t count = 0;
+			for (size_t client_index = 0; client_index < CLIENT_COUNT; client_index++)
+			{
+				count += next_event[client_index][sender_index];
+			}
+
+			EXPECT_GE(count, lastCount[sender_index]);
+			if (count > lastCount[sender_index])
+			{
+				last_received_event = std::chrono::steady_clock::now();
+				if ((count / REPORT_INTERVAL) > (lastCount[sender_index] / REPORT_INTERVAL))
+				{
+					printf("%llu: Received %llu events\n", sender_index, (count / REPORT_INTERVAL) * REPORT_INTERVAL);
+				}
+				lastCount[sender_index] = count;
+			}
 		}
-		if (count == event_count * (client_count - 1))
+
+		uint64_t totalCount = 0;
+		totalCount = std::accumulate(lastCount.begin(), lastCount.end(), 0ULL);
+
+		if (totalCount >= SENDER_COUNT * EVENT_COUNT * (CLIENT_COUNT - 1))
 		{
 			completed = true;
 			break;
 		}
+		
 		Sleep(1);
 	}
-	LogI("Awaiting client finish took {}ms", std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count());
-	EXPECT_TRUE(completed);
 
-	for (uint32_t i = 0; i < client_count; i++)
+	LogI("Awaiting client finish took {}", complete_timer);
+	EXPECT_TRUE(completed);
+	EXPECT_FALSE(failed.load());
+
+	for (size_t i = 0; i < CLIENT_COUNT; i++)
 	{
 		clients[i]->Shutdown();
 	}
-	for (uint32_t i = 0; i < client_count; i++)
+	for (size_t i = 0; i < CLIENT_COUNT; i++)
 	{
 		client_threads[i]->join();
 	}
-	EXPECT_EQ(next_event[0], 0);
-	for (uint32_t i = 1; i < client_count; i++)
+
+	for (size_t sender_index = 0; sender_index < SENDER_COUNT; sender_index++)
 	{
-		if (next_event[i] != event_count)
+		for (size_t client_index = 0; client_index < CLIENT_COUNT; client_index++)
 		{
-			LogE("Client {} only received {} events when it was expecting {}", i, next_event[i], event_count);
-			EXPECT_EQ(next_event[i], event_count); // Just log with values
+			if (client_index == sender_index)
+			{
+				// Sender shouldn't send events to itself
+				EXPECT_EQ(next_event[client_index][sender_index], 0);
+			}
+			else
+			{
+				if (next_event[client_index][sender_index] != EVENT_COUNT)
+				{
+					LogE("Client {} only received {} events from {} when it was expecting {}",
+						client_index, next_event[client_index][sender_index], sender_index, EVENT_COUNT);
+					EXPECT_EQ(next_event[client_index][sender_index], EVENT_COUNT); // Just log with values
+				}
+			}
 		}
 	}
-	EXPECT_FALSE(failed.load());
 }
