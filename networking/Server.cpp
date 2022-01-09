@@ -669,7 +669,7 @@ void evtc_rpc_server::SendEvent(const evtc_rpc::messages::CombatEvent& pEvent, W
 
 	pClient->WritePending = true;
 
-	LogD("(client {} tag {}) Sending CombatEvent from {} source {} target {} skill {} value {}", fmt::ptr(pClient.get()), fmt::ptr(pCallData), pEvent.SenderInstanceId, pEvent.Event.src_instid, pEvent.Event.dst_instid, pEvent.Event.skillid, pEvent.Event.value);
+	LogT("(client {} tag {}) Sending CombatEvent from {} source {} target {} skill {} value {}", fmt::ptr(pClient.get()), fmt::ptr(pCallData), pEvent.SenderInstanceId, pEvent.Event.src_instid, pEvent.Event.dst_instid, pEvent.Event.skillid, pEvent.Event.value);
 }
 
 void evtc_rpc_server::ForceDisconnect(const char* pErrorMessage, const std::shared_ptr<ConnectionContext>& pClient)
