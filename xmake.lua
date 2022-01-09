@@ -70,7 +70,7 @@ rule("protobuf")
 	end)
 
 
-target("server")
+target("evtc_rpc_server")
 	add_rules("protobuf")
 
 	set_kind("binary")
@@ -100,7 +100,7 @@ target("server")
 		set_optimize("none")
 		add_defines("_DEBUG")
 		table.insert(compilerflags, "-fsanitize=undefined")
-		--table.insert(compilerflags, "-fno-sanitize=alignment")
+		table.insert(compilerflags, "-fno-sanitize=alignment")
 		add_ldflags("-fsanitize=undefined")
 		--add_ldflags("-fno-sanitize=alignment")
 
@@ -111,9 +111,22 @@ target("server")
 		add_ldflags("-flto")
 		add_ldflags("-fuse-linker-plugin")
 
+	elseif is_mode("profiling") then
+		set_optimize("fastest")
+		add_defines("NDEBUG")
+		add_cxxflags("-flto")
+		add_ldflags("-flto")
+		add_ldflags("-fuse-linker-plugin")
+		add_cxxflags("-pg")
+		add_ldflags("-pg")
+
 	end
 
+	add_defines("LINUX")
+
 	add_links("grpc++", "protobuf", "gpr", "spdlog", "fmt", "absl_synchronization")
+
+	add_syslinks("pthread")
 
 	add_files("src/Log.cpp", {cxxflags = compilerflags})
 	add_files("evtc_rpc_server/**.cpp", {cxxflags = compilerflags})
@@ -121,15 +134,10 @@ target("server")
 	add_files("networking/**.cpp", {cxxflags = compilerflags})
 	add_files("networking/**.proto")
 
-	add_includedirs("arcdps_mock/arcdps-extension", "spdlog/include")
-
-	if is_os("linux") then
-		add_defines("LINUX")
-		add_syslinks("pthread")
-		add_cxxflags("-ggdb3")
-	end
+	add_includedirs("arcdps_mock/arcdps-extension")
 
 	add_cxxflags("-fPIC")
+	add_cxxflags("-ggdb3")
 	add_cxxflags("-march=native")
 	add_cxxflags("-Wextra", "-Weffc++", "-pedantic")
 	add_cxxflags("-Werror=shadow", "-Werror=duplicate-decl-specifier", "-Werror=ignored-qualifiers", "-Werror=return-type")
