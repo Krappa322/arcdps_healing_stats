@@ -111,6 +111,12 @@ void Log_::InitMultiSink(bool pRotateOnOpen, const char* pLogPathTrace, const ch
 	spdlog::flush_every(std::chrono::seconds(5));
 }
 
+void Log_::Shutdown()
+{
+	Log_::LOGGER = nullptr;
+	spdlog::shutdown();
+}
+
 static std::atomic_bool LoggerLocked = false;
 void Log_::SetLevel(spdlog::level::level_enum pLevel)
 {

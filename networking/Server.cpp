@@ -186,6 +186,11 @@ void evtc_rpc_server::Serve()
 void evtc_rpc_server::Shutdown()
 {
 	std::unique_lock lock{mShutdownLock};
+	if (mIsShutdown == true)
+	{
+		LogW("Ignoring shutdown request since server is already shut down");
+		return;
+	}
 
 	mServer->Shutdown();
 	mCompletionQueue->Shutdown();
