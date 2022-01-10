@@ -1,5 +1,4 @@
 #include "Log.h"
-#include "Log.h"
 
 #ifdef _WIN32
 #include "arcdps_structs.h"
