@@ -660,11 +660,13 @@ void evtc_rpc_server::SendEvent(const evtc_rpc::messages::CombatEvent& pEvent, W
 	header.MessageType = evtc_rpc::messages::Type::CombatEvent;
 
 	char buffer[sizeof(header) + sizeof(pEvent)];
-	memcpy(buffer, &header, sizeof(header));
-	memcpy(buffer + sizeof(header), &pEvent, sizeof(pEvent));
-
+	std::string blob;
+	blob.resize(sizeof(header) + sizeof(pEvent));
+	memcpy(blob.data(), &header, sizeof(header));
+	memcpy(blob.data() + sizeof(header), &pEvent, sizeof(pEvent));
 	evtc_rpc::Message rpc_message;
 	rpc_message.set_blob(buffer, sizeof(header) + sizeof(pEvent));
+	rpc_message.set_blob(std::move(blob));
 	pClient->Stream.Write(rpc_message, pCallData);
 
 	pClient->WritePending = true;
