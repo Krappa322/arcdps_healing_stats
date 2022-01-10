@@ -124,7 +124,7 @@ target("evtc_rpc_server")
 
 	add_defines("LINUX")
 
-	add_links("grpc++", "protobuf", "gpr", "spdlog", "fmt", "absl_synchronization")
+	add_links("grpc++", "grpc", "protobuf", "gpr", "spdlog", "fmt", "absl_synchronization")
 
 	add_syslinks("pthread")
 
