@@ -67,7 +67,7 @@ namespace ImGuiEx
 		}
 
 		RemoveFramePadding pad;
-		return ImGui::InputScalar(pLabel, ImGuiDataType_S32, pInt);
+		return ImGui::InputScalar(pLabel, dataType, pInt);
 	}
 
 	template <typename... Args>
