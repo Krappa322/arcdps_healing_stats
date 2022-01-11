@@ -9,11 +9,11 @@
 
 #include <numeric>
 
-TEST(Stress, Stress)
+TEST(Stress, DISABLED_Stress)
 {
 	constexpr static size_t CLIENT_COUNT = 10;
 	constexpr static size_t SENDER_COUNT = 10;
-	constexpr static uint64_t EVENT_COUNT = 100'000;
+	constexpr static uint64_t EVENT_COUNT = 10'000;
 	constexpr static uint64_t REPORT_INTERVAL = 10'000;
 
 	extern const char* LoadRootCertificatesFromResource();
