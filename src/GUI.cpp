@@ -378,21 +378,28 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGui::Separator();
 
 			ImGuiEx::SmallCheckBox("auto resize window", &pContext.AutoResize);
-			if (pContext.AutoResize == true)
+			if (pContext.AutoResize == false)
 			{
-				ImGuiEx::SmallIndent();
+				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(128, 128, 128, 255));
+			}
+			ImGuiEx::SmallIndent();
 
-				ImGuiEx::SmallInputInt("min entries", &pContext.MinLinesDisplayed);
-				ImGuiEx::AddTooltipToLastItem(
-					"The minimum amount of lines of data to show in this window.");
-				ImGuiEx::SmallInputInt("max entries", &pContext.MaxLinesDisplayed);
-				ImGuiEx::AddTooltipToLastItem(
-					"The maximum amount of lines of data to show in this window. Set to 0 for no limit");
-				ImGuiEx::SmallInputInt("window width", &pContext.FixedWindowWidth);
-				ImGuiEx::AddTooltipToLastItem(
-					"Set to 0 for dynamic resizing of width");
+			ImGuiEx::SmallInputInt("min entries", &pContext.MinLinesDisplayed);
+			ImGuiEx::AddTooltipToLastItem(
+				"The minimum amount of lines of data to show in this window.");
+			ImGuiEx::SmallInputInt("max entries", &pContext.MaxLinesDisplayed);
+			ImGuiEx::AddTooltipToLastItem(
+				"The maximum amount of lines of data to show in this window. Set to 0 for no limit");
+			ImGuiEx::SmallInputInt("window width", &pContext.FixedWindowWidth);
+			ImGuiEx::AddTooltipToLastItem(
+				"Set to 0 for dynamic resizing of width");
 
-				ImGuiEx::SmallUnindent();
+			ImGuiEx::SmallUnindent();
+			if (pContext.AutoResize == false)
+			{
+				ImGui::PopItemFlag();
+				ImGui::PopStyleColor();
 			}
 
 			ImGui::EndMenu();
