@@ -53,6 +53,14 @@ int main(int pArgumentCount, char** pArgumentVector)
 
 	SERVER = std::make_unique<evtc_rpc_server>(pArgumentVector[1], nullptr);
 	SERVER_THREAD = std::thread(evtc_rpc_server::ThreadStartServe, SERVER.get());
+
+// Set thread name after this thread is done cloning itself for other threads
+#ifdef LINUX
+	pthread_setname_np(pthread_self(), "main-thread");
+#elif defined(_WIN32)
+	SetThreadDescription(GetCurrentThread(), L"main-thread");
+#endif
+
 	install_signal_handler();
 	
 	SERVER_THREAD.join();

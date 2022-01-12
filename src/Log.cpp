@@ -13,12 +13,27 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef LINUX
+#include <pthread.h>
+#endif
 #ifdef _WIN32
 #include <Windows.h>
 #endif
 
 #include <chrono>
 #include <ctime>
+
+namespace
+{
+void SetThreadNameLogThread()
+{
+#ifdef LINUX
+	pthread_setname_np(pthread_self(), "spdlog-worker");
+#elif defined(_WIN32)
+	SetThreadDescription(GetCurrentThread(), L"spdlog-worker");
+#endif
+}
+};
 
 void Log_::LogImplementation_(const char* pComponentName, const char* pFunctionName, const char* pFormatString, ...)
 {
@@ -95,7 +110,7 @@ void Log_::InitMultiSink(bool pRotateOnOpen, const char* pLogPathTrace, const ch
 		return;
 	}
 
-	spdlog::init_thread_pool(8192, 1);
+	spdlog::init_thread_pool(8192, 1, &SetThreadNameLogThread);
 
 	auto debug_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(pLogPathTrace, 128*1024*1024, 8, pRotateOnOpen);
 	debug_sink->set_level(spdlog::level::trace);

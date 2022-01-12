@@ -64,6 +64,12 @@ evtc_rpc_server::~evtc_rpc_server()
 
 void evtc_rpc_server::ThreadStartServe(void* pThis)
 {
+#ifdef LINUX
+	pthread_setname_np(pthread_self(), "evtcrpc-worker");
+#elif defined(_WIN32)
+	SetThreadDescription(GetCurrentThread(), L"evtcrpc-worker");
+#endif
+
 	reinterpret_cast<evtc_rpc_server*>(pThis)->Serve();
 }
 
