@@ -106,7 +106,7 @@ void evtc_rpc_server::Serve()
 
 		if (ok == false || mIsShutdown == true)
 		{
-			LogI("(tag {}) Got not-ok or shutdown({}) (type {})", fmt::ptr(tag), BOOL_STR(mIsShutdown), tag_type);
+			LogI("(tag {}) Got not-ok or shutdown({}) (type {})", fmt::ptr(tag), BOOL_STR(mIsShutdown), static_cast<int>(tag_type));
 
 			switch (tag_type)
 			{
@@ -139,7 +139,7 @@ void evtc_rpc_server::Serve()
 				break;
 			}
 			default:
-				LogC("Invalid CallDataType {}", tag_type);
+				LogC("Invalid CallDataType {}", static_cast<int>(tag_type));
 				assert(false);
 			}
 
@@ -183,7 +183,7 @@ void evtc_rpc_server::Serve()
 			break;
 		}
 		default:
-			LogC("Invalid CallDataType {}", tag_type);
+			LogC("Invalid CallDataType {}", static_cast<int>(tag_type));
 			assert(false);
 		}
 	}
@@ -479,7 +479,7 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 	}
 
 	default:
-		LogE("(client {} tag {}) incorrect type {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), header.MessageType);
+		LogE("(client {} tag {}) incorrect type {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), static_cast<int>(header.MessageType));
 		return;
 	}
 }
