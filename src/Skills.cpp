@@ -83,6 +83,11 @@ SkillTable::SkillTable()
 	ENTRY(57356); // Nourishment (Spherified Cilantro Oyster Soup)
 	ENTRY(57401); // Nourishment (Fruit Salad with Cilantro Garnish)
 	ENTRY(57409); // Nourishment (Cilantro and Cured Meat Flatbread)
+	ENTRY(63160); // Eternal Night
+	ENTRY(63167); // Grasping Shadow
+	ENTRY(63220); // Dawn's Repose
+	ENTRY(63249); // Mind Shock 
+	ENTRY(63362); // Haunt Shot
 #undef ENTRY
 
 	std::lock_guard lock(mLock);
