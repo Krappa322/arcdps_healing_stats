@@ -86,7 +86,7 @@ SkillTable::SkillTable()
 	ENTRY(63160); // Eternal Night
 	ENTRY(63167); // Grasping Shadow
 	ENTRY(63220); // Dawn's Repose
-	ENTRY(63249); // Mind Shock 
+	ENTRY(63249); // Mind Shock
 	ENTRY(63362); // Haunt Shot
 #undef ENTRY
 

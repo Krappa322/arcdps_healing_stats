@@ -183,8 +183,15 @@ void HealTableOptions::Load(const char* pConfigPath)
 	buffer.data()[read] = '\0';
 	LogT("Parsing {}", buffer.data());
 
-	nlohmann::json jsonObject = nlohmann::json::parse(buffer.data());
-	FromJson(jsonObject);
+	try
+	{
+		nlohmann::json jsonObject = nlohmann::json::parse(buffer.data());
+		FromJson(jsonObject);
+	}
+	catch (std::exception& e)
+	{
+		LogW("Parsing settings failed - {}", e.what());
+	}
 }
 
 bool HealTableOptions::Save(const char* pConfigPath) const
