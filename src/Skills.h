@@ -45,6 +45,9 @@ private:
 	std::mutex mLock;
 	std::map<uint32_t, const char*> mSkillNames;
 
-	std::atomic<uint64_t> myDamagingSkills[(UINT16_MAX + 1) / 64];
-	uint64_t myHybridSkills[(UINT16_MAX + 1) / 64];
+	constexpr static uint32_t MAX_SKILL_ID = 131071;
+	static_assert((MAX_SKILL_ID + 1) % 64 == 0, "");
+
+	std::atomic<uint64_t> myDamagingSkills[(MAX_SKILL_ID + 1) / 64];
+	uint64_t myHybridSkills[(MAX_SKILL_ID + 1) / 64];
 };
