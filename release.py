@@ -101,7 +101,7 @@ def Archive(pReleaseDirectory: str):
 def Do_Release(pVersionString: str):
 	release_directory = CreateReleaseDirectory(pVersionString)
 	Build(release_directory, True)
-	asyncio.run(Test(release_directory), debug=True)
+	asyncio.run(Test(release_directory))
 	Archive(release_directory)
 	Progress("Release done")
 
@@ -111,4 +111,4 @@ def Do_Test():
 	Progress("Do_Test done")
 
 #Do_Test()
-Do_Release("v2.3rc1")
+Do_Release("v2.5rc1")

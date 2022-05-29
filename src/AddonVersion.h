@@ -4,7 +4,7 @@
 
 #define HEALING_STATS_ADDON_SIGNATURE 0x9c9b3c99U
 #define HEALING_STATS_EVTC_REVISION 2U
-#define HEALING_STATS_VERSION "2.4rc1"
+#define HEALING_STATS_VERSION "2.5rc1"
 #define LEGACY_INI_CONFIG_PATH "addons\\arcdps\\arcdps_healing_stats.ini"
 #define JSON_CONFIG_PATH "addons\\arcdps\\arcdps_healing_stats.json"
 
