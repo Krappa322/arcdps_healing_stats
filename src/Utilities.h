@@ -79,6 +79,18 @@ struct LongestStringInArray<Array, 0>
 };
 
 // Returns number of characters (as opposed to number of bytes) in a utf8 string
+static inline size_t utf8_strlen(std::string_view pString)
+{
+	// _mbstrlen is broken for utf8 so we use MultiByteToWideChar to get the character count (passing no destination
+	// buffer makes it return the amount of space needed - our character count).
+	int charCount = MultiByteToWideChar(CP_UTF8, 0, pString.data(), static_cast<int>(pString.size()), nullptr, 0);
+	assert(charCount > 0);
+
+	// charCount does not includes a null character since the source is not null terminated
+	return static_cast<size_t>(charCount);
+}
+
+// Returns number of characters (as opposed to number of bytes) in a utf8 string
 static inline size_t utf8_strlen(const char* pString)
 {
 	// _mbstrlen is broken for utf8 so we use MultiByteToWideChar to get the character count (passing no destination

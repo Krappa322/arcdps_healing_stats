@@ -6,6 +6,7 @@
 #include "imgui_internal.h"
 
 #include <optional>
+#include <string_view>
 #include <type_traits>
 
 #ifdef __clang__
@@ -42,7 +43,7 @@ namespace ImGuiEx
 	void SmallUnindent();
 
 	// returns minimum size needed to display the entry
-	float StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio);
+	float StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio);
 
 	template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
 	bool SmallInputInt(const char* pLabel, T* pInt)

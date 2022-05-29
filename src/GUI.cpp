@@ -101,7 +101,12 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.DetailsEntryFormat, entryValues);
 
 		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
-		ImGuiEx::StatsEntry(entry.Name.c_str(), buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
+		std::string_view name = entry.Name;
+		if (pContext.MaxNameLength > 0)
+		{
+			name = name.substr(0, pContext.MaxNameLength);
+		}
+		ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
 	}
 	ImGui::EndChild();
 
@@ -139,7 +144,12 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
 
 		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
-		float minSize = ImGuiEx::StatsEntry(entry.Name.c_str(), buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
+		std::string_view name = entry.Name;
+		if (pContext.MaxNameLength > 0)
+		{
+			name = name.substr(0, pContext.MaxNameLength);
+		}
+		float minSize = ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
 		pContext.CurrentFrameLineCount += 1;
 
@@ -238,7 +248,7 @@ static void Display_WindowOptions_Position(HealTableOptions& pHealingOptions, He
 				selectedWindowName = selectedWindow->Name;
 			}
 
-			ImGui::SetNextItemWidth(120.0f);
+			ImGui::SetNextItemWidth(260.0f);
 			if (ImGui::BeginCombo("anchor window", selectedWindowName) == true)
 			{
 				// This doesn't return the same thing as RootWindow interestingly enough, RootWindow returns a "higher" parent
@@ -322,27 +332,26 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
 				"that entry is in proportion to the largest entry");
 
+			ImGui::SetNextItemWidth(260.0f);
 			ImGuiEx::SmallInputText("short name", pContext.Name, sizeof(pContext.Name));
 			ImGuiEx::AddTooltipToLastItem("The name used to represent this window in the \"heal stats\" menu");
 
-			ImGuiEx::SmallInputText("title bar format", pContext.TitleFormat, sizeof(pContext.TitleFormat));
-			if (pContext.DataSourceChoice != DataSource::Totals)
-			{
-				ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
-					"{1}: Total healing\n"
-					"{2}: Total hits\n"
-					"{3}: Total casts (not implemented yet)\n"
-					"{4}: Healing per second\n"
-					"{5}: Healing per hit\n"
-					"{6}: Healing per cast (not implemented yet)\n"
-					"{7}: Time in combat");
-			}
-			else
-			{
-				ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
-					"{1}: Time in combat");
-			}
+			ImGui::SetNextItemWidth(39.0f);
+			ImGuiEx::SmallInputInt("max name length", &pContext.MaxNameLength);
+			ImGuiEx::AddTooltipToLastItem(
+				"Truncate displayed names to this many characters. Set to 0 to disable.");
 
+			ImGui::SetNextItemWidth(39.0f);
+			ImGuiEx::SmallInputInt("min displayed", &pContext.MinLinesDisplayed);
+			ImGuiEx::AddTooltipToLastItem(
+				"The minimum amount of lines of data to show in this window.");
+
+			ImGui::SetNextItemWidth(39.0f);
+			ImGuiEx::SmallInputInt("max displayed", &pContext.MaxLinesDisplayed);
+			ImGuiEx::AddTooltipToLastItem(
+				"The maximum amount of lines of data to show in this window. Set to 0 for no limit");
+
+			ImGui::SetNextItemWidth(260.0f);
 			ImGuiEx::SmallInputText("stats format", pContext.EntryFormat, sizeof(pContext.EntryFormat));
 			if (pContext.DataSourceChoice != DataSource::Totals)
 			{
@@ -366,6 +375,25 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 					"{6}: Healing per cast (not implemented yet)");
 			}
 
+			ImGui::SetNextItemWidth(260.0f);
+			ImGuiEx::SmallInputText("title bar format", pContext.TitleFormat, sizeof(pContext.TitleFormat));
+			if (pContext.DataSourceChoice != DataSource::Totals)
+			{
+				ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
+					"{1}: Total healing\n"
+					"{2}: Total hits\n"
+					"{3}: Total casts (not implemented yet)\n"
+					"{4}: Healing per second\n"
+					"{5}: Healing per hit\n"
+					"{6}: Healing per cast (not implemented yet)\n"
+					"{7}: Time in combat");
+			}
+			else
+			{
+				ImGuiEx::AddTooltipToLastItem("Format for the title of this window.\n"
+					"{1}: Time in combat");
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -385,12 +413,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			}
 			ImGuiEx::SmallIndent();
 
-			ImGuiEx::SmallInputInt("min entries", &pContext.MinLinesDisplayed);
-			ImGuiEx::AddTooltipToLastItem(
-				"The minimum amount of lines of data to show in this window.");
-			ImGuiEx::SmallInputInt("max entries", &pContext.MaxLinesDisplayed);
-			ImGuiEx::AddTooltipToLastItem(
-				"The maximum amount of lines of data to show in this window. Set to 0 for no limit");
+			ImGui::SetNextItemWidth(65.0f);
 			ImGuiEx::SmallInputInt("window width", &pContext.FixedWindowWidth);
 			ImGuiEx::AddTooltipToLastItem(
 				"Set to 0 for dynamic resizing of width");

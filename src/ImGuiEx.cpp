@@ -57,7 +57,7 @@ void ImGuiEx::SmallUnindent()
 	ImGui::Unindent(ImGui::GetCurrentContext()->FontSize);
 }
 
-float ImGuiEx::StatsEntry(const char* pLeftText, const char* pRightText, std::optional<float> pFillRatio)
+float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio)
 {
 	ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(204, 204, 212, 255));
 	ImGui::BeginGroup();
@@ -67,8 +67,8 @@ float ImGuiEx::StatsEntry(const char* pLeftText, const char* pRightText, std::op
 	//ImGui::Selectable("", false, ImGuiSelectableFlags_SpanAllColumns);
 	//ImGui::PopID();
 
-	ImVec2 leftTextSize = ImGui::CalcTextSize(pLeftText);
-	ImVec2 rightTextSize = ImGui::CalcTextSize(pRightText);
+	ImVec2 leftTextSize = ImGui::CalcTextSize(pLeftText.data(), pLeftText.data() + pLeftText.size());
+	ImVec2 rightTextSize = ImGui::CalcTextSize(pRightText.data(), pRightText.data() + pRightText.size());
 
 	if (pFillRatio.has_value() == true)
 	{
@@ -78,11 +78,11 @@ float ImGuiEx::StatsEntry(const char* pLeftText, const char* pRightText, std::op
 
 	// Add ItemInnerSpacing even if no box is being drawn, that way it looks consistent with and without progress bars
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetStyle().ItemInnerSpacing.x);
-	ImGui::TextUnformatted(pLeftText);
+	ImGui::TextUnformatted(pLeftText.data(), pLeftText.data() + pLeftText.size());
 
 	ImGui::SameLine();
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - rightTextSize.x - ImGui::GetStyle().ItemInnerSpacing.x); // Sending x in SameLine messes with alignment when inside of a group
-	ImGui::TextUnformatted(pRightText);
+	ImGui::TextUnformatted(pRightText.data(), pRightText.data() + pRightText.size());
 
 	ImGui::EndGroup();
 	ImGui::PopStyleColor();
