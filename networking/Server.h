@@ -114,6 +114,13 @@ class evtc_rpc_server
 		std::array<std::atomic_size_t, static_cast<size_t>(evtc_rpc::messages::Type::Max)> MessageType = {};
 	};
 
+	enum class ShutdownState
+	{
+		Online,
+		ShouldShutdown,
+		ShuttingDown
+	};
+
 public:
 	evtc_rpc_server(const char* pListeningEndpoint, const grpc::SslServerCredentialsOptions* pCredentialsOptions);
 	~evtc_rpc_server();
@@ -154,5 +161,5 @@ private:
 	std::unique_ptr<grpc::ServerCompletionQueue> mCompletionQueue;
 
 	std::shared_mutex mShutdownLock;
-	bool mIsShutdown = false;
+	std::atomic<ShutdownState> mShutdownState = ShutdownState::Online;
 };

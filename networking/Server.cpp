@@ -96,6 +96,29 @@ void evtc_rpc_server::Serve()
 			return;
 		}
 
+		if (mShutdownState.load(std::memory_order_relaxed) == ShutdownState::ShouldShutdown)
+		{
+			std::unique_lock lock{mShutdownLock};
+			if (mShutdownState.load(std::memory_order_relaxed) == ShutdownState::ShouldShutdown)
+			{
+				LogI("Starting shutdown");
+				// Wait a few milliseconds so we get a chance to flush out all pending messages
+				mServer->Shutdown(std::chrono::system_clock::now() + std::chrono::milliseconds(100));
+				mCompletionQueue->Shutdown();
+
+				ShutdownState expected = ShutdownState::ShouldShutdown;
+				if (mShutdownState.compare_exchange_strong(expected, ShutdownState::ShuttingDown, std::memory_order_relaxed) == false)
+				{
+					// Shouldn't be able to happen - this transition should be guarded by mShutdownLock
+					LogE("Not changing mShutdownState since it's {}", static_cast<int>(expected));
+				}
+				else
+				{
+					LogI("Set mShutdownState to ShuttingDown");
+				}
+			}
+		}
+
 		std::shared_lock lock{mShutdownLock};
 
 		CallDataType tag_type = static_cast<CallDataBase*>(tag)->Type;
@@ -104,9 +127,10 @@ void evtc_rpc_server::Serve()
 			mStatistics.CallData[static_cast<size_t>(tag_type)].fetch_add(1, std::memory_order_relaxed);
 		}
 
-		if (ok == false || mIsShutdown == true)
+		ShutdownState shutdown_state = mShutdownState.load(std::memory_order_relaxed);
+		if (ok == false || shutdown_state == ShutdownState::ShuttingDown)
 		{
-			LogI("(tag {}) Got not-ok or shutdown({}) (type {})", fmt::ptr(tag), BOOL_STR(mIsShutdown), static_cast<int>(tag_type));
+			LogI("(tag {}) Got not-ok or shutdown({}) (type {})", fmt::ptr(tag), static_cast<int>(shutdown_state), static_cast<int>(tag_type));
 
 			switch (tag_type)
 			{
@@ -191,16 +215,15 @@ void evtc_rpc_server::Serve()
 
 void evtc_rpc_server::Shutdown()
 {
-	std::unique_lock lock{mShutdownLock};
-	if (mIsShutdown == true)
+	ShutdownState expected = ShutdownState::Online;
+	if (mShutdownState.compare_exchange_strong(expected, ShutdownState::ShouldShutdown, std::memory_order_relaxed) == false)
 	{
-		LogW("Ignoring shutdown request since server is already shut down");
-		return;
+		LogI("Not changing mShutdownState since it's {}", static_cast<int>(expected));
 	}
-
-	mServer->Shutdown();
-	mCompletionQueue->Shutdown();
-	mIsShutdown = true;
+	else
+	{
+		LogI("Set mShutdownState to ShouldShutdown");
+	}
 }
 
 constexpr const char* evtc_rpc_server::CallDataTypeToString(CallDataType pType)
@@ -593,7 +616,7 @@ const char* evtc_rpc_server::HandleRemovePeer(uint16_t pInstanceId, std::shared_
 	
 	if (removed_name == "")
 	{
-		LogI("(client {}) can't find peer with instance id %hu", fmt::ptr(pClient.get()), pInstanceId);
+		LogI("(client {}) can't find peer with instance id {}", fmt::ptr(pClient.get()), pInstanceId);
 		return nullptr;
 	}
 
@@ -701,7 +724,7 @@ void evtc_rpc_server::ForceDisconnect(const char* pErrorMessage, const std::shar
 	
 	pClient->ForceDisconnected = true;
 
-	if (mIsShutdown == true)
+	if (mShutdownState.load(std::memory_order_relaxed) == ShutdownState::ShuttingDown)
 	{
 		LogI("(client {}) force disconnected (removedFromTable={}) - '{}'. Server is shutting down so not queueing a Finish",
 			fmt::ptr(pClient.get()), BOOL_STR(removedFromTable), pErrorMessage);
