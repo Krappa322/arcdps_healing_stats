@@ -1,8 +1,10 @@
 #include "Client.h"
+#include "Client.h"
 
 #include "evtc_rpc_messages.h"
 #include "../src/Log.h"
 
+#include <algorithm>
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -194,11 +196,16 @@ uintptr_t evtc_rpc_client::ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, 
 				assert(pDestinationAgent->id <= UINT16_MAX);
 				assert(pDestinationAgent->name != nullptr && pDestinationAgent->name[0] != '\0');
 
-				AddPeerCallData* newEvent = new AddPeerCallData(static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name);
-				if (QueueEvent(newEvent, true) == false)
+				std::lock_guard lock(mPeerInfoLock);
+				auto [iter, inserted] = mPeers.try_emplace(static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name);
+				if (inserted == true)
 				{
-					DEBUGLOG("Dropping AddPeer event %hu %s since queue is full", newEvent->PeerInstanceId, newEvent->PeerAccountName.c_str());
-					delete newEvent;
+					LogD("Added peer {} {}", iter->first, iter->second);
+				}
+				else
+				{
+					LogE("Dropping peer {} {} since they're already registered as {}",
+						static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name, iter->second);
 				}
 			}
 		}
@@ -212,12 +219,16 @@ uintptr_t evtc_rpc_client::ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, 
 			if (pDestinationAgent->self == 0 &&
 				(pDestinationAgent->name != nullptr && pDestinationAgent->name[0] != '\0'))
 			{
-
-				RemovePeerCallData* newEvent = new RemovePeerCallData(static_cast<uint16_t>(pDestinationAgent->id));
-				if (QueueEvent(newEvent, true) == false)
+				std::lock_guard lock(mPeerInfoLock);
+				size_t removedCount = mPeers.erase(static_cast<uint16_t>(pDestinationAgent->id));
+				if (removedCount == 1)
 				{
-					DEBUGLOG("Dropping RemovePeer event %hu since queue is full", newEvent->PeerInstanceId);
-					delete newEvent;
+					LogD("Removed peer {}", static_cast<uint16_t>(pDestinationAgent->id));
+				}
+				else
+				{
+					LogE("Removing peer {} ({}) failed - removedCount={}",
+						static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name, removedCount);
 				}
 			}
 		}
@@ -434,6 +445,11 @@ void evtc_rpc_client::Serve()
 
 			if (queuedData == nullptr && mConnectionContext->RegisteredInstanceId != 0)
 			{
+				queuedData = TryGetPeerEvent();
+			}
+
+			if (queuedData == nullptr && mConnectionContext->RegisteredInstanceId != 0)
+			{
 				std::lock_guard lock(mQueuedEventsLock);
 
 				if (mQueuedEvents.size() > 0)
@@ -491,6 +507,61 @@ bool evtc_rpc_client::QueueEvent(CallDataBase* pCallData, bool pIsImportant)
 
 	mQueuedEvents.push(pCallData);
 	return true;
+}
+
+evtc_rpc_client::CallDataBase* evtc_rpc_client::TryGetPeerEvent()
+{
+	std::lock_guard lock(mPeerInfoLock);
+
+	auto peers = mPeers.begin();
+	auto registered = mConnectionContext->RegisteredPeers.begin();
+	while (peers != mPeers.end() &&
+		registered != mConnectionContext->RegisteredPeers.end())
+	{
+		if (peers->first < registered->first)
+		{
+			LogT("1) registering {}", peers->first);
+
+			auto [iter, inserted] = mConnectionContext->RegisteredPeers.try_emplace(peers->first, std::string(peers->second));
+			assert(inserted == true);
+			return new AddPeerCallData(std::shared_ptr(mConnectionContext), peers->first, std::string(peers->second));
+		}
+		else if (
+			// peer that changed name (likely deregistered then registered again in rapid succession)
+			(peers->first == registered->first && peers->second != registered->second) ||
+			// removed peer
+			(peers->first > registered->first))
+		{
+			LogT("1) deregistering {}", registered->first);
+
+			uint16_t id = registered->first;
+			mConnectionContext->RegisteredPeers.erase(registered);
+			return new RemovePeerCallData(std::shared_ptr(mConnectionContext), id);
+		}
+
+		peers++;
+		registered++;
+	}
+	// If we reached the end by `registered` reaching the end, we should register everything left in `peers`
+	for (; peers != mPeers.end(); peers++)
+	{
+		LogT("2) registering {}", peers->first);
+
+		auto [iter, inserted] = mConnectionContext->RegisteredPeers.try_emplace(peers->first, std::string(peers->second));
+		assert(inserted == true);
+		return new AddPeerCallData(std::shared_ptr(mConnectionContext), peers->first, std::string(peers->second));
+	}
+	// Otherwise, if we reached the end by `peers` reaching the end, we should deregister everything left in `registered`
+	for (; registered != mConnectionContext->RegisteredPeers.end(); registered++)
+	{
+		LogT("2) deregistering {}", registered->first);
+
+		uint16_t id = registered->first;
+		mConnectionContext->RegisteredPeers.erase(registered);
+		return new RemovePeerCallData(std::shared_ptr(mConnectionContext), id);
+	}
+
+	return nullptr;
 }
 
 void evtc_rpc_client::ForceDisconnect(const std::shared_ptr<ConnectionContext>& pContext, const char* /*pErrorMessage*/)

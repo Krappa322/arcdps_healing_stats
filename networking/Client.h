@@ -43,6 +43,7 @@ class evtc_rpc_client
 		bool ForceDisconnected = false;
 		bool WritePending = false;
 		uint16_t RegisteredInstanceId = 0;
+		std::map<uint16_t, std::string> RegisteredPeers;
 
 		grpc::ClientContext ClientContext;
 		std::shared_ptr<grpc::Channel> Channel;
@@ -131,8 +132,8 @@ class evtc_rpc_client
 
 	struct AddPeerCallData : public CallDataBase
 	{
-		AddPeerCallData(uint16_t pPeerInstanceId, std::string&& pPeerAccountName)
-			: CallDataBase{CallDataType::AddPeer, nullptr}
+		AddPeerCallData(std::shared_ptr<ConnectionContext>&& pContext, uint16_t pPeerInstanceId, std::string&& pPeerAccountName)
+			: CallDataBase{CallDataType::AddPeer, std::move(pContext)}
 			, PeerInstanceId{pPeerInstanceId}
 			, PeerAccountName{std::move(pPeerAccountName)}
 		{
@@ -144,8 +145,8 @@ class evtc_rpc_client
 
 	struct RemovePeerCallData : public CallDataBase
 	{
-		RemovePeerCallData(uint16_t pPeerInstanceId)
-			: CallDataBase{CallDataType::RemovePeer, nullptr}
+		RemovePeerCallData(std::shared_ptr<ConnectionContext>&& pContext, uint16_t pPeerInstanceId)
+			: CallDataBase{CallDataType::RemovePeer, std::move(pContext)}
 			, PeerInstanceId{pPeerInstanceId}
 		{
 		}
@@ -192,6 +193,7 @@ public:
 private:
 #endif
 	bool QueueEvent(CallDataBase* pCallData, bool pIsImportant);
+	CallDataBase* TryGetPeerEvent();
 
 	void ForceDisconnect(const std::shared_ptr<ConnectionContext>& pContext, const char* pErrorMessage);
 	void HandleReadMessage(ReadMessageCallData* pCallData);
@@ -215,6 +217,9 @@ private:
 	std::mutex mSelfInfoLock;
 	std::string mAccountName;
 	uint16_t mInstanceId = 0;
+
+	std::mutex mPeerInfoLock;
+	std::map<uint16_t, std::string> mPeers;
 
 	std::mutex mStatusLock;
 	evtc_rpc_client_status mStatus;
