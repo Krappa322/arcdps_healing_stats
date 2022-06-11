@@ -276,7 +276,7 @@ void GetJsonValue(const nlohmann::json& pJsonObject, const char* pFieldName, Res
 		if ((jsonType == NUMBER_TYPE && iter->is_number_integer() == false) ||
 			(jsonType != NUMBER_TYPE && iter->type() != jsonType))
 		{
-			LogW("Found '{}' but it has the wrong type {} (expected {})", pFieldName, iter->type(), jsonType);
+			LogW("Found '{}' but it has the wrong type {} (expected {})", pFieldName, static_cast<uint8_t>(iter->type()), static_cast<uint8_t>(jsonType));
 		}
 		else
 		{
@@ -299,7 +299,7 @@ void GetJsonValue(const nlohmann::json& pJsonObject, const char* pFieldName, cha
 		}
 		else
 		{
-			LogW("(String) Found '{}' but it has the wrong type {}", pFieldName, iter->type());
+			LogW("(String) Found '{}' but it has the wrong type {}", pFieldName, static_cast<uint8_t>(iter->type()));
 		}
 	}
 }
@@ -340,7 +340,7 @@ void HealTableOptions::FromJson(const nlohmann::json& pJsonObject)
 		}
 		else
 		{
-			LogW("Found 'Windows' but it's not an array (type {})", iter->type());
+			LogW("Found 'Windows' but it's not an array (type {})", static_cast<uint8_t>(iter->type()));
 		}
 	}
 

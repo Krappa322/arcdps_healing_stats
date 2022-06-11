@@ -50,7 +50,7 @@ END
 // CERTIFICATE
 //
 
-IDR_ROOT_CERTIFICATES   CERTIFICATE             "vcpkg_installed\\x64-windows\\share\\grpc\\roots.pem"
+IDR_ROOT_CERTIFICATES   CERTIFICATE             "vcpkg_installed\\x64-windows-static\\x64-windows\\share\\grpc\\roots.pem"
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

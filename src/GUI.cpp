@@ -16,6 +16,8 @@ static constexpr EnumStringArray<SortOrder> SORT_ORDER_ITEMS{
 	"alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending"};
 static constexpr EnumStringArray<CombatEndCondition> COMBAT_END_CONDITION_ITEMS{
 	"combat exit", "last damage event", "last heal event", "last damage / heal event"};
+static constexpr EnumStringArray<spdlog::level::level_enum, 7> LOG_LEVEL_ITEMS{
+	"trace", "debug", "info", "warning", "error", "critical", "off"};
 
 static constexpr EnumStringArray<Position, static_cast<size_t>(Position::FINAL_ENTRY)> POSITION_ITEMS{
 	"manual", "screen relative", "window relative"};
@@ -664,11 +666,15 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 		"Includes debug data in target and skill names.\n"
 		"Turn this on before taking screenshots of potential calculation issues.");
 
-	const char* log_level_items[] = SPDLOG_LEVEL_NAMES;
-	int choice = pHealingOptions.LogLevel;
-	if (ImGui::Combo("debug logging", &choice, log_level_items, sizeof(log_level_items) / sizeof(log_level_items[0])) == true)
+	spdlog::string_view_t log_level_names[] = SPDLOG_LEVEL_NAMES;
+	std::string log_level_items[std::size(log_level_names)];
+	for (size_t i = 0; i < std::size(log_level_names); i++)
 	{
-		pHealingOptions.LogLevel = static_cast<spdlog::level::level_enum>(choice);
+		log_level_items[i] = std::string_view(log_level_names[i].data(), log_level_names[i].size());
+	}
+
+	if (ImGuiEx::ComboMenu("debug logging", pHealingOptions.LogLevel, LOG_LEVEL_ITEMS) == true)
+	{
 		Log_::SetLevel(pHealingOptions.LogLevel);
 	}
 	ImGuiEx::AddTooltipToLastItem(

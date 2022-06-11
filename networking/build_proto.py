@@ -10,11 +10,12 @@ filename = sys.argv[2]
 output_path = sys.argv[3]
 
 args = [protoc_path, "--cpp_out={}".format(output_path), "--grpc_out={}".format(output_path), "--plugin=protoc-gen-grpc={}".format(grpc_plugin_path), filename]
+#print(" ".join(args), file=sys.stderr)
 result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
 for line in result.stderr.splitlines():
 	match = re.match(r"(.*?):(.*?):(.*?):(.*)", line)
 	if match is not None:
-		print("{}({},{}) : error PROTO : {}".format(match.group(1), match.group(2), match.group(3), match.group(4)))
+		print("{}({},{}) : error PROTO : {}".format(match.group(1), match.group(2), match.group(3), match.group(4)), file=sys.stderr)
 
 exit(result.returncode)

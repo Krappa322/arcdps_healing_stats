@@ -112,7 +112,7 @@ namespace ImGuiEx
 	}
 
 	template <typename EnumType, size_t Size = static_cast<size_t>(EnumType::Max)>
-	void ComboMenu(const char* pLabel, EnumType& pCurrentItem, const EnumStringArray<EnumType, Size>& pItems)
+	bool ComboMenu(const char* pLabel, EnumType& pCurrentItem, const EnumStringArray<EnumType, Size>& pItems)
 	{
 		static_assert(std::is_enum_v<EnumType>, "Accidental loss of type safety?");
 
@@ -125,6 +125,7 @@ namespace ImGuiEx
 		}
 		size.y += ImGui::GetStyle().ItemSpacing.y * (pItems.size() - 1);
 
+		bool value_changed = false;
 		ImGui::SetNextWindowContentSize(size);
 		if (ImGui::BeginMenu(pLabel) == true)
 		{
@@ -135,6 +136,7 @@ namespace ImGuiEx
 				bool selected = (pCurrentItem == static_cast<EnumType>(i));
 				if (ImGui::Selectable(pItems[i], selected, ImGuiSelectableFlags_DontClosePopups) == true)
 				{
+					value_changed = true;
 					pCurrentItem = static_cast<EnumType>(i);
 				}
 
@@ -142,6 +144,8 @@ namespace ImGuiEx
 			}
 			ImGui::EndMenu();
 		}
+
+		return value_changed;
 	}
 
 	template <typename EnumType, size_t Size = static_cast<size_t>(EnumType::Max)>
