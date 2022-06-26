@@ -162,6 +162,12 @@ void evtc_rpc_server::Serve()
 				delete message;
 				break;
 			}
+			case CallDataType::WakeUp:
+			{
+				WakeUpCallData* message = static_cast<WakeUpCallData*>(tag);
+				delete message;
+				break;
+			}
 			default:
 				LogC("Invalid CallDataType {}", static_cast<int>(tag_type));
 				assert(false);
@@ -206,6 +212,12 @@ void evtc_rpc_server::Serve()
 			delete message;
 			break;
 		}
+		case CallDataType::WakeUp:
+		{
+			WakeUpCallData* message = static_cast<WakeUpCallData*>(tag);
+			delete message;
+			break;
+		}
 		default:
 			LogC("Invalid CallDataType {}", static_cast<int>(tag_type));
 			assert(false);
@@ -223,6 +235,8 @@ void evtc_rpc_server::Shutdown()
 	else
 	{
 		LogI("Set mShutdownState to ShouldShutdown");
+		WakeUpCallData* calldata = new WakeUpCallData;
+		calldata->Alarm->Set(mCompletionQueue.get(), std::chrono::system_clock::now(), calldata);
 	}
 }
 
@@ -240,6 +254,8 @@ constexpr const char* evtc_rpc_server::CallDataTypeToString(CallDataType pType)
 		return "WriteEvent";
 	case CallDataType::Disconnect:
 		return "Disconnect";
+	case CallDataType::WakeUp:
+		return "WakeUp";
 	default:
 		return "<invalid>";
 	};

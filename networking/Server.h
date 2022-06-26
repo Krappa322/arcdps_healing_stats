@@ -9,6 +9,7 @@
 #include <evtc_rpc.grpc.pb.h>
 
 #include <grpc/grpc.h>
+#include <grpcpp/alarm.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
@@ -51,6 +52,7 @@ class evtc_rpc_server
 		ReadMessage,
 		WriteEvent,
 		Disconnect,
+		WakeUp, // Sent internally only
 		Max,
 	};
 
@@ -105,6 +107,17 @@ class evtc_rpc_server
 			: CallDataBase{CallDataType::Disconnect, std::move(pContext)}
 		{
 		}
+	};
+
+	struct WakeUpCallData : public CallDataBase
+	{
+		WakeUpCallData()
+			: CallDataBase{CallDataType::WakeUp, nullptr}
+			, Alarm{new grpc::Alarm}
+		{
+		}
+
+		std::unique_ptr<grpc::Alarm> Alarm;
 	};
 
 	struct Statistics
