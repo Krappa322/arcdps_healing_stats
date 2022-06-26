@@ -7,7 +7,7 @@ import string
 import subprocess
 from typing import List
 
-MSBUILD_PATH = r"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild.exe"
+MSBUILD_PATH = r"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe"
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 RELEASES_PATH = os.path.join(SCRIPT_PATH, "..", "arcdps_personal_stats_releases")
 BUILD_PATH = os.path.join(SCRIPT_PATH, "x64") # Gets cleaned automatically, be careful what path you put in
@@ -30,8 +30,11 @@ def CreateReleaseDirectory(pVersionString: str) -> str:
 
 def Build(pReleaseDirectory: str, pRebuild: bool):
 	if pRebuild == True:
-		shutil.rmtree(BUILD_PATH)
-		Progress("Cleaned build")
+		Progress("Cleaning build")
+		try:
+			shutil.rmtree(BUILD_PATH)
+		except FileNotFoundError:
+			pass
 
 	Progress("Starting build")
 	build_output = subprocess.run(
@@ -111,4 +114,4 @@ def Do_Test():
 	Progress("Do_Test done")
 
 #Do_Test()
-Do_Release("v2.5rc1")
+Do_Release("v2.5rc2")
