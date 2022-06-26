@@ -104,7 +104,7 @@ evtc_rpc_client::evtc_rpc_client(std::function<std::string()>&& pEndpointCallbac
 	: mEndpointCallback{std::move(pEndpointCallback)}
 	, mRootCertificatesCallback{std::move(pRootCertificatesCallback)}
 	, mCombatEventCallback{std::move(pCombatEventCallback)}
-	, mLastConnectionAttempt{std::chrono::steady_clock::now() - std::chrono::hours{1}}
+	, mLastConnectionAttempt{std::chrono::steady_clock::time_point(std::chrono::seconds(0))}
 {
 }
 

@@ -641,12 +641,51 @@ TEST_P(DisableClientTestFixture, DisableClient)
 		client1->SetEnabledStatus(false);
 	}
 
-	Sleep(1000);
+	Sleep(200);
 
 	{
 		std::lock_guard lock(Server->mRegisteredAgentsLock);
-
 		EXPECT_EQ(Server->mRegisteredAgents.size(), 0);
+	}
+
+	// Not thread safe, but shouldn't be an issue because nothing else should be writing when the client is disabled
+	client1->mLastConnectionAttempt = std::chrono::steady_clock::time_point(std::chrono::seconds(0));
+	// Now enable the client - the peer should be registered again
+	client1->SetEnabledStatus(true);
+
+	std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+	bool completed = false;
+	while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(100))
+	{
+		{
+			std::lock_guard lock(Server->mRegisteredAgentsLock);
+			auto iter = Server->mRegisteredAgents.find("testagent.1234");
+			if (iter != Server->mRegisteredAgents.end())
+			{
+				if (iter->second->Peers.size() > 0)
+				{
+					completed = true;
+					break;
+				}
+			}
+		}
+
+		Sleep(1);
+	}
+
+	EXPECT_TRUE(completed);
+	{
+		std::lock_guard lock(Server->mRegisteredAgentsLock);
+
+		EXPECT_EQ(Server->mRegisteredAgents.size(), 1U);
+		auto iter = Server->mRegisteredAgents.find("testagent.1234");
+		ASSERT_NE(iter, Server->mRegisteredAgents.end());
+		EXPECT_EQ(iter->first, "testagent.1234");
+		EXPECT_EQ(iter->second->Iterator, iter);
+		EXPECT_EQ(iter->second->InstanceId, 10);
+
+		auto expected_map = std::map<std::string, uint16_t>({ {"testagent2.1234", static_cast<uint16_t>(11)} });
+		EXPECT_EQ(iter->second->Peers, expected_map);
 	}
 }
 
@@ -654,7 +693,6 @@ INSTANTIATE_TEST_SUITE_P(
 	Normal,
 	DisableClientTestFixture,
 	::testing::Values(false, true));
-
 
 TEST_P(NetworkXevtcTestFixture, druid_MO)
 {
