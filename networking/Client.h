@@ -5,8 +5,13 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
 #elif _WIN32
-#pragma warning(disable : 4702)
 #pragma warning(push, 0)
+#pragma warning(disable : 4127)
+#pragma warning(disable : 4702)
+#pragma warning(disable : 6385)
+#pragma warning(disable : 6387)
+#pragma warning(disable : 26451)
+#pragma warning(disable : 26495)
 #endif
 #include <evtc_rpc.grpc.pb.h>
 

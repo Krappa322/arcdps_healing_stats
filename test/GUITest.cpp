@@ -1,4 +1,8 @@
 #pragma warning(push, 0)
+#pragma warning(disable : 4005)
+#pragma warning(disable : 4389)
+#pragma warning(disable : 26439)
+#pragma warning(disable : 26495)
 #include <gtest/gtest.h>
 #pragma warning(pop)
 

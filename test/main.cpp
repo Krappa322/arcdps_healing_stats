@@ -2,6 +2,8 @@
 #include "Log.h"
 
 #pragma warning(push, 0)
+#pragma warning(disable : 4005)
+#pragma warning(disable : 4389)
 #include <gtest/gtest.h>
 #pragma warning(pop)
 

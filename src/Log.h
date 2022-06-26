@@ -1,8 +1,13 @@
 #pragma once
 #define SPDLOG_COMPILED_LIB
 #define SPDLOG_FMT_EXTERNAL
+
+#pragma warning(push, 0)
+#pragma warning(disable : 4189)
+#pragma warning(disable : 6285)
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/rotating_file_sink.h>
+#pragma warning(pop)
 
 #include <stdio.h>
 
