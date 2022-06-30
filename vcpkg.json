@@ -6,6 +6,7 @@
     "grpc",
     "gtest",
     "nlohmann-json",
+    "prometheus-cpp",
     "spdlog"
   ]
 }

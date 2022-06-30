@@ -1,4 +1,6 @@
 #pragma once
+#include "ServerStatistics.h"
+
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
@@ -47,17 +49,6 @@ class evtc_rpc_server
 		bool ForceDisconnected = false; // Protected by WriteLock
 		bool WritePending = false; // Protected by WriteLock
 		std::deque<evtc_rpc::messages::CombatEvent> QueuedEvents; // Protected by WriteLock
-	};
-
-	enum class CallDataType : uint32_t
-	{
-		Connect,
-		Finish,
-		ReadMessage,
-		WriteEvent,
-		Disconnect,
-		WakeUp, // Sent internally only
-		Max,
 	};
 
 	struct CallDataBase
@@ -124,13 +115,6 @@ class evtc_rpc_server
 		std::unique_ptr<grpc::Alarm> Alarm;
 	};
 
-	struct Statistics
-	{
-		// TODO: Implement usage of these (don't forget to check that value is not higher than ::Max)
-		std::array<std::atomic_size_t, static_cast<size_t>(CallDataType::Max)> CallData = {};
-		std::array<std::atomic_size_t, static_cast<size_t>(evtc_rpc::messages::Type::Max)> MessageType = {};
-	};
-
 	enum class ShutdownState
 	{
 		Online,
@@ -139,8 +123,10 @@ class evtc_rpc_server
 	};
 
 public:
-	evtc_rpc_server(const char* pListeningEndpoint, const grpc::SslServerCredentialsOptions* pCredentialsOptions);
+	evtc_rpc_server(const char* pListeningEndpoint, const char* pPrometheusEndpoint, const grpc::SslServerCredentialsOptions* pCredentialsOptions);
 	~evtc_rpc_server();
+
+	ServerStatisticsSample GetStatistics();
 
 	static void ThreadStartServe(void* pThis);
 	void Serve();
@@ -149,9 +135,6 @@ public:
 #ifndef TEST
 private:
 #endif
-	constexpr const char* CallDataTypeToString(CallDataType pType);
-	void TryDumpStatistics(bool pForced);
-
 	void HandleConnect(ConnectCallData* pCallData);
 	void HandleReadMessage(ReadMessageCallData* pCallData);
 	void HandleWriteEvent(WriteEventCallData* pCallData);
@@ -168,10 +151,8 @@ private:
 	std::mutex mRegisteredAgentsLock;
 	std::map<std::string, std::shared_ptr<ConnectionContext>> mRegisteredAgents;
 
-	std::mutex mLastDumpedStatisticsLock;
-	std::chrono::steady_clock::time_point mLastDumpedStatistics = {};
-
-	Statistics mStatistics = {};
+	std::shared_ptr<ServerStatistics> mStatistics;
+	prometheus::Exposer mPrometheusExposer;
 
 	evtc_rpc::evtc_rpc::AsyncService mService;
 	std::unique_ptr<grpc::Server> mServer;

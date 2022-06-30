@@ -162,7 +162,7 @@ protected:
 		grpc::SslServerCredentialsOptions server_credentials_options;
 		server_credentials_options.pem_root_certs = UNIT_TEST_CA;
 		server_credentials_options.pem_key_cert_pairs.push_back(UNIT_TEST_CERT_PAIR);
-		Server = std::make_unique<evtc_rpc_server>("localhost:50051", &server_credentials_options);
+		Server = std::make_unique<evtc_rpc_server>("localhost:50051", "localhost:50052", &server_credentials_options);
 		mServerThread = std::make_unique<std::thread>(evtc_rpc_server::ThreadStartServe, Server.get());
 	}
 
@@ -274,7 +274,7 @@ protected:
 		grpc::SslServerCredentialsOptions server_credentials_options;
 		server_credentials_options.pem_root_certs = UNIT_TEST_CA;
 		server_credentials_options.pem_key_cert_pairs.push_back(UNIT_TEST_CERT_PAIR);
-		Server = std::make_unique<evtc_rpc_server>("localhost:50051", &server_credentials_options);
+		Server = std::make_unique<evtc_rpc_server>("localhost:50051", "localhost:50052", &server_credentials_options);
 
 		auto eventhandler = [](cbtevent* /*pEvent*/, uint16_t /*pInstanceId*/)
 		{

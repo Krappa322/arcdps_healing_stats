@@ -4,33 +4,8 @@
 
 const auto STATISTICS_DUMP_INTERVAL = std::chrono::minutes(5);
 
-namespace
-{
-constexpr const char* EvtcRpcMessageTypeToString(evtc_rpc::messages::Type pType)
-{
-	using evtc_rpc::messages::Type;
-
-	switch (pType)
-	{
-	case Type::Invalid:
-		return "Invalid";
-	case Type::RegisterSelf:
-		return "RegisterSelf";
-	case Type::SetSelfId:
-		return "SetSelfId";
-	case Type::AddPeer:
-		return "AddPeer";
-	case Type::RemovePeer:
-		return "RemovePeer";
-	case Type::CombatEvent:
-		return "CombatEvent";
-	default:
-		return "<invalid>";
-	};
-}
-}; // anonymous namespace
-
-evtc_rpc_server::evtc_rpc_server(const char* pListeningEndpoint, const grpc::SslServerCredentialsOptions* pCredentialsOptions)
+evtc_rpc_server::evtc_rpc_server(const char* pListeningEndpoint, const char* pPrometheusEndpoint, const grpc::SslServerCredentialsOptions* pCredentialsOptions)
+	: mPrometheusExposer(pPrometheusEndpoint)
 {
 	grpc::ServerBuilder builder;
 	builder.AddChannelArgument("GRPC_ARG_KEEPALIVE_TIME_MS", 60000);
@@ -54,12 +29,37 @@ evtc_rpc_server::evtc_rpc_server(const char* pListeningEndpoint, const grpc::Ssl
 
 	mCompletionQueue = builder.AddCompletionQueue();
 	mServer = builder.BuildAndStart();
+	mStatistics = std::make_shared<ServerStatistics>(*this);
+	mPrometheusExposer.RegisterCollectable(mStatistics->PrometheusRegistry);
+	mPrometheusExposer.RegisterCollectable(mStatistics);
 }
 
 evtc_rpc_server::~evtc_rpc_server()
 {
 	assert(mRegisteredAgents.size() == 0);
-	TryDumpStatistics(true);
+}
+
+ServerStatisticsSample evtc_rpc_server::GetStatistics()
+{
+	ServerStatisticsSample result = {};
+
+	std::lock_guard agents_lock{ mRegisteredAgentsLock };
+	result.RegisteredPlayers = mRegisteredAgents.size();
+
+	for (const auto& agent : mRegisteredAgents)
+	{
+		result.KnownPeers += agent.second->Peers.size();
+		for (const auto& peer : agent.second->Peers)
+		{
+			const auto iter = mRegisteredAgents.find(peer.first);
+			if (iter != mRegisteredAgents.end())
+			{
+				result.RegisteredPeers += 1;
+			}
+		}
+	}
+
+	return result;
 }
 
 void evtc_rpc_server::ThreadStartServe(void* pThis)
@@ -86,8 +86,6 @@ void evtc_rpc_server::Serve()
 
 	while (true)
 	{
-		TryDumpStatistics(false);
-
 		void* tag;
 		bool ok;
 		if (mCompletionQueue->Next(&tag, &ok) == false)
@@ -124,7 +122,7 @@ void evtc_rpc_server::Serve()
 		CallDataType tag_type = static_cast<CallDataBase*>(tag)->Type;
 		if (tag_type < CallDataType::Max)
 		{
-			mStatistics.CallData[static_cast<size_t>(tag_type)].fetch_add(1, std::memory_order_relaxed);
+			mStatistics->CallData[static_cast<size_t>(tag_type)]->Increment();
 		}
 
 		ShutdownState shutdown_state = mShutdownState.load(std::memory_order_relaxed);
@@ -240,99 +238,6 @@ void evtc_rpc_server::Shutdown()
 	}
 }
 
-constexpr const char* evtc_rpc_server::CallDataTypeToString(CallDataType pType)
-{
-	switch (pType)
-	{
-	case CallDataType::Connect:
-		return "Connect";
-	case CallDataType::Finish:
-		return "Finish";
-	case CallDataType::ReadMessage:
-		return "ReadMessage";
-	case CallDataType::WriteEvent:
-		return "WriteEvent";
-	case CallDataType::Disconnect:
-		return "Disconnect";
-	case CallDataType::WakeUp:
-		return "WakeUp";
-	default:
-		return "<invalid>";
-	};
-}
-
-// All the potential divides by zero in here are fine since the divisor is a double
-void evtc_rpc_server::TryDumpStatistics(bool pForced)
-{
-	using namespace std::chrono;
-
-	std::unique_lock statistics_lock{mLastDumpedStatisticsLock, std::try_to_lock};
-	if (pForced && statistics_lock.owns_lock() == false)
-	{
-		statistics_lock.lock();
-	}
-
-	if (statistics_lock.owns_lock() == false)
-	{
-		return;
-	}
-
-	steady_clock::time_point now = steady_clock::now();
-	if (pForced == false && mLastDumpedStatistics + STATISTICS_DUMP_INTERVAL > now)
-	{
-		return;
-	}
-
-	// For arithmetic below, make sure now is at least equal to mLastDumpedStatistics (so subtraction doesn't go negative)
-	now = (std::max)(mLastDumpedStatistics, now);
-
-	std::lock_guard agents_lock{mRegisteredAgentsLock};
-	LogI("Total of {} registered players", mRegisteredAgents.size());
-
-	size_t total_peer_count = 0;
-	size_t registered_peer_count = 0;
-	for (const auto& agent : mRegisteredAgents)
-	{
-		total_peer_count += agent.second->Peers.size();
-		for (const auto& peer : agent.second->Peers)
-		{
-			const auto iter = mRegisteredAgents.find(peer.first);
-			if (iter != mRegisteredAgents.end())
-			{
-				registered_peer_count += 1;
-			}
-		}
-	}
-
-	LogI("Total peer count {} (average of {:.2f} per registered player)",
-		total_peer_count, static_cast<double>(total_peer_count) / static_cast<double>(mRegisteredAgents.size()));
-	LogI("Registered peer count {} (average of {:.2f} per peer, {:.2f} per registered player)",
-		registered_peer_count,
-		static_cast<double>(registered_peer_count) / static_cast<double>(total_peer_count),
-		static_cast<double>(registered_peer_count) / static_cast<double>(mRegisteredAgents.size()));
-
-	// std::chrono doesn't have any functions for getting fractional count, so manual multiplication of tick count it is
-	const double minute_count = static_cast<double>(duration_cast<nanoseconds>(now - mLastDumpedStatistics).count()) / 60'000'000'000.0;
-
-	LogI("CallData statistics:");
-	for (size_t i = 0; i < mStatistics.CallData.size(); i++)
-	{
-		size_t val = mStatistics.CallData[i].exchange(0, std::memory_order_relaxed);
-		LogI("\t{} - {} calls ({:.2f} per minute)",
-			CallDataTypeToString(static_cast<CallDataType>(i)), val, static_cast<double>(val) / minute_count);
-	}
-
-	LogI("MessageType statistics:");
-	for (size_t i = 0; i < mStatistics.MessageType.size(); i++)
-	{
-		size_t val = mStatistics.MessageType[i].exchange(0, std::memory_order_relaxed);
-		LogI("\t{} - {} calls ({:.2f} per minute)",
-			EvtcRpcMessageTypeToString(static_cast<evtc_rpc::messages::Type>(i)), val, static_cast<double>(val) / minute_count);
-	}
-
-	mLastDumpedStatistics = now;
-}
-
 void evtc_rpc_server::HandleConnect(ConnectCallData* pCallData)
 {
 	// Add a ReadMessageCallData so we can start reading messages on this new connection
@@ -375,7 +280,7 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 
 	if (header.MessageType < evtc_rpc::messages::Type::Max)
 	{
-		mStatistics.MessageType[static_cast<size_t>(header.MessageType)].fetch_add(1, std::memory_order_relaxed);
+		mStatistics->MessageTypeReceive[static_cast<size_t>(header.MessageType)]->Increment();
 	}
 
 	switch (header.MessageType)
@@ -714,6 +619,8 @@ void evtc_rpc_server::SendEvent(const evtc_rpc::messages::CombatEvent& pEvent, W
 	pClient->Stream.Write(rpc_message, pCallData);
 
 	pClient->WritePending = true;
+
+	mStatistics->MessageTypeTransmit[static_cast<size_t>(evtc_rpc::messages::Type::CombatEvent)]->Increment();
 
 	LogT("(client {} tag {}) Sending CombatEvent from {} source {} target {} skill {} value {}", fmt::ptr(pClient.get()), fmt::ptr(pCallData), pEvent.SenderInstanceId, pEvent.Event.src_instid, pEvent.Event.dst_instid, pEvent.Event.skillid, pEvent.Event.value);
 }

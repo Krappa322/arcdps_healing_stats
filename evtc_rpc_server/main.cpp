@@ -45,13 +45,13 @@ int main(int pArgumentCount, char** pArgumentVector)
 	Log_::InitMultiSink(false, "logs/evtc_rpc_server_debug.txt", "logs/evtc_rpc_server_info.txt");
 	Log_::SetLevel(spdlog::level::debug);
 
-	if (pArgumentCount != 2)
+	if (pArgumentCount != 3)
 	{
-		fprintf(stderr, "Invalid argument count\nusage: %s <listening endpoint>\n", pArgumentVector[0]);
+		fprintf(stderr, "Invalid argument count\nusage: %s <listening endpoint> <prometheus endpoint>\n", pArgumentVector[0]);
 		return 1;
 	}
 
-	SERVER = std::make_unique<evtc_rpc_server>(pArgumentVector[1], nullptr);
+	SERVER = std::make_unique<evtc_rpc_server>(pArgumentVector[1], pArgumentVector[2], nullptr);
 	SERVER_THREAD = std::thread(evtc_rpc_server::ThreadStartServe, SERVER.get());
 
 // Set thread name after this thread is done cloning itself for other threads
