@@ -95,9 +95,6 @@
     <ClInclude Include="src\State.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="json\json.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Exports.h">
       <Filter>Header Files</Filter>
     </ClInclude>
