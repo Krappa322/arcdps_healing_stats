@@ -40,14 +40,16 @@ This project is licensed under the MIT license (see the LICENSE file for more de
 ### Dear ImGui
 [Dear ImGui](https://github.com/ocornut/imgui), licensed under the MIT license and included in this project as a git submodule [imgui](/imgui).
 ### GoogleTest
-[GoogleTest](https://github.com/google/googletest), licensed under the BSD-3-Clause license and included in this project as a linking/header dependency (provided through vcpkg or linux package manager).
+[GoogleTest](https://github.com/google/googletest), licensed under the BSD-3-Clause license and included in this project as a linking/header dependency (provided through vcpkg).
 ### gRPC
-[gRPC](https://github.com/grpc/grpc), licensed under the Apache-2.0 license and included in this project as a linking/header dependency (provided through vcpkg or linux package manager).
+[gRPC](https://github.com/grpc/grpc), licensed under the Apache-2.0 license and included in this project as a linking/header dependency (provided through vcpkg).
 ### JSON for Modern C++
-[JSON for Modern C++](https://github.com/nlohmann/json), licensed under the MIT license and included in this project as a single header file [json.hpp](/json/json.hpp).
+[JSON for Modern C++](https://github.com/nlohmann/json), licensed under the MIT license and included in this project as a linking/header dependency (provided through vcpkg).
+### Prometheus Client Library for Modern C++
+[prometheus-cpp](https://github.com/jupp0r/prometheus-cpp), licensed under the MIT license and included in this project as a linking/header dependency (provided through vcpkg).
 ### Protocol Buffers
-[Protocol Buffers](https://github.com/protocolbuffers/protobuf), licensed under the BSD-3-Clause license and included in this project as a linking/header dependency (provided through vcpkg or linux package manager).
+[Protocol Buffers](https://github.com/protocolbuffers/protobuf), licensed under the BSD-3-Clause license and included in this project as a linking/header dependency (provided through vcpkg).
 ### simpleini
 [simpleini](https://github.com/brofield/simpleini), licensed under the MIT license and included in this project as a directory [simpleini](/simpleini).
 ### spdlog
-[spdlog](https://github.com/gabime/spdlog), licensed under the MIT license and included in this project as a directory [spdlog](/spdlog).
+[spdlog](https://github.com/gabime/spdlog), licensed under the MIT license and included in this project as a linking/header dependency (provided through vcpkg).
