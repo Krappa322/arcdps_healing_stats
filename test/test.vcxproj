@@ -64,7 +64,11 @@
     <VcpkgUseStatic>true</VcpkgUseStatic>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="CombatMock.cpp" />
+    <ClCompile Include="CombatMock.cpp">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\src;..\arcdps_mock\arcdps-extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Address Sanitizer|x64'">..\src;..\arcdps_mock\arcdps-extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\src;..\arcdps_mock\arcdps-extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
     <ClCompile Include="ConfigTest.cpp" />
     <ClCompile Include="EnvironmentTest.cpp" />
     <ClCompile Include="EventProcessorTest.cpp" />
@@ -88,11 +92,12 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\src;..\arcdps_mock\arcdps-extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NOMINMAX;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\src;..\modules\arcdps_extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeaderFile />
+      <AdditionalOptions>/Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>arcdps_personal_stats_lib.lib;Iphlpapi.lib;networking.lib;winmm.lib;ws2_32.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -106,14 +111,15 @@
     <ClCompile>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <PreprocessorDefinitions>_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;_DEBUG;_CONSOLE;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;_DEBUG;_CONSOLE;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>Level4</WarningLevel>
-      <AdditionalIncludeDirectories>..\src;..\arcdps_mock\arcdps-extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>..\src;..\modules\arcdps_extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalOptions>/Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -129,11 +135,12 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>Level4</WarningLevel>
-      <AdditionalIncludeDirectories>..\src;..\arcdps_mock\arcdps-extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>..\src;..\modules\arcdps_extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalOptions>/Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

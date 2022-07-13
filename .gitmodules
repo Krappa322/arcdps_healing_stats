@@ -1,3 +1,6 @@
 [submodule "arcdps_mock"]
 	path = arcdps_mock
 	url = https://github.com/Krappa322/arcdps_mock
+[submodule "modules/arcdps_extension"]
+	path = modules/arcdps_extension
+	url = https://github.com/knoxfighter/arcdps-extension

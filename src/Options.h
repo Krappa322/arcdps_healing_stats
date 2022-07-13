@@ -81,7 +81,7 @@ struct fmt::formatter<HealTableOptions> : SimpleFormatter
 		nlohmann::json jsonObject;
 		pObject.ToJson(jsonObject);
 
-		return format_to(
+		return fmt::format_to(
 			pContext.out(),
 			"{}",
 			jsonObject.dump());
