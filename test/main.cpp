@@ -73,7 +73,7 @@ int main(int pArgumentCount, char** pArgumentVector)
 	GlobalObjects::IS_UNIT_TEST = true;
 
 	Log_::Init(true, "logs/unit_tests.txt");
-	Log_::SetLevel(spdlog::level::debug);
+	Log_::SetLevel(spdlog::level::trace);
 	Log_::LockLogger();
 
 	::testing::InitGoogleTest(&pArgumentCount, pArgumentVector); 

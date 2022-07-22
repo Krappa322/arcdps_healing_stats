@@ -613,13 +613,16 @@ EventProcessor::EventType EventProcessor::GetEventType(const cbtevent* pEvent, b
 	}
 }
 
-std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState()
+std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState(uintptr_t pSelfUniqueId)
 {
 	std::map<uintptr_t, std::pair<std::string, HealingStats>> result;
 	uint64_t collectionTime = timeGetTime();
-	uintptr_t selfUniqueId = mSelfUniqueId.load(std::memory_order_relaxed);
+	if (pSelfUniqueId == 0)
+	{
+		pSelfUniqueId = mSelfUniqueId.load(std::memory_order_relaxed);
+	}
 
-	auto [localEntry, localInserted] = result.try_emplace(selfUniqueId);
+	auto [localEntry, localInserted] = result.try_emplace(pSelfUniqueId);
 	assert(localInserted == true);
 
 
@@ -628,7 +631,7 @@ std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> 
 	localEntry->second.second.Agents = mAgentTable.GetState();
 	localEntry->second.second.Skills = std::shared_ptr(mSkillTable);
 
-	std::optional<std::string> localName = mAgentTable.GetName(selfUniqueId);
+	std::optional<std::string> localName = mAgentTable.GetName(pSelfUniqueId);
 	if (localName.has_value())
 	{
 		localEntry->second.first = std::move(*localName);
@@ -673,6 +676,6 @@ std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> 
 		DEBUGLOG("peer %llu %s, %zu events", uniqueId, entry->second.first.c_str(), entry->second.second.Events.size());
 	}
 
-	DEBUGLOG("self %llu, %zu entries", selfUniqueId, result.size());
-	return {selfUniqueId, result};
+	DEBUGLOG("self %llu, %zu entries", pSelfUniqueId, result.size());
+	return {pSelfUniqueId, result};
 }

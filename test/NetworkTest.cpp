@@ -321,6 +321,77 @@ protected:
 		ACTIVE_CLIENT = nullptr;
 	}
 
+	void ExecuteLog(uint16_t pSelfInstanceId, const char* pLogPath)
+	{
+		// Register agents on peer and also register our fake peer on the local client (otherwise events will not be sent to
+		// the peer, since it's not known)
+		ag ag1{};
+		ag ag2{};
+		ag1.elite = 0;
+		ag1.prof = static_cast<Prof>(1);
+		ag2.self = 1;
+		ag2.id = UINT16_MAX - 1;
+		ag2.name = ":FakePeer.1234";
+		PeerClient->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+
+		ag2.self = 0;
+		ag2.id = pSelfInstanceId;
+		ag2.name = ":worshipperofnarnia.2689";
+		PeerClient->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+
+		ag2.self = 0;
+		ag2.id = UINT16_MAX - 1;
+		ag2.name = ":FakePeer.1234";
+		Client->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+
+		// Add the fake self agent we use below to split stats into local and peer (otherwise we just get local stats since
+		// the instance id matches that of the peer and they both use the same event processor)
+		uintptr_t localFakeSelfUniqueId = 100000;
+		Processor.mAgentTable.AddAgent(localFakeSelfUniqueId, static_cast<uint16_t>(UINT16_MAX - 2), "Local Fake Self", static_cast<uint16_t>(1), false, true);
+
+		// Send the events themselves
+		uint32_t result = Mock.ExecuteFromXevtc(pLogPath, 0, 0);
+		ASSERT_EQ(result, 0U);
+
+		Client->FlushEvents();
+		PeerClient->FlushEvents();
+
+		std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+		bool completed = false;
+		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(1000))
+		{
+			{
+				auto [localId, states] = Processor.GetState(localFakeSelfUniqueId);
+				HealingStats* localState = &states[localId].second;
+				HealingStats* peerState = &states[2000].second;
+
+				ASSERT_EQ(states.size(), 2U);
+				if (localState->Events.size() == peerState->Events.size() && localState->LastDamageEvent == peerState->LastDamageEvent)
+				{
+					for (size_t i = 0; i < localState->Events.size(); i++)
+					{
+						if (localState->Events[i] != peerState->Events[i])
+						{
+							LOG("Event %zu does not match - %llu %llu %llu %u vs %llu %llu %llu %u", i,
+								localState->Events[i].Time, localState->Events[i].Size, localState->Events[i].AgentId, localState->Events[i].SkillId,
+								peerState->Events[i].Time, peerState->Events[i].Size, peerState->Events[i].AgentId, peerState->Events[i].SkillId);
+							GTEST_FAIL();
+						}
+					}
+
+					completed = true;
+					break;
+				}
+			}
+
+			Sleep(1);
+		}
+		ASSERT_TRUE(completed);
+
+		// We can only do this when we know no more events will be sent, since events can override mSelfUniqueId
+		Processor.mSelfUniqueId.store(100000);
+	}
+
 	CombatMock Mock{&mExports};
 	EventProcessor Processor;
 
@@ -700,50 +771,12 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_P(NetworkXevtcTestFixture, druid_MO)
 {
-	uint32_t parallelCallbacks = GetParam();
-	LOG("Starting test, parallelCallbacks=%u", parallelCallbacks);
-
-	ag ag1{};
-	ag ag2{};
-	ag1.elite = 0;
-	ag1.prof = static_cast<Prof>(1);
-	ag2.self = 1;
-	ag2.id = 642;
-	ag2.name = ":Spontanefix.2376";
-	PeerClient->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
-
-	ag2.self = 0;
-	ag2.id = 697;
-	ag2.name = ":worshipperofnarnia.2689";
-	PeerClient->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
-
-	uint32_t result = Mock.ExecuteFromXevtc("xevtc_logs\\druid_MO.xevtc", parallelCallbacks, 0);
-	ASSERT_EQ(result, 0U);
-
-	Client->FlushEvents();
-	PeerClient->FlushEvents();
-	Sleep(1000); // TODO: Fix ugly sleep :(
+	ExecuteLog(697, "xevtc_logs\\druid_MO.xevtc");
 
 	HealTableOptions options;
-	Processor.mSelfUniqueId.store(100000); // Fake self having a different id
-	Processor.mAgentTable.AddAgent(100000, static_cast<uint16_t>(UINT16_MAX - 1), "Local Zarwae", static_cast<uint16_t>(1), false, true);
 	auto [localId, states] = Processor.GetState();
-
 	HealingStats* localState = &states[localId].second;
 	HealingStats* peerState = &states[2000].second;
-
-	ASSERT_EQ(states.size(), 2U);
-	ASSERT_EQ(localState->Events.size(), peerState->Events.size());
-	for (size_t i = 0; i < localState->Events.size(); i++)
-	{
-		if (localState->Events[i] != peerState->Events[i])
-		{
-			LOG("Event %zu does not match - %llu %llu %llu %u vs %llu %llu %llu %u", i,
-				localState->Events[i].Time, localState->Events[i].Size, localState->Events[i].AgentId, localState->Events[i].SkillId,
-				peerState->Events[i].Time, peerState->Events[i].Size, peerState->Events[i].AgentId, peerState->Events[i].SkillId);
-			GTEST_FAIL();
-		}
-	}
 
 	for (HealingStats* rawStats : {localState, peerState})
 	{
@@ -805,7 +838,181 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 	float combatTime = stats.GetCombatTime();
 	AggregatedVector expectedStats;
 	expectedStats.Add(2000, "Zarwae", combatTime, 304967, 727, std::nullopt);
-	expectedStats.Add(100000, "Local Zarwae", combatTime, 304967, 727, std::nullopt);
+	expectedStats.Add(100000, "Local Fake Self", combatTime, 304967, 727, std::nullopt);
+
+	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
+	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());
+	EXPECT_EQ(actualStats.HighestHealing, expectedStats.HighestHealing);
+	for (uint32_t i = 0; i < expectedStats.Entries.size(); i++)
+	{
+		EXPECT_EQ(actualStats.Entries[i].GetTie(), expectedStats.Entries[i].GetTie());
+	}
+}
+
+TEST_P(NetworkXevtcTestFixture, berserker_solo)
+{
+	ExecuteLog(23, "xevtc_logs\\berserker_solo.xevtc");
+
+	HealTableOptions options;
+	auto [localId, states] = Processor.GetState();
+	HealingStats* localState = &states[localId].second;
+	HealingStats* peerState = &states[2000].second;
+
+	uint64_t totalHealing = 195693;
+	uint64_t totalHits = 89;
+	for (HealingStats* rawStats : { localState, peerState })
+	{
+		LOG("Verifying %p (localStats=%p peerStats=%p)", rawStats, localState, peerState);
+
+		// Use the "Combined" window
+		AggregatedStats stats{ std::move(*rawStats), options.Windows[9], false };
+
+		float combatTime = stats.GetCombatTime();
+		EXPECT_FLOAT_EQ(std::floor(combatTime), 166.0f);
+
+		const AggregatedStatsEntry& totalEntry = stats.GetTotal();
+		EXPECT_EQ(totalEntry.Healing, totalHealing);
+		EXPECT_EQ(totalEntry.Hits, totalHits);
+
+		AggregatedVector expectedTotals;
+		expectedTotals.Add(0, "Group", combatTime, totalHealing, totalHits, std::nullopt);
+		expectedTotals.Add(0, "Squad", combatTime, totalHealing, totalHits, std::nullopt);
+		expectedTotals.Add(0, "All (Excluding Summons)", combatTime, totalHealing, totalHits, std::nullopt);
+		expectedTotals.Add(0, "All (Including Summons)", combatTime, totalHealing, totalHits, std::nullopt);
+
+		const AggregatedVector& totals = stats.GetStats(DataSource::Totals);
+		ASSERT_EQ(totals.Entries.size(), expectedTotals.Entries.size());
+		EXPECT_EQ(totals.HighestHealing, expectedTotals.HighestHealing);
+		for (uint32_t i = 0; i < expectedTotals.Entries.size(); i++)
+		{
+			EXPECT_EQ(totals.Entries[i].GetTie(), expectedTotals.Entries[i].GetTie());
+		}
+
+		AggregatedVector expectedAgents;
+		expectedAgents.Add(2000, "Khalagur", combatTime, totalHealing, totalHits, std::nullopt);
+
+		const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
+		ASSERT_EQ(agents.Entries.size(), expectedAgents.Entries.size());
+		EXPECT_EQ(agents.HighestHealing, expectedAgents.HighestHealing);
+		for (uint32_t i = 0; i < expectedAgents.Entries.size(); i++)
+		{
+			EXPECT_EQ(agents.Entries[i].GetTie(), expectedAgents.Entries[i].GetTie());
+		}
+
+		AggregatedVector expectedSkills;
+		expectedSkills.Add(0, "Healing by Damage Dealt", combatTime, 163393, 79, std::nullopt);
+		expectedSkills.Add(30189, "Blood Reckoning", combatTime, 32300, 10, std::nullopt);
+
+		const AggregatedVector& skills = stats.GetStats(DataSource::Skills);
+		ASSERT_EQ(skills.Entries.size(), expectedSkills.Entries.size());
+		EXPECT_EQ(skills.HighestHealing, expectedSkills.HighestHealing);
+		for (uint32_t i = 0; i < expectedSkills.Entries.size(); i++)
+		{
+			EXPECT_EQ(skills.Entries[i].GetTie(), expectedSkills.Entries[i].GetTie());
+		}
+	}
+
+	// This is not really realistic - peer and local has same name, id, etc. But everything can handle it fine.
+	auto [localId2, states2] = Processor.GetState();
+
+	AggregatedStatsCollection stats{ std::move(states2), localId2, options.Windows[9], false };
+	const AggregatedStatsEntry& totalEntry = stats.GetTotal(DataSource::PeersOutgoing);
+	EXPECT_EQ(totalEntry.Healing, totalHealing * 2);
+	EXPECT_EQ(totalEntry.Hits, totalHits * 2);
+
+	float combatTime = stats.GetCombatTime();
+	AggregatedVector expectedStats;
+	expectedStats.Add(2000, "Khalagur", combatTime, totalHealing, totalHits, std::nullopt);
+	expectedStats.Add(100000, "Local Fake Self", combatTime, totalHealing, totalHits, std::nullopt);
+
+	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
+	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());
+	EXPECT_EQ(actualStats.HighestHealing, expectedStats.HighestHealing);
+	for (uint32_t i = 0; i < expectedStats.Entries.size(); i++)
+	{
+		EXPECT_EQ(actualStats.Entries[i].GetTie(), expectedStats.Entries[i].GetTie());
+	}
+}
+
+TEST_P(NetworkXevtcTestFixture, renegade_solo)
+{
+	ExecuteLog(23, "xevtc_logs\\renegade_solo.xevtc");
+
+	HealTableOptions options;
+	auto [localId, states] = Processor.GetState();
+	HealingStats* localState = &states[localId].second;
+	HealingStats* peerState = &states[2000].second;
+
+	uint64_t totalHealing = 53544;
+	uint64_t totalHits = 337;
+	for (HealingStats* rawStats : { localState, peerState })
+	{
+		LOG("Verifying %p (localStats=%p peerStats=%p)", rawStats, localState, peerState);
+
+		// Use the "Combined" window
+		AggregatedStats stats{ std::move(*rawStats), options.Windows[9], false };
+
+		float combatTime = stats.GetCombatTime();
+		EXPECT_FLOAT_EQ(std::floor(combatTime), 61.0f);
+
+		const AggregatedStatsEntry& totalEntry = stats.GetTotal();
+		EXPECT_EQ(totalEntry.Healing, totalHealing);
+		EXPECT_EQ(totalEntry.Hits, totalHits);
+
+		AggregatedVector expectedTotals;
+		expectedTotals.Add(0, "Group", combatTime, totalHealing, totalHits, std::nullopt);
+		expectedTotals.Add(0, "Squad", combatTime, totalHealing, totalHits, std::nullopt);
+		expectedTotals.Add(0, "All (Excluding Summons)", combatTime, totalHealing, totalHits, std::nullopt);
+		expectedTotals.Add(0, "All (Including Summons)", combatTime, totalHealing, totalHits, std::nullopt);
+
+		const AggregatedVector& totals = stats.GetStats(DataSource::Totals);
+		ASSERT_EQ(totals.Entries.size(), expectedTotals.Entries.size());
+		EXPECT_EQ(totals.HighestHealing, expectedTotals.HighestHealing);
+		for (uint32_t i = 0; i < expectedTotals.Entries.size(); i++)
+		{
+			EXPECT_EQ(totals.Entries[i].GetTie(), expectedTotals.Entries[i].GetTie());
+		}
+
+		AggregatedVector expectedAgents;
+		expectedAgents.Add(2000, "Enagyy", combatTime, totalHealing, totalHits, std::nullopt);
+
+		const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
+		ASSERT_EQ(agents.Entries.size(), expectedAgents.Entries.size());
+		EXPECT_EQ(agents.HighestHealing, expectedAgents.HighestHealing);
+		for (uint32_t i = 0; i < expectedAgents.Entries.size(); i++)
+		{
+			EXPECT_EQ(agents.Entries[i].GetTie(), expectedAgents.Entries[i].GetTie());
+		}
+
+		AggregatedVector expectedSkills;
+		expectedSkills.Add(26646, "Battle Scars", combatTime, 33792, 295, std::nullopt);
+		expectedSkills.Add(57409, "Nourishment", combatTime, 7181, 24, std::nullopt);
+		expectedSkills.Add(45686, "Breakrazor's Bastion (Self)", combatTime, 3923, 1, std::nullopt);
+		expectedSkills.Add(28313, "Enchanted Daggers (Siphon)", combatTime, 3870, 6, std::nullopt);
+		expectedSkills.Add(46232, "Breakrazor's Bastion (Area)", combatTime, 3218, 10, std::nullopt);
+		expectedSkills.Add(26937, "Enchanted Daggers (Initial)", combatTime, 1560, 1, std::nullopt);
+
+		const AggregatedVector& skills = stats.GetStats(DataSource::Skills);
+		ASSERT_EQ(skills.Entries.size(), expectedSkills.Entries.size());
+		EXPECT_EQ(skills.HighestHealing, expectedSkills.HighestHealing);
+		for (uint32_t i = 0; i < expectedSkills.Entries.size(); i++)
+		{
+			EXPECT_EQ(skills.Entries[i].GetTie(), expectedSkills.Entries[i].GetTie());
+		}
+	}
+
+	// This is not really realistic - peer and local has same name, id, etc. But everything can handle it fine.
+	auto [localId2, states2] = Processor.GetState();
+
+	AggregatedStatsCollection stats{ std::move(states2), localId2, options.Windows[9], false };
+	const AggregatedStatsEntry& totalEntry = stats.GetTotal(DataSource::PeersOutgoing);
+	EXPECT_EQ(totalEntry.Healing, totalHealing * 2);
+	EXPECT_EQ(totalEntry.Hits, totalHits * 2);
+
+	float combatTime = stats.GetCombatTime();
+	AggregatedVector expectedStats;
+	expectedStats.Add(2000, "Enagyy", combatTime, totalHealing, totalHits, std::nullopt);
+	expectedStats.Add(100000, "Local Fake Self", combatTime, totalHealing, totalHits, std::nullopt);
 
 	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
 	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());

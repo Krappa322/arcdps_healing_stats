@@ -35,7 +35,8 @@ public:
 	EventType GetEventType(const cbtevent* pEvent, bool pIsLocal);
 
 	// Returns <local unique id, map<unique id, <name, agent state>>
-	std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> GetState();
+	// pSelfUniqueId is only specified in testing
+	std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> GetState(uintptr_t pSelfUniqueId = 0);
 
 #ifndef TEST
 private:
