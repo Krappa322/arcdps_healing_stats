@@ -8,6 +8,65 @@
 #include <cassert>
 #include <cstddef>
 
+[[maybe_unused]]
+static void PrintEvent(cbtevent* pEvent)
+{
+	LogD("time={} "
+		"src_agent={} "
+		"dst_agent={} "
+		"value={} "
+		"buff_dmg={} "
+		"overstack_value={} "
+		"skillid={} "
+		"src_instid={} "
+		"dst_instid={} "
+		"src_master_instid={} "
+		"dst_master_instid={} "
+		"iff={} "
+		"buff={} "
+		"result={} "
+		"is_activation={} "
+		"is_buffremove={} "
+		"is_ninety={} "
+		"is_fifty={} "
+		"is_moving={} "
+		"is_statechange={} "
+		"is_flanking={} "
+		"is_shields={} "
+		"is_offcycle={} "
+		"pad61={} "
+		"pad62={} "
+		"pad63={} "
+		"pad64={}",
+		pEvent->time,
+		pEvent->src_agent,
+		pEvent->dst_agent,
+		pEvent->value,
+		pEvent->buff_dmg,
+		pEvent->overstack_value,
+		pEvent->skillid,
+		pEvent->src_instid,
+		pEvent->dst_instid,
+		pEvent->src_master_instid,
+		pEvent->dst_master_instid,
+		pEvent->iff,
+		pEvent->buff,
+		pEvent->result,
+		pEvent->is_activation,
+		pEvent->is_buffremove,
+		pEvent->is_ninety,
+		pEvent->is_fifty,
+		pEvent->is_moving,
+		pEvent->is_statechange,
+		pEvent->is_flanking,
+		pEvent->is_shields,
+		pEvent->is_offcycle,
+		pEvent->pad61,
+		pEvent->pad62,
+		pEvent->pad63,
+		pEvent->pad64);
+}
+
 EventProcessor::EventProcessor()
 	: mSkillTable(std::make_shared<SkillTable>())
 {
@@ -159,20 +218,13 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		}
 	}
 
-	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
+	EventType eventType = GetEventType(pEvent, false);
+	if (eventType == EventType::Damage)
 	{
-		return;
-	}
+		LogT("AREA Damage event {} {} {} {} ({} {} {})->({} {} {}) iff={}",
+			pEvent->skillid, pSkillname, pEvent->value, pEvent->buff_dmg, pSourceAgent->id, pSourceAgent->name, pSourceAgent->self, pDestinationAgent->id, pDestinationAgent->name, pDestinationAgent->self, pEvent->iff);
+		//PrintEvent(pEvent);
 
-	if (pEvent->buff != 0 && pEvent->buff_dmg == 0)
-	{
-		// Buff application - not interesting
-		return;
-	}
-
-	// Event actually did something
-	if (pEvent->buff_dmg > 0 || pEvent->value > 0)
-	{
 		mSkillTable->RegisterDamagingSkill(pEvent->skillid, pSkillname);
 		return;
 	}
@@ -305,21 +357,22 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		}
 	}
 
-	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
+	EventType eventType = GetEventType(pEvent, true);
+	if (eventType == EventType::Damage || eventType == EventType::SemiDamaging)
 	{
-		// Not a HP modifying event - not interesting
-		return;
-	}
-
-	if (pEvent->value <= 0 && pEvent->buff_dmg <= 0)
-	{
-		LOG("Damage event %s %u %u (%llu %s %u)->(%llu %s %u) iff=%hhu", pSkillname, pEvent->value, pEvent->buff_dmg, pSourceAgent->id, pSourceAgent->name, pSourceAgent->self, pDestinationAgent->id, pDestinationAgent->name, pDestinationAgent->self, pEvent->iff);
+		LogD("LOCAL Damage event {} {} {} {} ({} {} {})->({} {} {}) iff={}",
+			pEvent->skillid, pSkillname, pEvent->value, pEvent->buff_dmg, pSourceAgent->id, pSourceAgent->name, pSourceAgent->self, pDestinationAgent->id, pDestinationAgent->name, pDestinationAgent->self, pEvent->iff);
+		//PrintEvent(pEvent);
 
 		if ((pSourceAgent->self != 0 || pDestinationAgent->self != 0) && pEvent->iff == IFF_FOE)
 		{
 			mLocalState.DamageEvent(pEvent);
 		}
 
+		return;
+	}
+	else if (eventType == EventType::Other)
+	{
 		return;
 	}
 
@@ -426,21 +479,22 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		return;
 	}
 
-	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
+	EventType eventType = GetEventType(pEvent, true);
+	if (eventType == EventType::Damage || eventType == EventType::SemiDamaging)
 	{
-		// Not a HP modifying event - not interesting
-		return;
-	}
-
-	if (pEvent->value <= 0 && pEvent->buff_dmg <= 0)
-	{
-		LOG("Damage event %hu->%hu iff=%hhu", pEvent->src_instid, pEvent->dst_instid, pEvent->iff);
+		LogD("PEER Damage event {} {} {} ({})->({}) iff={}",
+			pEvent->skillid, pEvent->value, pEvent->buff_dmg, pEvent->src_instid, pEvent->dst_instid, pEvent->iff);
+		//PrintEvent(pEvent);
 
 		if ((pEvent->src_instid == pPeerInstanceId || pEvent->dst_instid == pPeerInstanceId) && pEvent->iff == IFF_FOE)
 		{
 			state->DamageEvent(pEvent);
 		}
 
+		return;
+	}
+	else if (eventType == EventType::Other)
+	{
 		return;
 	}
 
@@ -510,6 +564,53 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		assert(healedAmount != 0);
 	}
 	LOG("Registered heal event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
+}
+
+EventProcessor::EventType EventProcessor::GetEventType(const cbtevent* pEvent, bool pIsLocal)
+{
+	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
+	{
+		return EventType::Other;
+	}
+
+	if (pEvent->buff == 0)
+	{
+		switch (pEvent->result)
+		{
+		case CBTR_NORMAL:
+		case CBTR_CRIT:
+		case CBTR_GLANCE:
+			break;
+		case CBTR_ACTIVATION:
+			return EventType::Other;
+		default:
+			return EventType::SemiDamaging; // Breakbar / misc.
+		}
+
+		if ((pIsLocal && pEvent->value <= 0) || (!pIsLocal && pEvent->value >= 0))
+		{
+			return EventType::Damage; // Direct damage
+		}
+		else
+		{
+			return EventType::Healing; // Direct healing
+		}
+	}
+	else
+	{
+		if (pEvent->buff_dmg == 0)
+		{
+			return EventType::SemiDamaging; // Buff apply
+		}
+		else if ((pIsLocal && pEvent->buff_dmg <= 0) || (!pIsLocal && pEvent->buff_dmg >= 0))
+		{
+			return EventType::Damage; // Buff damage
+		}
+		else
+		{
+			return EventType::Healing; // Buff healing (e.g. Regeneration)
+		}
+	}
 }
 
 std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState()

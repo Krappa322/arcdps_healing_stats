@@ -16,6 +16,14 @@ struct HealingStats : HealingStatsSlim
 class EventProcessor
 {
 public:
+	enum class EventType
+	{
+		Damage,
+		Healing,
+		SemiDamaging, // non-damaging events that still reset combat time
+		Other,
+	};
+
 	EventProcessor();
 
 	void SetEvtcLoggingEnabled(bool pEnabled);
@@ -23,6 +31,8 @@ public:
 	void AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 	void LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 	void PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId);
+
+	EventType GetEventType(const cbtevent* pEvent, bool pIsLocal);
 
 	// Returns <local unique id, map<unique id, <name, agent state>>
 	std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> GetState();
