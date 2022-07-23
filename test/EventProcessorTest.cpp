@@ -232,10 +232,10 @@ static void e9_ExpectVersionEvent(cbtevent* pEvent, uint32_t pSignature)
 
 	EXPECT_EQ(versionHeader.EvtcRevision, HEALING_STATS_EVTC_REVISION);
 	EXPECT_EQ(versionHeader.Signature, HEALING_STATS_ADDON_SIGNATURE);
-	EXPECT_EQ(versionHeader.VersionStringLength, constexpr_strlen(HEALING_STATS_VERSION));
+	EXPECT_EQ(versionHeader.VersionStringLength, constexpr_strlen(GlobalObjects::VERSION_STRING_FRIENDLY));
 
 	std::string_view version = std::string_view{reinterpret_cast<char*>(&pEvent->dst_agent), versionHeader.VersionStringLength};
-	EXPECT_EQ(version, HEALING_STATS_VERSION);
+	EXPECT_EQ(version, GlobalObjects::VERSION_STRING_FRIENDLY);
 }
 
 TEST(EventProcessorTest, LogStart)

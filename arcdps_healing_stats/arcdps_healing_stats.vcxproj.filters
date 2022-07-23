@@ -29,4 +29,7 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\vcpkg_installed\x64-windows-static\x64-windows\share\grpc\roots.pem" />
+  </ItemGroup>
 </Project>

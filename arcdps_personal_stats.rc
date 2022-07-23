@@ -52,6 +52,44 @@ END
 
 IDR_ROOT_CERTIFICATES   CERTIFICATE             "vcpkg_installed\\x64-windows-static\\x64-windows\\share\\grpc\\roots.pem"
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2,5,2,0
+ PRODUCTVERSION 2,5,2,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x0L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "200004b0"
+        BEGIN
+            VALUE "FileDescription", "arcdps_healing_stats"
+            VALUE "FileVersion", "2.5.2.0"
+            VALUE "InternalName", "arcdps_healing_stats"
+            VALUE "LegalCopyright", "Copyright (C) 2022"
+            VALUE "OriginalFilename", "arcdps_healing_stats.dll"
+            VALUE "ProductName", "arcdps_healing_stats"
+            VALUE "ProductVersion", "2.5.2.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x2000, 1200
+    END
+END
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 

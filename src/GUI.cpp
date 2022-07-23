@@ -10,6 +10,9 @@
 #include <array>
 #include <Windows.h>
 
+static constexpr EnumStringArray<AutoUpdateSettingEnum> AUTO_UPDATE_SETTING_ITEMS{
+	"off", "on (only download stable)", "on (download prerelease/stable)"
+};
 static constexpr EnumStringArray<DataSource> DATA_SOURCE_ITEMS{
 	"targets", "skills", "totals", "combined", "peers outgoing"};
 static constexpr EnumStringArray<SortOrder> SORT_ORDER_ITEMS{
@@ -661,6 +664,7 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 	}
 	ImGuiEx::SmallUnindent();
 
+	ImGuiEx::ComboMenu("auto updates", pHealingOptions.AutoUpdateSetting, AUTO_UPDATE_SETTING_ITEMS);
 	ImGuiEx::SmallCheckBox("debug mode", &pHealingOptions.DebugMode);
 	ImGuiEx::AddTooltipToLastItem(
 		"Includes debug data in target and skill names.\n"

@@ -19,6 +19,9 @@
 #include <stdio.h>
 #include <Windows.h>
 
+#include <grpcpp/grpcpp.h>
+#include <cpr/cpr.h>
+
 /* proto/globals */
 arcdps_exports* mod_init();
 uintptr_t mod_release();
@@ -188,12 +191,27 @@ arcdps_exports* mod_init()
 	ARC_EXPORTS.imguivers = IMGUI_VERSION_NUM;
 	ARC_EXPORTS.size = sizeof(arcdps_exports);
 	ARC_EXPORTS.out_name = "healing_stats";
-	ARC_EXPORTS.out_build = HEALING_STATS_VERSION;
+	ARC_EXPORTS.out_build = &GlobalObjects::VERSION_STRING_FRIENDLY[0];
 	ARC_EXPORTS.combat = mod_combat;
 	ARC_EXPORTS.imgui = mod_imgui;
 	ARC_EXPORTS.options_end = mod_options_end;
 	ARC_EXPORTS.combat_local = mod_combat_local;
 	ARC_EXPORTS.wnd_nofilter = mod_wnd;
+
+	GlobalObjects::UPDATE_CHECKER = std::make_unique<UpdateChecker>();
+	const std::optional<UpdateChecker::Version> version_raw = GlobalObjects::UPDATE_CHECKER->GetCurrentVersion(GlobalObjects::SELF_HANDLE);
+	if (version_raw.has_value() == false)
+	{
+		LogE("Failed startup - GetCurrentVersion failed");
+
+		ARC_EXPORTS.sig = 0;
+		ARC_EXPORTS.size = reinterpret_cast<uintptr_t>("GetCurrentVersion failed");
+		return &ARC_EXPORTS;
+	}
+
+	GlobalObjects::VERSION = version_raw.value();
+	fmt::format_to(GlobalObjects::VERSION_STRING_FRIENDLY, "{}.{}.rc{}",
+		GlobalObjects::VERSION[0], GlobalObjects::VERSION[1], GlobalObjects::VERSION[2]);
 
 	const char* certificate_load_result = LoadRootCertificatesFromFile();
 	if (certificate_load_result != nullptr)
@@ -232,11 +250,19 @@ arcdps_exports* mod_init()
 		Log_::SetLevel(HEAL_TABLE_OPTIONS.LogLevel);
 		GlobalObjects::EVENT_PROCESSOR->SetEvtcLoggingEnabled(HEAL_TABLE_OPTIONS.EvtcLoggingEnabled);
 		GlobalObjects::EVTC_RPC_CLIENT->SetEnabledStatus(HEAL_TABLE_OPTIONS.EvtcRpcEnabled);
+
+		if (HEAL_TABLE_OPTIONS.AutoUpdateSetting != AutoUpdateSettingEnum::Off)
+		{
+			const bool enablePreReleases = (HEAL_TABLE_OPTIONS.AutoUpdateSetting == AutoUpdateSettingEnum::PreReleases);
+			GlobalObjects::UPDATE_CHECKER->ClearFiles(GlobalObjects::SELF_HANDLE);
+			GlobalObjects::UPDATE_STATE = GlobalObjects::UPDATE_CHECKER->CheckForUpdate(GlobalObjects::SELF_HANDLE, GlobalObjects::VERSION, "Krappa322/arcdps_healing_stats", enablePreReleases);
+		}
 	}
 
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, GlobalObjects::EVTC_RPC_CLIENT.get());
 
-	LogI("Startup completed, arcdps_version={} healing_stats_version={}", ARCDPS_VERSION, ARC_EXPORTS.out_build);
+	LogI("Startup completed, arcdps_version={} healing_stats_version={} cpr_version={} curl_version={} grpc_version={} grpc_core_version={}",
+		ARCDPS_VERSION, ARC_EXPORTS.out_build, CPR_VERSION, LIBCURL_VERSION, grpc::Version(), grpc_version_string());
 	return &ARC_EXPORTS;
 }
 
@@ -265,6 +291,13 @@ uintptr_t mod_release()
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 		HEAL_TABLE_OPTIONS.Save(JSON_CONFIG_PATH);
 	}
+	
+	if (GlobalObjects::UPDATE_STATE != nullptr)
+	{
+		GlobalObjects::UPDATE_STATE->FinishPendingTasks();
+	}
+	GlobalObjects::UPDATE_STATE = nullptr;
+	GlobalObjects::UPDATE_CHECKER = nullptr;
 
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD->join();
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD = nullptr;
@@ -301,6 +334,7 @@ uintptr_t mod_imgui(uint32_t pNotCharSelectionOrLoading)
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 		HEAL_TABLE_OPTIONS.AnchoringHighlightedWindows.clear();
+		Display_UpdateWindow();
 		Display_GUI(HEAL_TABLE_OPTIONS);
 	}
 

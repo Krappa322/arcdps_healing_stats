@@ -159,6 +159,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="arcdps_mock\arcdps-extension\Widgets.cpp" />
+    <ClCompile Include="modules\arcdps_extension\UpdateCheckerBase.cpp" />
     <ClCompile Include="src\AgentTable.cpp" />
     <ClCompile Include="src\AggregatedStats.cpp" />
     <ClCompile Include="src\AggregatedStatsCollection.cpp" />
@@ -175,9 +176,11 @@
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\PlayerStats.cpp" />
     <ClCompile Include="src\Skills.cpp" />
+    <ClCompile Include="src\UpdateGUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arcdps_mock\arcdps-extension\Widgets.h" />
+    <ClInclude Include="modules\arcdps_extension\UpdateCheckerBase.h" />
     <ClInclude Include="src\AgentTable.h" />
     <ClInclude Include="src\AggregatedStats.h" />
     <ClInclude Include="src\AggregatedStatsCollection.h" />
@@ -195,6 +198,7 @@
     <ClInclude Include="src\PlayerStats.h" />
     <ClInclude Include="src\Skills.h" />
     <ClInclude Include="src\State.h" />
+    <ClInclude Include="src\UpdateGUI.h" />
     <ClInclude Include="src\Utilities.h" />
     <ClInclude Include="src\AddonVersion.h" />
   </ItemGroup>

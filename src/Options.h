@@ -20,6 +20,13 @@
 #include <type_traits>
 #include <vector>
 
+enum class AutoUpdateSettingEnum : uint8_t
+{
+	Off = 0,
+	On = 1,
+	PreReleases = 2,
+	Max = 3
+};
 
 struct DetailsWindowState : AggregatedStatsEntry
 {
@@ -45,6 +52,7 @@ struct HealWindowContext : HealWindowOptions
 
 struct HealTableOptions
 {
+	AutoUpdateSettingEnum AutoUpdateSetting = AutoUpdateSettingEnum::On;
 	bool DebugMode = false;
 	spdlog::level::level_enum LogLevel = spdlog::level::off;
 	

@@ -3,6 +3,7 @@
   "name": "arcdps-personal-stats",
   "version-string": "2.2rc2",
   "dependencies": [
+    "cpr",
     "grpc",
     "gtest",
     "nlohmann-json",

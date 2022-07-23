@@ -1,6 +1,6 @@
 #pragma once
-
 #include "Options.h"
+#include "UpdateGUI.h"
 
 #include <Windows.h>
 

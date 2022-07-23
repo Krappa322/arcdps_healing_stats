@@ -136,8 +136,7 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 
 		cbtevent logEvent = {};
 
-		constexpr char versionString[] = HEALING_STATS_VERSION;
-		constexpr size_t versionStringLength = constexpr_strlen(versionString);
+		size_t versionStringLength = strlen(GlobalObjects::VERSION_STRING_FRIENDLY);
 
 		EvtcVersionHeader versionHeader = {};
 		static_assert(sizeof(versionHeader) == sizeof(logEvent.src_agent), "");
@@ -147,12 +146,12 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		static_assert(HEALING_STATS_EVTC_REVISION <= 0x00ffffff, "Revision does not fit in cbtevent");
 
 		versionHeader.VersionStringLength = versionStringLength;
-		static_assert(versionStringLength <= UINT8_MAX, "Version string length does not fit in cbtevent");
+		assert(versionStringLength <= UINT8_MAX && "Version string length does not fit in cbtevent");
 
 		memcpy(&logEvent.src_agent, &versionHeader, sizeof(versionHeader));
 
-		static_assert(versionStringLength <= (offsetof(cbtevent, is_statechange) - offsetof(cbtevent, dst_agent)), "Version string does not fit in cbtevent");
-		memcpy(&logEvent.dst_agent, &versionString, versionStringLength);
+		assert(versionStringLength <= (offsetof(cbtevent, is_statechange) - offsetof(cbtevent, dst_agent)) && "Version string does not fit in cbtevent");
+		memcpy(&logEvent.dst_agent, GlobalObjects::VERSION_STRING_FRIENDLY, versionStringLength);
 
 		if (mEvtcLoggingEnabled.load(std::memory_order_relaxed) == true)
 		{

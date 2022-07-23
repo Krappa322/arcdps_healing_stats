@@ -2,6 +2,7 @@
 #include "arcdps_structs.h"
 #include "EventProcessor.h"
 #include "EventSequencer.h"
+#include "UpdateGUI.h"
 #include "../networking/Client.h"
 
 #include <memory>
@@ -24,6 +25,11 @@ public:
 	static inline std::unique_ptr<EventProcessor> EVENT_PROCESSOR = nullptr;
 	static inline std::unique_ptr<evtc_rpc_client> EVTC_RPC_CLIENT = nullptr;
 	static inline std::unique_ptr<std::thread> EVTC_RPC_CLIENT_THREAD = nullptr;
+
+	static inline UpdateChecker::Version VERSION = {};
+	static inline char VERSION_STRING_FRIENDLY[128] = {};
+	static inline std::unique_ptr<UpdateChecker> UPDATE_CHECKER = nullptr;
+	static inline std::unique_ptr<UpdateChecker::UpdateState> UPDATE_STATE = nullptr;
 
 	static inline std::string ROOT_CERTIFICATES = "";
 

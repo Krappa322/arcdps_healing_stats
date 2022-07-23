@@ -313,6 +313,7 @@ void HealTableOptions::FromJson(const nlohmann::json& pJsonObject)
 		LogW("Invalid config version {}", version);
 	}
 
+	GetJsonValue(pJsonObject, "AutoUpdateSetting", AutoUpdateSetting);
 	GetJsonValue(pJsonObject, "DebugMode", DebugMode);
 	GetJsonValue(pJsonObject, "LogLevel", LogLevel);
 	GetJsonValue(pJsonObject, "EvtcLoggingEnabled", EvtcLoggingEnabled);
@@ -370,6 +371,7 @@ do {\
 
 	pJsonObject["Version"] = 1U;
 
+	SET_JSON_VAL(AutoUpdateSetting);
 	SET_JSON_VAL(DebugMode);
 	SET_JSON_VAL(LogLevel);
 	SET_JSON_VAL(EvtcLoggingEnabled);
