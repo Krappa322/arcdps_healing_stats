@@ -4,6 +4,7 @@
 #include "PlayerStats.h"
 #include "Skills.h"
 
+#include <optional>
 
 struct HealingStats : HealingStatsSlim
 {
@@ -16,23 +17,13 @@ struct HealingStats : HealingStatsSlim
 class EventProcessor
 {
 public:
-	enum class EventType
-	{
-		Damage,
-		Healing,
-		SemiDamaging, // non-damaging events that still reset combat time
-		Other,
-	};
-
 	EventProcessor();
 
 	void SetEvtcLoggingEnabled(bool pEnabled);
 
 	void AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
-	void LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
+	void LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision, std::optional<cbtevent>* pModifiedEvent = nullptr);
 	void PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId);
-
-	EventType GetEventType(const cbtevent* pEvent, bool pIsLocal);
 
 	// Returns <local unique id, map<unique id, <name, agent state>>
 	// pSelfUniqueId is only specified in testing

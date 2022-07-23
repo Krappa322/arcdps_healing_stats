@@ -1,4 +1,5 @@
 #include "AddonVersion.h"
+#include "Common.h"
 #include "EventProcessor.h"
 #include "Exports.h"
 #include "Log.h"
@@ -230,7 +231,7 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 	}
 }
 
-void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t /*pRevision*/)
+void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t /*pRevision*/, std::optional<cbtevent>* pModifiedEvent)
 {
 	UNREFERENCED_PARAMETER(pId);
 	if (pEvent == nullptr)
@@ -338,7 +339,15 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 
 		if (pSourceAgent->self != 0)
 		{
-			mLocalState.ExitedCombat(pEvent->time);
+			uint64_t lastDamageEventTime = mLocalState.ExitedCombat(pEvent->time);
+			if (pModifiedEvent != nullptr)
+			{
+				*pModifiedEvent = *pEvent;
+				assert(*reinterpret_cast<uint64_t*>(&pModifiedEvent->value().iff) == 0);
+				memcpy(&pModifiedEvent->value().iff, &lastDamageEventTime, sizeof(lastDamageEventTime));
+
+				LogD("Modified combat exit with last damage event {}", lastDamageEventTime);
+			}
 		}
 
 		return;
@@ -366,7 +375,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 
 		if ((pSourceAgent->self != 0 || pDestinationAgent->self != 0) && pEvent->iff == IFF_FOE)
 		{
-			mLocalState.DamageEvent(pEvent);
+			mLocalState.DamageEvent(pEvent->time);
 		}
 
 		return;
@@ -469,12 +478,14 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 	}
 	else if (pEvent->is_statechange == CBTS_EXITCOMBAT)
 	{
-		LOG("EnterCombat agent %llu %hu %hu %llu",
+		LOG("ExitCombat agent %llu %hu %hu %llu",
 			pEvent->src_agent, pEvent->src_instid, pEvent->src_master_instid, pEvent->dst_agent);
 
 		if (pEvent->src_instid == pPeerInstanceId)
 		{
-			state->ExitedCombat(pEvent->time);
+			// See LocalCombat handling of CBTS_EXITCOMBAT
+			uint64_t lastDamageEventTime = *reinterpret_cast<uint64_t*>(&pEvent->iff);
+			state->ExitedCombat(pEvent->time, lastDamageEventTime);
 		}
 		return;
 	}
@@ -488,7 +499,7 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 
 		if ((pEvent->src_instid == pPeerInstanceId || pEvent->dst_instid == pPeerInstanceId) && pEvent->iff == IFF_FOE)
 		{
-			state->DamageEvent(pEvent);
+			state->DamageEvent(pEvent->time);
 		}
 
 		return;
@@ -512,7 +523,6 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		// Flip event values so healed amount is negative
 		logEvent.value *= -1;
 		logEvent.buff_dmg *= -1;
-
 
 		if (logEvent.is_offcycle != 0)
 		{
@@ -564,53 +574,6 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		assert(healedAmount != 0);
 	}
 	LOG("Registered heal event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
-}
-
-EventProcessor::EventType EventProcessor::GetEventType(const cbtevent* pEvent, bool pIsLocal)
-{
-	if (pEvent->is_statechange != 0 || pEvent->is_activation != 0 || pEvent->is_buffremove != 0)
-	{
-		return EventType::Other;
-	}
-
-	if (pEvent->buff == 0)
-	{
-		switch (pEvent->result)
-		{
-		case CBTR_NORMAL:
-		case CBTR_CRIT:
-		case CBTR_GLANCE:
-			break;
-		case CBTR_ACTIVATION:
-			return EventType::Other;
-		default:
-			return EventType::SemiDamaging; // Breakbar / misc.
-		}
-
-		if ((pIsLocal && pEvent->value <= 0) || (!pIsLocal && pEvent->value >= 0))
-		{
-			return EventType::Damage; // Direct damage
-		}
-		else
-		{
-			return EventType::Healing; // Direct healing
-		}
-	}
-	else
-	{
-		if (pEvent->buff_dmg == 0)
-		{
-			return EventType::SemiDamaging; // Buff apply
-		}
-		else if ((pIsLocal && pEvent->buff_dmg <= 0) || (!pIsLocal && pEvent->buff_dmg >= 0))
-		{
-			return EventType::Damage; // Buff damage
-		}
-		else
-		{
-			return EventType::Healing; // Buff healing (e.g. Regeneration)
-		}
-	}
 }
 
 std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState(uintptr_t pSelfUniqueId)

@@ -185,6 +185,7 @@ public:
 
 	evtc_rpc_client_status GetStatus();
 	void SetEnabledStatus(bool pEnabledStatus);
+	void SetBudgetMode(bool pBudgetMode);
 
 	uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 	uintptr_t ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
@@ -213,6 +214,7 @@ private:
 	std::queue<CallDataBase*> mQueuedEvents;
 
 	std::atomic_bool mDisabled{false};
+	std::atomic_bool mBudgetMode{false};
 	std::atomic_bool mShouldShutdown{false};
 	bool mShutdown = false;
 	std::chrono::steady_clock::time_point mLastConnectionAttempt;

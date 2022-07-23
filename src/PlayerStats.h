@@ -39,10 +39,12 @@ public:
 	PlayerStats() = default;
 
 	void EnteredCombat(uint64_t pTime, uint16_t pSubGroup);
-	void ExitedCombat(uint64_t pTime);
+
+	// Returns last damage event time (or 0 if combat wasn't really exited)
+	uint64_t ExitedCombat(uint64_t pTime, uint64_t pLastDamageEventTime = 0);
 	bool ResetIfNotInCombat(); // Returns true if peer was reset
 
-	void DamageEvent(cbtevent* pEvent);
+	void DamageEvent(uint64_t pTime);
 	void HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId);
 
 	HealingStatsSlim GetState();

@@ -50,25 +50,29 @@ void PlayerStats::EnteredCombat(uint64_t pTime, uint16_t pSubGroup)
 	}
 }
 
-void PlayerStats::ExitedCombat(uint64_t pTime)
+uint64_t PlayerStats::ExitedCombat(uint64_t pTime, uint64_t pLastDamageEventTime)
 {
 	std::lock_guard<std::mutex> lock(myLock);
 
 	if (myStats.IsOutOfCombat() == true)
 	{
-		LOG("Tried to exit combat when not in combat (current time %llu)", pTime);
-		return;
+		LogD("Tried to exit combat when not in combat (current time {})", pTime);
+		return 0;
 	}
 
 	if (pTime <= myStats.EnteredCombatTime)
 	{
-		LOG("Tried to exit combat with timestamp earlier than combat start (current time %llu, combat start %llu)", pTime, myStats.EnteredCombatTime);
-		return;
+		LogD("Tried to exit combat with timestamp earlier than combat start (current time {}, combat start {})", pTime, myStats.EnteredCombatTime);
+		return 0;
 	}
 
 	myStats.ExitedCombatTime = pTime;
+	myStats.LastDamageEvent = std::max(myStats.LastDamageEvent, pLastDamageEventTime);
 
-	LOG("Spent %llu ms in combat, collected %zu events", myStats.ExitedCombatTime - myStats.EnteredCombatTime, myStats.Events.size());
+	LogI("EnteredCombatTime={} ExitedCombatTime={} LastDamageEvent={} EventCount={} pLastDamageEventTime={}",
+		myStats.EnteredCombatTime, myStats.ExitedCombatTime, myStats.LastDamageEvent, myStats.Events.size(), pLastDamageEventTime);
+
+	return myStats.LastDamageEvent;
 }
 
 bool PlayerStats::ResetIfNotInCombat()
@@ -89,7 +93,7 @@ bool PlayerStats::ResetIfNotInCombat()
 	return false;
 }
 
-void PlayerStats::DamageEvent(cbtevent* pEvent)
+void PlayerStats::DamageEvent(uint64_t pTime)
 {
 	{
 		std::lock_guard<std::mutex> lock(myLock);
@@ -99,7 +103,7 @@ void PlayerStats::DamageEvent(cbtevent* pEvent)
 			return;
 		}
 
-		myStats.LastDamageEvent = pEvent->time;
+		myStats.LastDamageEvent = std::max(myStats.LastDamageEvent, pTime);
 	}
 }
 

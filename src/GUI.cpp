@@ -705,8 +705,37 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 		"\n"
 		"Enabling this option has a small impact on performance, and\n"
 		"will put some additional load on your connection (a maximum\n"
-		"of about 10 kiB/s up and 100 kiB/s down)"
+		"of about 10 kiB/s up and 100 kiB/s down). The download\n"
+		"connection usage increases the more players in your squad\n"
+		"have live stats sharing enabled, the upload connection usage\n"
+		"does not."
 		, DATA_SOURCE_ITEMS[DataSource::PeersOutgoing]);
+
+	if (pHealingOptions.EvtcRpcEnabled == false)
+	{
+		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(128, 128, 128, 255));
+	}
+	if (ImGuiEx::SmallCheckBox("live stats sharing budget mode", &pHealingOptions.EvtcRpcBudgetMode) == true)
+	{
+		GlobalObjects::EVTC_RPC_CLIENT->SetBudgetMode(pHealingOptions.EvtcRpcBudgetMode);
+	}
+	if (pHealingOptions.EvtcRpcEnabled == false)
+	{
+		ImGui::PopItemFlag();
+		ImGui::PopStyleColor();
+	}
+	ImGuiEx::AddTooltipToLastItem(
+		"Only send a minimal subset of events to peers. This reduces\n"
+		"the amount of upload bandwidth used by the addon. Healing\n"
+		"statistics shown will still be fully accurate, however combat\n"
+		"times as viewed by other players may be slightly inaccurate\n"
+		"while still in combat. If those players are running a version\n"
+		"of the addon released before budget mode support was\n"
+		"introduced, the combat times may be highly inaccurate, even\n"
+		"when out of combat. This option has no effect on download\n"
+		"bandwidth usage, only upload. Expected connection usage with\n"
+		"this option enabled should go down to <1kiB/s up.");
 
 	ImGuiEx::SmallInputText("evtc rpc server", pHealingOptions.EvtcRpcEndpoint, sizeof(pHealingOptions.EvtcRpcEndpoint));
 	ImGuiEx::AddTooltipToLastItem(

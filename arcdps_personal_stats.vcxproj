@@ -181,6 +181,7 @@
     <ClInclude Include="src\AgentTable.h" />
     <ClInclude Include="src\AggregatedStats.h" />
     <ClInclude Include="src\AggregatedStatsCollection.h" />
+    <ClInclude Include="src\Common.h" />
     <ClInclude Include="src\EventProcessor.h" />
     <ClInclude Include="src\EventSequencer.h" />
     <ClInclude Include="src\Exports.h" />

@@ -254,14 +254,21 @@ uintptr_t network_test_mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDesti
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
 uintptr_t network_test_mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
-	ACTIVE_PROCESSOR->LocalCombat(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
+	std::optional<cbtevent> modifiedEvent = std::nullopt;
+	ACTIVE_PROCESSOR->LocalCombat(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision, &modifiedEvent);
+	if (modifiedEvent.has_value())
+	{
+		pEvent = &modifiedEvent.value();
+	}
+
 	ACTIVE_CLIENT->ProcessLocalEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
+
 	return 0;
 }
 }; // Anonymous namespace
 
-// parameters are <max parallel callbacks, max fuzz width>
-class NetworkXevtcTestFixture : public ::testing::TestWithParam<uint32_t>
+// parameters are <budget mode enabled>
+class NetworkXevtcTestFixture : public ::testing::TestWithParam<bool>
 {
 protected:
 	void SetUp() override
@@ -305,6 +312,9 @@ protected:
 		mServerThread = std::make_unique<std::thread>(evtc_rpc_server::ThreadStartServe, Server.get());
 		mClientThread = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, Client.get());
 		mPeerClientThread = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, PeerClient.get());
+
+		bool budget_mode = GetParam();
+		ACTIVE_CLIENT->SetBudgetMode(budget_mode);
 	}
 
 	void TearDown() override
@@ -325,24 +335,49 @@ protected:
 	{
 		// Register agents on peer and also register our fake peer on the local client (otherwise events will not be sent to
 		// the peer, since it's not known)
-		ag ag1{};
-		ag ag2{};
-		ag1.elite = 0;
-		ag1.prof = static_cast<Prof>(1);
-		ag2.self = 1;
-		ag2.id = UINT16_MAX - 1;
-		ag2.name = ":FakePeer.1234";
-		PeerClient->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+		{
+			ag ag1{};
+			ag ag2{};
+			ag1.elite = 0;
+			ag1.prof = static_cast<Prof>(1);
+			ag2.self = 1;
+			ag2.id = UINT16_MAX - 1;
+			ag2.name = ":FakePeer.1234";
+			PeerClient->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
 
-		ag2.self = 0;
-		ag2.id = pSelfInstanceId;
-		ag2.name = ":worshipperofnarnia.2689";
-		PeerClient->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+			ag2.self = 0;
+			ag2.id = pSelfInstanceId;
+			ag2.name = ":worshipperofnarnia.2689";
+			PeerClient->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
 
-		ag2.self = 0;
-		ag2.id = UINT16_MAX - 1;
-		ag2.name = ":FakePeer.1234";
-		Client->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+			ag2.self = 0;
+			ag2.id = UINT16_MAX - 1;
+			ag2.name = ":FakePeer.1234";
+			Client->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+		}
+
+		// Wait until the peer is fully connected to the server (the local client will not be connected yet, that's fine,
+		// events are buffered until a connection is established)
+		auto start = std::chrono::system_clock::now();
+		bool completed = false;
+		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(200))
+		{
+			{
+				std::lock_guard lock(Server->mRegisteredAgentsLock);
+				if (Server->mRegisteredAgents.size() >= 1)
+				{
+					auto iter = Server->mRegisteredAgents.find(":FakePeer.1234");
+					if (iter != Server->mRegisteredAgents.end())
+					{
+						completed = true;
+						break;
+					}
+				}
+			}
+
+			Sleep(1);
+		}
+		EXPECT_TRUE(completed);
 
 		// Add the fake self agent we use below to split stats into local and peer (otherwise we just get local stats since
 		// the instance id matches that of the peer and they both use the same event processor)
@@ -353,11 +388,31 @@ protected:
 		uint32_t result = Mock.ExecuteFromXevtc(pLogPath, 0, 0);
 		ASSERT_EQ(result, 0U);
 
+		// All logs used in testing don't have combat exit in them. In budget mode we only guarantee consistent combat time
+		// after combat exit, so send a "fake" combat exit event at the end to make the whole thing work
+		bool budget_mode = GetParam();
+		if (budget_mode == true)
+		{
+			ag ag1{};
+			ag ag2{};
+			ag1.elite = 0;
+			ag1.prof = static_cast<Prof>(0);
+			ag1.id = 2000;
+			ag1.name = "";
+			ag1.self = 1;
+			cbtevent e{};
+			e.time = UINT64_MAX;
+			e.src_instid = pSelfInstanceId;
+			e.src_agent = 2000;
+			e.is_statechange = CBTS_EXITCOMBAT;
+			network_test_mod_combat_local(&e, &ag1, &ag2, nullptr, 0, 0);
+		}
+
 		Client->FlushEvents();
 		PeerClient->FlushEvents();
 
-		std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
-		bool completed = false;
+		start = std::chrono::system_clock::now();
+		completed = false;
 		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(1000))
 		{
 			{
@@ -365,6 +420,7 @@ protected:
 				HealingStats* localState = &states[localId].second;
 				HealingStats* peerState = &states[2000].second;
 
+				ASSERT_NE(localState, peerState);
 				ASSERT_EQ(states.size(), 2U);
 				if (localState->Events.size() == peerState->Events.size() && localState->LastDamageEvent == peerState->LastDamageEvent)
 				{
@@ -386,7 +442,22 @@ protected:
 
 			Sleep(1);
 		}
-		ASSERT_TRUE(completed);
+		if (completed == false)
+		{
+			auto [localId, states] = Processor.GetState(localFakeSelfUniqueId);
+			HealingStats* localState = &states[localId].second;
+			HealingStats* peerState = &states[2000].second;
+
+			LogC("Clients didn't sync in time - "
+				"EventCount: local {} peer {} - "
+				"ExitedCombatTime: local {} peer {} - "
+				"LastDamageEvent: local {} peer {}",
+				localState->Events.size(), peerState->Events.size(),
+				localState->ExitedCombatTime, peerState->ExitedCombatTime,
+				localState->LastDamageEvent, peerState->LastDamageEvent);
+			GTEST_FAIL();
+		}
+		
 
 		// We can only do this when we know no more events will be sent, since events can override mSelfUniqueId
 		Processor.mSelfUniqueId.store(100000);
@@ -1026,4 +1097,4 @@ TEST_P(NetworkXevtcTestFixture, renegade_solo)
 INSTANTIATE_TEST_SUITE_P(
 	Normal,
 	NetworkXevtcTestFixture,
-	::testing::Values(0u));
+	::testing::Values(false, true));

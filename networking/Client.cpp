@@ -1,7 +1,7 @@
 #include "Client.h"
-#include "Client.h"
 
 #include "evtc_rpc_messages.h"
+#include "../src/Common.h"
 #include "../src/Log.h"
 
 #include <algorithm>
@@ -126,6 +126,13 @@ void evtc_rpc_client::SetEnabledStatus(bool pEnabledStatus)
 	LogI("Changed enabled status to {}", pEnabledStatus);
 }
 
+void evtc_rpc_client::SetBudgetMode(bool pBudgetMode)
+{
+	mBudgetMode = pBudgetMode;
+	LogI("Changed budget mode to {}", pBudgetMode);
+}
+
+
 uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* /*pSkillname*/, uint64_t pId, uint64_t /*pRevision*/)
 {
 	if (pEvent == nullptr)
@@ -164,12 +171,28 @@ uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent,
 		return 0;
 	}
 
-	CombatEventCallData* newEvent = new CombatEventCallData(*pEvent);
-	if (QueueEvent(newEvent, false) == false)
+	bool sendEvent = true;
+	if (mBudgetMode.load(std::memory_order_relaxed) == true)
 	{
-		DEBUGLOG("Dropping CombatEvent event %llu since queue is full", pId);
-		delete newEvent;
+		sendEvent = false;
+
+		EventType eventType = GetEventType(pEvent, true);
+		if (eventType == EventType::Healing || pEvent->is_statechange == CBTS_ENTERCOMBAT || pEvent->is_statechange == CBTS_EXITCOMBAT)
+		{
+			sendEvent = true;
+		}
 	}
+
+	if (sendEvent == true)
+	{
+		CombatEventCallData* newEvent = new CombatEventCallData(*pEvent);
+		if (QueueEvent(newEvent, false) == false)
+		{
+			DEBUGLOG("Dropping CombatEvent event %llu since queue is full", pId);
+			delete newEvent;
+		}
+	}
+
 	return 0;
 }
 

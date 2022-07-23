@@ -97,6 +97,7 @@ void Log_::Init(bool pRotateOnOpen, const char* pLogPath)
 
 	Log_::LOGGER = spdlog::rotating_logger_mt<spdlog::async_factory>("arcdps_healing_stats", pLogPath, 128*1024*1024, 8, pRotateOnOpen);
 	Log_::LOGGER->set_pattern("%b %d %H:%M:%S.%f %t %L %v");
+	Log_::LOGGER->flush_on(spdlog::level::err);
 	spdlog::flush_every(std::chrono::seconds(5));
 }
 
@@ -120,6 +121,7 @@ void Log_::InitMultiSink(bool pRotateOnOpen, const char* pLogPathTrace, const ch
 	std::vector<spdlog::sink_ptr> sinks{debug_sink, info_sink};
 	Log_::LOGGER = std::make_shared<spdlog::async_logger>("arcdps_healing_stats", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 	Log_::LOGGER->set_pattern("%b %d %H:%M:%S.%f %t %L %v");
+	Log_::LOGGER->flush_on(spdlog::level::err);
 	spdlog::register_logger(Log_::LOGGER);
 
 	spdlog::flush_every(std::chrono::seconds(5));
