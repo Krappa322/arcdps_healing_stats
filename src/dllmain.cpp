@@ -426,6 +426,16 @@ uintptr_t mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM
 					LOG("Key %i '%s' toggled window %u - new heal window state is %s", HEAL_TABLE_OPTIONS.Windows[i].Hotkey, VirtualKeyToString(HEAL_TABLE_OPTIONS.Windows[i].Hotkey).c_str(), i, BOOL_STR(HEAL_TABLE_OPTIONS.Windows[i].Shown));
 				}
 			}
+			if (HEAL_TABLE_OPTIONS.EvtcRpcEnabledHotkey > 0 &&
+				static_cast<size_t>(HEAL_TABLE_OPTIONS.EvtcRpcEnabledHotkey) < sizeof(io.KeysDown) &&
+				virtualKey == HEAL_TABLE_OPTIONS.EvtcRpcEnabledHotkey)
+			{
+				HEAL_TABLE_OPTIONS.EvtcRpcEnabled = !HEAL_TABLE_OPTIONS.EvtcRpcEnabled;
+				GlobalObjects::EVTC_RPC_CLIENT->SetEnabledStatus(HEAL_TABLE_OPTIONS.EvtcRpcEnabled);
+				triggeredKey = true;
+
+				LogI("Key {} {} toggled evtc rpc enabled - new state is {}", virtualKey, VirtualKeyToString(virtualKey).c_str(), BOOL_STR(HEAL_TABLE_OPTIONS.EvtcRpcEnabled));
+			}
 
 			if (triggeredKey == true)
 			{

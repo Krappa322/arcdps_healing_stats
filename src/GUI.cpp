@@ -447,7 +447,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 		ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
 		ImGui::SetCursorPosY(oldPosY);
 
-		ImGui::PushItemWidth(ImGui::CalcTextSize("-----").x);
+		ImGui::SetNextItemWidth(ImGui::CalcTextSize("-----").x);
 		ImGui::InputInt("##HOTKEY", &pContext.Hotkey, 0);
 
 		ImGui::SameLine();
@@ -736,6 +736,25 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 		"when out of combat. This option has no effect on download\n"
 		"bandwidth usage, only upload. Expected connection usage with\n"
 		"this option enabled should go down to <1kiB/s up.");
+
+	float oldPosY = ImGui::GetCursorPosY();
+	ImGui::BeginGroup();
+
+	ImGui::SetCursorPosY(oldPosY + ImGui::GetStyle().FramePadding.y);
+	ImGui::Text("live stats sharing hotkey");
+
+	ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
+	ImGui::SetCursorPosY(oldPosY);
+
+	ImGui::SetNextItemWidth(ImGui::CalcTextSize("-----").x);
+	ImGui::InputInt("##HOTKEY", &pHealingOptions.EvtcRpcEnabledHotkey, 0);
+
+	ImGui::SameLine();
+	ImGui::Text("(%s)", VirtualKeyToString(pHealingOptions.EvtcRpcEnabledHotkey).c_str());
+
+	ImGui::EndGroup();
+	ImGuiEx::AddTooltipToLastItem("Numerical value (virtual key code) for the key\n"
+		"used to toggle live stats sharing");
 
 	ImGuiEx::SmallInputText("evtc rpc server", pHealingOptions.EvtcRpcEndpoint, sizeof(pHealingOptions.EvtcRpcEndpoint));
 	ImGuiEx::AddTooltipToLastItem(

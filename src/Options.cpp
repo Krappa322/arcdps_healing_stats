@@ -319,6 +319,7 @@ void HealTableOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "EvtcRpcEndpoint", EvtcRpcEndpoint);
 	GetJsonValue(pJsonObject, "EvtcRpcEnabled", EvtcRpcEnabled);
 	GetJsonValue(pJsonObject, "EvtcRpcBudgetMode", EvtcRpcBudgetMode);
+	GetJsonValue(pJsonObject, "EvtcRpcEnabledHotkey", EvtcRpcEnabledHotkey);
 
 	const auto iter = pJsonObject.find("Windows");
 	if (iter != pJsonObject.end())
@@ -375,6 +376,7 @@ do {\
 	SET_JSON_VAL_CSTR_ARRAY(EvtcRpcEndpoint);
 	SET_JSON_VAL(EvtcRpcEnabled);
 	SET_JSON_VAL(EvtcRpcBudgetMode);
+	SET_JSON_VAL(EvtcRpcEnabledHotkey);
 
 	nlohmann::json windows;
 	for (size_t i = 0; i < Windows.size(); i++)
