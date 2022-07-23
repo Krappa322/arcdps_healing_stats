@@ -122,6 +122,4 @@ namespace Log_
 
 #define DEBUGLOG(pFormatString, ...) if (false) { printf(pFormatString, ##__VA_ARGS__); }
 
-#define LOG_ARC(pFormatString, ...) Log_::LogImplementationArc_(Log_::GetFileName(__FILE__), __func__, pFormatString, ##__VA_ARGS__); if (false) { printf(pFormatString, ##__VA_ARGS__); }
-
 #define BOOL_STR(pBool) pBool == true ? "true" : "false"
