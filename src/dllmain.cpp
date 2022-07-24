@@ -210,7 +210,7 @@ arcdps_exports* mod_init()
 	}
 
 	GlobalObjects::VERSION = version_raw.value();
-	fmt::format_to(GlobalObjects::VERSION_STRING_FRIENDLY, "{}.{}.rc{}",
+	fmt::format_to(GlobalObjects::VERSION_STRING_FRIENDLY, "{}.{}rc{}",
 		GlobalObjects::VERSION[0], GlobalObjects::VERSION[1], GlobalObjects::VERSION[2]);
 
 	const char* certificate_load_result = LoadRootCertificatesFromFile();

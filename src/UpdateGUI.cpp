@@ -30,8 +30,8 @@ void Display_UpdateWindow()
 			const UpdateChecker::Version& newVersion = state->NewVersion;
 
 			ImGui::TextColored(ImVec4(1.f, 0.f, 0.f, 1.f), "A new update for the healing stats addon is available");
-			ImGui::TextColored(ImVec4(1.f, 0.f, 0.f, 1.f), "Current version: %u.%u.%u", currentVersion[0], currentVersion[1], currentVersion[2]);
-			ImGui::TextColored(ImVec4(0.f, 1.f, 0.f, 1.f), "New version: %u.%u.%u", newVersion[0], newVersion[1], newVersion[2]);
+			ImGui::TextColored(ImVec4(1.f, 0.f, 0.f, 1.f), "Current version: %u.%urc%u", currentVersion[0], currentVersion[1], currentVersion[2]);
+			ImGui::TextColored(ImVec4(0.f, 1.f, 0.f, 1.f), "New version: %u.%urc%u", newVersion[0], newVersion[1], newVersion[2]);
 
 			if (ImGui::Button("Open download page") == true)
 			{
