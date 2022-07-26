@@ -124,11 +124,22 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	UNREFERENCED_PARAMETER(pWindowIndex);
 	char buffer[1024];
 
-	if (pDataSource == DataSource::PeersOutgoing && pEvtcRpcEnabled == false)
+	if (pDataSource == DataSource::PeersOutgoing)
 	{
-		ImGui::TextWrapped("Live stats sharing is disabled. Enable \"live stats sharing\" under \"Heal Stats Options\" in order to see the healing done by other players in the squad.");
-		pContext.CurrentFrameLineCount += 1;
-		return;
+		if (pEvtcRpcEnabled == false)
+		{
+			ImGui::TextWrapped("Live stats sharing is disabled. Enable \"live stats sharing\" under \"Heal Stats Options\" in order to see the healing done by other players in the squad.");
+			pContext.CurrentFrameLineCount += 3;
+			return;
+		}
+
+		evtc_rpc_client_status status = GlobalObjects::EVTC_RPC_CLIENT->GetStatus();
+		if (status.Connected == false)
+		{
+			ImGui::TextWrapped("Not connected to the live stats sharing server (\"%s\").", status.Endpoint.c_str());
+			pContext.CurrentFrameLineCount += 3;
+			return;
+		}
 	}
 
 	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal(pDataSource);
