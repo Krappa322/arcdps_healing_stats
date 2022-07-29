@@ -15,12 +15,55 @@ BUILD_ALL_PROJECT = "arcdps_personal_stats_build_all.proj"
 ARCHVING_TARGETS = ["arcdps_healing_stats.dll", "arcdps_healing_stats.pdb"]
 TEST_BINARY_NAME = "test.exe"
 
+
 CONFIGURATIONS = ["Debug", "Release"]
 START = datetime.datetime.now()
 
 def Progress(pStatus: str):
 	time_diff = datetime.datetime.now() - START
 	print("{:03}.{:06} {}".format(int(time_diff.total_seconds()), time_diff.microseconds, pStatus))
+
+def ExtractInternalVersion(pVersionString: str) -> List[int]:
+	result: List[int] = []
+	for token_raw in pVersionString.split("."):
+		token = "".join([char for char in token_raw if char in string.digits])
+		result.append(int(token))
+	assert len(result) == 3, "Version must include 3 tokens"
+	Progress("Parsed version")
+	return result
+
+def ChangeResourceVersion(pVersion: List[int]) -> None:
+	with open(os.path.join(SCRIPT_PATH, "arcdps_personal_stats.rc"), "r+") as file:
+		fulldata = file.read()
+
+		fulldata, replace_count = re.subn(
+			r" FILEVERSION \d+,\d+,\d+,\d+",
+			r" FILEVERSION {},{},{},1".format(pVersion[0], pVersion[1], pVersion[2]),
+			fulldata)
+		assert replace_count == 1
+
+		fulldata, replace_count = re.subn(
+			r" PRODUCTVERSION \d+,\d+,\d+,\d+",
+			r" PRODUCTVERSION {},{},{},1".format(pVersion[0], pVersion[1], pVersion[2]),
+			fulldata)
+		assert replace_count == 1
+
+		fulldata, replace_count = re.subn(
+			r'            VALUE "FileVersion", "\d+.\d+.\d+.\d+"',
+			r'            VALUE "FileVersion", "{}.{}.{}.1"'.format(pVersion[0], pVersion[1], pVersion[2]),
+			fulldata)
+		assert replace_count == 1
+
+		fulldata, replace_count = re.subn(
+			r'            VALUE "ProductVersion", "\d+.\d+.\d+.\d+"',
+			r'            VALUE "ProductVersion", "{}.{}.{}.1"'.format(pVersion[0], pVersion[1], pVersion[2]),
+			fulldata)
+		assert replace_count == 1
+
+		file.seek(0)
+		file.write(fulldata)
+		file.truncate()
+	Progress("Changed version in resource file")
 
 # Returns an absolute path to the newly created directory
 def CreateReleaseDirectory(pVersionString: str) -> str:
@@ -102,7 +145,9 @@ def Archive(pReleaseDirectory: str):
 	Progress("Archiving complete")
 
 def Do_Release(pVersionString: str):
+	version_internal = ExtractInternalVersion(pVersionString)
 	release_directory = CreateReleaseDirectory(pVersionString)
+	ChangeResourceVersion(version_internal)
 	Build(release_directory, True)
 	asyncio.run(Test(release_directory))
 	Archive(release_directory)
@@ -114,4 +159,4 @@ def Do_Test():
 	Progress("Do_Test done")
 
 #Do_Test()
-Do_Release("v2.5rc2")
+Do_Release("v2.6.rc1")
