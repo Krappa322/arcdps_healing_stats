@@ -1,9 +1,11 @@
 # ArcDPS Healing Stats
+[![downloads](https://img.shields.io/github/downloads/Krappa322/arcdps_healing_stats/total)](https://github.com/Krappa322/arcdps_healing_stats/releases/latest)
+
 Show healing statistics based on your local stats (i.e. your own healing output).
 
 This includes outgoing healing per agent and per skill, as well as filtering to only include your own subgroup/squad or to exclude minions. Format of the window title and contents are fully configurable and windows can be configured to show different data (targets healed, skills used to heal, total healing).
 
-If live stats sharing is enabled, also allows you to see other players in your squads healing stats (and them to see yours)
+If live stats sharing is enabled, this addon also allows you to see other players in your squads healing stats (and them to see yours)
 
 Also logs healing to the arcdps evtc, allowing evtc parsers to show healing stats.
 
