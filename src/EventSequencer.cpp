@@ -16,7 +16,7 @@ uintptr_t EventSequencer::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* p
 {
 	if (pId == 0) // id 0 can occur multiple times and is unordered
 	{
-		DEBUGLOG("Id0 event");
+		LogT("Id0 event");
 
 		mCallback(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 		return 0;
@@ -25,12 +25,12 @@ uintptr_t EventSequencer::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* p
 	uint64_t current = mHighestId.load(std::memory_order_acquire);
 	while (true)
 	{
-		DEBUGLOG(">> %llu", pId);
+		LogT(">> {}", pId);
 		if (current == pId)
 		{
 			//assert(false);
 
-			LogW("Received event %llu twice!", pId);
+			LogW("Received event {} twice!", pId);
 
 			mCallback(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 			return 0;
@@ -41,14 +41,14 @@ uintptr_t EventSequencer::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* p
 			bool result = mHighestId.compare_exchange_weak(current, pId - 1, std::memory_order_acq_rel);
 			DBG_UNREFERENCED_LOCAL_VARIABLE(result);
 
-			LOG("Registered first event (%llu) - result %s", pId, BOOL_STR(result));
+			LogD("Registered first event ({}) - result {}", pId, BOOL_STR(result));
 
 			current = mHighestId.load(std::memory_order_acquire);
 			continue;
 		}
 		else if (current > (pId - 1)) // Race condition after registering first event
 		{
-			LOG("Got event lower than current highest seen (%llu vs %llu)", pId, current);
+			LogD("Got event lower than current highest seen ({} vs {})", pId, current);
 
 			mCallback(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 			return 0;
@@ -74,7 +74,7 @@ uintptr_t EventSequencer::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* p
 			uint64_t current2 = mHighestId.load(std::memory_order_acquire);
 			if (current != current2)
 			{
-				LOG("Race1 current %llu current2 %llu", current, current2);
+				LogD("Race1 current {} current2 {}", current, current2);
 
 				current = current2;
 				continue;
@@ -85,7 +85,7 @@ uintptr_t EventSequencer::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* p
 			uint32_t index = mQueuedEventCount.fetch_add(1, std::memory_order_acq_rel);
 			if (index >= MAX_QUEUED_EVENTS)
 			{
-				LOG("More than max events queued - %u %u %llu %llu", index, MAX_QUEUED_EVENTS, pId, current);
+				LogD("More than max events queued - {} {} {} {}", index, MAX_QUEUED_EVENTS, pId, current);
 				// Subtracting here has the same issue as described below in Race2
 
 				assert(false);
@@ -108,7 +108,7 @@ uintptr_t EventSequencer::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* p
 				// So instead, we just add the event as completely empty.
 				mQueuedEvents[index].id = 0;
 
-				LOG("Race2 current %llu current2 %llu index %u", current, current2, index);
+				LogD("Race2 current {} current2 {} index {}", current, current2, index);
 
 				current = current2;
 				continue;
@@ -178,7 +178,7 @@ uintptr_t EventSequencer::ProcessEvent(cbtevent* pEvent, ag* pSourceAgent, ag* p
 			mQueuedEvents[index].id = pId;
 			mQueuedEvents[index].revision = pRevision;
 
-			DEBUGLOG("Queued %llu at index %u, current %llu", pId, index, current);
+			LogT("Queued {} at index {}, current {}", pId, index, current);
 			return 0;
 		}
 	}
@@ -188,7 +188,7 @@ bool EventSequencer::QueueIsEmpty()
 {
 	bool isEmpty = (mQueuedEventCount.load(std::memory_order_acquire) == 0);
 
-	LOG("isEmpty=%s, highestQueueSize=%u", BOOL_STR(isEmpty), mHighestQueueSize.load(std::memory_order_relaxed));
+	LogD("isEmpty={}, highestQueueSize={}", BOOL_STR(isEmpty), mHighestQueueSize.load(std::memory_order_relaxed));
 	return isEmpty;
 }
 
@@ -205,7 +205,7 @@ void EventSequencer::TryFlushEvents()
 	if (eventCount > MAX_QUEUED_EVENTS)
 	{
 		// This is possible because of Race1 above
-		LOG("Truncating event count %u %u", eventCount, MAX_QUEUED_EVENTS);
+		LogD("Truncating event count {} {}", eventCount, MAX_QUEUED_EVENTS);
 		eventCount = MAX_QUEUED_EVENTS;
 	}
 
@@ -227,11 +227,11 @@ void EventSequencer::TryFlushEvents()
 			if (current != (mQueuedEvents[i].id - 1))
 			{
 				nonZeroEvents++;
-				DEBUGLOG("Skipping %llu", mQueuedEvents[i].id);
+				LogT("Skipping {}", mQueuedEvents[i].id);
 				continue;
 			}
 
-			DEBUGLOG(">> Delayed %llu", mQueuedEvents[i].id);
+			LogT(">> Delayed {}", mQueuedEvents[i].id);
 
 			ag source;
 			ag destination;
@@ -283,7 +283,7 @@ void EventSequencer::TryFlushEvents()
 			mHighestQueueSize.store(oldSize, std::memory_order_relaxed);
 		}
 
-		DEBUGLOG("Clearing size %u", oldSize);
+		LogT("Clearing size {}", oldSize);
 	}
 }
 
