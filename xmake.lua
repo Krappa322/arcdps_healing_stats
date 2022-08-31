@@ -123,7 +123,7 @@ target("evtc_rpc_server")
 
 	add_syslinks("pthread")
 
-	add_includedirs("arcdps_mock/arcdps-extension", "vcpkg_installed/x64-linux/x64-linux/include")
+	add_includedirs("modules/arcdps_extension", "vcpkg_installed/x64-linux/x64-linux/include")
 	add_linkdirs("vcpkg_installed/x64-linux/x64-linux/lib")
 
 	-- Add everything absl as a group since they have circular dependencies
