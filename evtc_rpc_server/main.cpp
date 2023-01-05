@@ -1,3 +1,5 @@
+#include "linux_versions_auto.h"
+
 #include "../networking/Server.h"
 #include "../src/Log.h"
 
@@ -44,6 +46,7 @@ int main(int pArgumentCount, char** pArgumentVector)
 {
 	Log_::InitMultiSink(false, "logs/evtc_rpc_server_debug.txt", "logs/evtc_rpc_server_info.txt");
 	Log_::SetLevel(spdlog::level::debug);
+	LogI("Start. Dependency versions:\n{}", DEPENDENCY_VERSIONS);
 
 	if (pArgumentCount != 3)
 	{
@@ -62,7 +65,7 @@ int main(int pArgumentCount, char** pArgumentVector)
 #endif
 
 	install_signal_handler();
-	
+
 	SERVER_THREAD.join();
 	uninstall_signal_handler();
 	SERVER = nullptr;
