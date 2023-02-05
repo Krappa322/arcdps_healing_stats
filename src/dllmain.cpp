@@ -25,7 +25,7 @@
 /* proto/globals */
 arcdps_exports* mod_init();
 uintptr_t mod_release();
-uintptr_t mod_imgui(uint32_t pNotCharselOrLoading);
+uintptr_t mod_imgui(uint32_t pNotCharSelectionOrLoading, uint32_t pHideIfCombatOrOoc);
 uintptr_t mod_options_end();
 uintptr_t mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 uintptr_t mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
@@ -193,7 +193,7 @@ arcdps_exports* mod_init()
 	ARC_EXPORTS.out_name = "healing_stats";
 	ARC_EXPORTS.out_build = &GlobalObjects::VERSION_STRING_FRIENDLY[0];
 	ARC_EXPORTS.combat = mod_combat;
-	ARC_EXPORTS.imgui = mod_imgui;
+	ARC_EXPORTS.imgui = reinterpret_cast<ImguiCallbackSignature>(mod_imgui); // TODO: Remove cast when arcdps_extension is updated
 	ARC_EXPORTS.options_end = mod_options_end;
 	ARC_EXPORTS.combat_local = mod_combat_local;
 	ARC_EXPORTS.wnd_nofilter = mod_wnd;
@@ -317,7 +317,7 @@ uintptr_t mod_release()
 	return 0;
 }
 
-uintptr_t mod_imgui(uint32_t pNotCharSelectionOrLoading)
+uintptr_t mod_imgui(uint32_t pNotCharSelectionOrLoading, uint32_t pHideIfCombatOrOoc)
 {
 	std::shared_lock shutdown_lock(GlobalObjects::SHUTDOWN_LOCK);
 	if (GlobalObjects::IS_SHUTDOWN == true)
@@ -326,7 +326,7 @@ uintptr_t mod_imgui(uint32_t pNotCharSelectionOrLoading)
 		return 1;
 	}
 
-	if (pNotCharSelectionOrLoading == 0)
+	if (pNotCharSelectionOrLoading == 0 || pHideIfCombatOrOoc != 0)
 	{
 		return 0;
 	}
