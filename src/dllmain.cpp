@@ -137,6 +137,8 @@ extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArc
 	assert(GlobalObjects::ARC_E7 != nullptr);
 	GlobalObjects::ARC_E9 = reinterpret_cast<E9Signature>(GetProcAddress(pArcModule, "e9"));
 	assert(GlobalObjects::ARC_E9 != nullptr);
+	GlobalObjects::ARC_E10 = reinterpret_cast<E9Signature>(GetProcAddress(pArcModule, "e10"));
+	assert(GlobalObjects::ARC_E10 != nullptr);
 
 	ARCDPS_VERSION = pArcdpsVersionString;
 	SetContext(pImguiContext);

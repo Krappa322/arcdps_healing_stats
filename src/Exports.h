@@ -21,6 +21,7 @@ public:
 	static inline E3Signature ARC_E3 = nullptr;
 	static inline E7Signature ARC_E7 = nullptr;
 	static inline E9Signature ARC_E9 = nullptr;
+	static inline E9Signature ARC_E10 = nullptr;
 	static inline std::unique_ptr<EventSequencer> EVENT_SEQUENCER = nullptr;
 	static inline std::unique_ptr<EventProcessor> EVENT_PROCESSOR = nullptr;
 	static inline std::unique_ptr<evtc_rpc_client> EVTC_RPC_CLIENT = nullptr;

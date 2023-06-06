@@ -277,7 +277,7 @@ static void e9_ExpectCombatEvent(cbtevent* pEvent, uint32_t pSignature)
 
 TEST(EventProcessorTest, LogCombatEvent)
 {
-	GlobalObjects::ARC_E9 = e9_ExpectCombatEvent;
+	GlobalObjects::ARC_E10 = e9_ExpectCombatEvent;
 	EXPECTED_COMBAT_EVENT = nullptr;
 
 	EventProcessor processor;
@@ -367,6 +367,6 @@ TEST(EventProcessorTest, LogCombatEvent)
 		}
 	}
 
-	GlobalObjects::ARC_E9 = nullptr;
+	GlobalObjects::ARC_E10 = nullptr;
 	EXPECTED_COMBAT_EVENT = nullptr;
 }

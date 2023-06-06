@@ -406,7 +406,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 			logEvent.is_offcycle |= HealingEventFlags_EventCameFromDestination;
 		}
 
-		GlobalObjects::ARC_E9(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
+		GlobalObjects::ARC_E10(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
 	}
 
 	if (pEvent->is_shields != 0)
@@ -536,7 +536,7 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 			logEvent.is_offcycle |= HealingEventFlags_EventCameFromDestination;
 		}
 
-		GlobalObjects::ARC_E9(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
+		GlobalObjects::ARC_E10(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
 	}
 
 	// No need to drop the event if src isn't known; we only use that translation for evtc logging

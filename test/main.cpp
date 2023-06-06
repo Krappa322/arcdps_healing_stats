@@ -13,6 +13,7 @@ extern "C" __declspec(dllexport) void e3(const char* pString);
 extern "C" __declspec(dllexport) uint64_t e6();
 extern "C" __declspec(dllexport) uint64_t e7();
 extern "C" __declspec(dllexport) void e9(cbtevent* pEvent, uint32_t pSignature);
+extern "C" __declspec(dllexport) void e10(cbtevent* pEvent, uint32_t pSignature);
 
 #pragma pack(push, 1)
 namespace
@@ -44,6 +45,11 @@ uint64_t e7()
 }
 
 void e9(cbtevent*, uint32_t)
+{
+	return; // Ignore, can be overridden by specific test if need be
+}
+
+void e10(cbtevent*, uint32_t)
 {
 	return; // Ignore, can be overridden by specific test if need be
 }
