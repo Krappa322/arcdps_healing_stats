@@ -53,12 +53,12 @@ static void PrintEvent(cbtevent* pEvent)
 		pEvent->iff,
 		pEvent->buff,
 		pEvent->result,
-		pEvent->is_activation,
-		pEvent->is_buffremove,
+		static_cast<int>(pEvent->is_activation),
+		static_cast<int>(pEvent->is_buffremove),
 		pEvent->is_ninety,
 		pEvent->is_fifty,
 		pEvent->is_moving,
-		pEvent->is_statechange,
+		static_cast<int>(pEvent->is_statechange), 
 		pEvent->is_flanking,
 		pEvent->is_shields,
 		pEvent->is_offcycle,
@@ -214,7 +214,7 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		else
 		{
 			LogD("Got event with skillid {} but skillname is nullptr - is_statechange={} is_activation={} is_buffremove={} buff={} buff_dmg={} value={}",
-				pEvent->skillid, pEvent->is_statechange, pEvent->is_activation, pEvent->is_buffremove, pEvent->buff, pEvent->buff_dmg, pEvent->value);
+				pEvent->skillid, static_cast<int>(pEvent->is_statechange), static_cast<int>(pEvent->is_activation), static_cast<int>(pEvent->is_buffremove), pEvent->buff, pEvent->buff_dmg, pEvent->value);
 		}
 	}
 
@@ -361,7 +361,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		else
 		{
 			LogD("Got event with skillid {} but skillname is nullptr - is_statechange={} is_activation={} is_buffremove={} buff={} buff_dmg={} value={}",
-				pEvent->skillid, pEvent->is_statechange, pEvent->is_activation, pEvent->is_buffremove, pEvent->buff, pEvent->buff_dmg, pEvent->value);
+				pEvent->skillid, static_cast<int>(pEvent->is_statechange), static_cast<int>(pEvent->is_activation), static_cast<int>(pEvent->is_buffremove), pEvent->buff, pEvent->buff_dmg, pEvent->value);
 		}
 	}
 

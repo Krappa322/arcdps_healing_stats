@@ -98,17 +98,17 @@ void Log_::SetLevel(spdlog::level::level_enum pLevel)
 {
 	if (pLevel < 0 || pLevel >= spdlog::level::n_levels)
 	{
-		LogW("Not setting level to {} since level is out of range", pLevel);
+		LogW("Not setting level to {} since level is out of range", static_cast<int>(pLevel));
 		return;
 	}
 	if (LoggerLocked == true)
 	{
-		LogW("Not setting level to {} since logger is locked", pLevel);
+		LogW("Not setting level to {} since logger is locked", static_cast<int>(pLevel));
 		return;
 	}
 
 	Log_::LOGGER->set_level(pLevel);
-	LogI("Changed level to {}", pLevel);
+	LogI("Changed level to {}", static_cast<int>(pLevel));
 }
 
 void Log_::LockLogger()

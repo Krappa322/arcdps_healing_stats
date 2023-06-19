@@ -165,15 +165,15 @@
   <ItemGroup>
     <CustomBuild Include="evtc_rpc.proto">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">python build_proto.py x64-windows-static\x64-windows %(Filename)%(Extension) $(SolutionDir)$(Platform)\autogen</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Address Sanitizer|x64'">python build_proto.py x64-windows-static\x64-windows %(Filename)%(Extension) $(SolutionDir)$(Platform)\autogen</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">python build_proto.py "x64-windows-static\x64-windows" "%(Filename)%(Extension)" "$(SolutionDir)$(Platform)\autogen"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Address Sanitizer|x64'">python build_proto.py "x64-windows-static\x64-windows" "%(Filename)%(Extension)" "$(SolutionDir)$(Platform)\autogen"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">[PROTO] %(Filename)%(Extension) to generate $(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.cc $(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.h $(SolutionDir)$(Platform)\autogen\%(Filename).pb.cc $(SolutionDir)$(Platform)\autogen\%(Filename).pb.h</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Address Sanitizer|x64'">[PROTO] %(Filename)%(Extension) to generate $(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.cc $(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.h $(SolutionDir)$(Platform)\autogen\%(Filename).pb.cc $(SolutionDir)$(Platform)\autogen\%(Filename).pb.h</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.cc;$(SolutionDir)$(Platform)\autogen\%(Filename).pb.cc</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Address Sanitizer|x64'">$(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.cc;$(SolutionDir)$(Platform)\autogen\%(Filename).pb.cc</Outputs>
       <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
       <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Address Sanitizer|x64'">true</BuildInParallel>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">python build_proto.py x64-windows-static\x64-windows %(Filename)%(Extension) $(SolutionDir)$(Platform)\autogen</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">python build_proto.py "x64-windows-static\x64-windows" "%(Filename)%(Extension)" "$(SolutionDir)$(Platform)\autogen"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">[PROTO] %(Filename)%(Extension) to generate $(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.cc $(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.h $(SolutionDir)$(Platform)\autogen\%(Filename).pb.cc $(SolutionDir)$(Platform)\autogen\%(Filename).pb.h</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\autogen\%(Filename).grpc.pb.cc;$(SolutionDir)$(Platform)\autogen\%(Filename).pb.cc</Outputs>
       <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</BuildInParallel>

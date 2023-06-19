@@ -10,21 +10,6 @@
 
 namespace
 {
-template<size_t Size>
-void rand_string(char (&pStringBuffer)[Size])
-{
-	uint64_t length = rand_t<uint64_t>() % Size;
-
-	for (size_t i = 0; i < length; i++)
-	{
-		do
-		{
-			pStringBuffer[i] = rand_t<char>();
-		} while(pStringBuffer[i] < 1 || isprint(pStringBuffer[i]) == 0);
-	}
-	pStringBuffer[length] = '\0';
-}
-
 template<typename T>
 T rand_t()
 {
@@ -37,6 +22,21 @@ T rand_t()
 	T result;
 	memcpy(&result, &components, sizeof(result));
 	return result;
+}
+
+template<size_t Size>
+void rand_string(char(&pStringBuffer)[Size])
+{
+	uint64_t length = rand_t<uint64_t>() % Size;
+
+	for (size_t i = 0; i < length; i++)
+	{
+		do
+		{
+			pStringBuffer[i] = rand_t<char>();
+		} while (pStringBuffer[i] < 1 || isprint(pStringBuffer[i]) == 0);
+	}
+	pStringBuffer[length] = '\0';
 }
 }; // anonymous namespace
 
