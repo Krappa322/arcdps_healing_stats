@@ -20,6 +20,7 @@ public:
 	EventProcessor();
 
 	void SetEvtcLoggingEnabled(bool pEnabled);
+	void SetUseBarrier(bool pEnabled);
 
 	void AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 	void LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision, std::optional<cbtevent>* pModifiedEvent = nullptr);
@@ -43,4 +44,5 @@ private:
 	std::map<uintptr_t, std::shared_ptr<PlayerStats>> mPeerStates;
 
 	std::atomic_bool mEvtcLoggingEnabled = false;
+	std::atomic_bool useBarrier = false;
 };

@@ -286,7 +286,7 @@ void GetJsonValue(const nlohmann::json& pJsonObject, const char* pFieldName, Res
 }
 
 template <size_t StringSize>
-void GetJsonValue(const nlohmann::json& pJsonObject, const char* pFieldName, char (&pResult)[StringSize])
+void GetJsonValue(const nlohmann::json& pJsonObject, const char* pFieldName, char(&pResult)[StringSize])
 {
 	const auto iter = pJsonObject.find(pFieldName);
 	if (iter != pJsonObject.end())
@@ -321,6 +321,7 @@ void HealTableOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "EvtcRpcEnabled", EvtcRpcEnabled);
 	GetJsonValue(pJsonObject, "EvtcRpcBudgetMode", EvtcRpcBudgetMode);
 	GetJsonValue(pJsonObject, "EvtcRpcEnabledHotkey", EvtcRpcEnabledHotkey);
+	GetJsonValue(pJsonObject, "IncludeBarrier", IncludeBarrier);
 
 	const auto iter = pJsonObject.find("Windows");
 	if (iter != pJsonObject.end())
@@ -379,6 +380,7 @@ do {\
 	SET_JSON_VAL(EvtcRpcEnabled);
 	SET_JSON_VAL(EvtcRpcBudgetMode);
 	SET_JSON_VAL(EvtcRpcEnabledHotkey);
+	SET_JSON_VAL(IncludeBarrier);
 
 	nlohmann::json windows;
 	for (size_t i = 0; i < Windows.size(); i++)
@@ -420,7 +422,7 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "ExcludeOffGroup", ExcludeOffGroup);
 	GetJsonValue(pJsonObject, "ExcludeOffSquad", ExcludeOffSquad);
 	GetJsonValue(pJsonObject, "ExcludeMinions", ExcludeMinions);
-	GetJsonValue(pJsonObject,  "ExcludeUnmapped", ExcludeUnmapped);
+	GetJsonValue(pJsonObject, "ExcludeUnmapped", ExcludeUnmapped);
 
 	GetJsonValue(pJsonObject, "ShowProgressBars", ShowProgressBars);
 	GetJsonValue(pJsonObject, "Name", Name);

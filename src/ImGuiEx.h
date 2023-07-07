@@ -43,7 +43,7 @@ namespace ImGuiEx
 	void SmallUnindent();
 
 	// returns minimum size needed to display the entry
-	float StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio);
+	float StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierRatio);
 
 	template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
 	bool SmallInputInt(const char* pLabel, T* pInt)
@@ -116,7 +116,7 @@ namespace ImGuiEx
 	{
 		static_assert(std::is_enum_v<EnumType>, "Accidental loss of type safety?");
 
-		ImVec2 size{0, 0};
+		ImVec2 size{ 0, 0 };
 		for (const char* item : pItems)
 		{
 			ImVec2 itemSize = ImGui::CalcTextSize(item);

@@ -54,8 +54,9 @@ struct HealTableOptions
 {
 	AutoUpdateSettingEnum AutoUpdateSetting = AutoUpdateSettingEnum::On;
 	bool DebugMode = false;
+	bool IncludeBarrier = false;
 	spdlog::level::level_enum LogLevel = spdlog::level::off;
-	
+
 	bool EvtcLoggingEnabled = true;
 
 	char EvtcRpcEndpoint[128] = "evtc-rpc.kappa322.com:443";
@@ -64,7 +65,7 @@ struct HealTableOptions
 	int EvtcRpcEnabledHotkey = 0;
 
 	std::array<HealWindowContext, HEAL_WINDOW_COUNT> Windows;
-		
+
 	std::vector<ImGuiID> AnchoringHighlightedWindows; // In-Memory only
 
 	HealTableOptions();

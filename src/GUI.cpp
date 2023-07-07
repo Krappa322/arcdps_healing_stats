@@ -45,13 +45,13 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	{
 		ImGui::InputText("entry format", pContext.DetailsEntryFormat, sizeof(pContext.DetailsEntryFormat));
 		ImGuiEx::AddTooltipToLastItem("Format for displayed data (statistics are per entry).\n"
-		                              "{1}: Healing\n"
-		                              "{2}: Hits\n"
-		                              "{3}: Casts (not implemented yet)\n"
-		                              "{4}: Healing per second\n"
-		                              "{5}: Healing per hit\n"
-		                              "{6}: Healing per cast (not implemented yet)\n"
-		                              "{7}: Percent of total healing\n");
+			"{1}: Healing\n"
+			"{2}: Hits\n"
+			"{3}: Casts (not implemented yet)\n"
+			"{4}: Healing per second\n"
+			"{5}: Healing per hit\n"
+			"{6}: Healing per cast (not implemented yet)\n"
+			"{7}: Percent of total healing\n");
 
 		ImGui::EndPopup();
 	}
@@ -61,8 +61,17 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImGui::PushStyleColor(ImGuiCol_ChildBg, bgColor);
 	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.TOTALS.%i.%llu", static_cast<int>(pDataSource), pState.Id);
 	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.35f, 0));
+
+	uint64_t adjustedHealing = (pState.Healing - pState.Barrier);
+
 	ImGui::Text("total healing");
-	ImGuiEx::TextRightAlignedSameLine("%llu", pState.Healing);
+	ImGuiEx::TextRightAlignedSameLine("%llu", adjustedHealing);
+
+	if (pState.Barrier > 0)
+	{
+		ImGui::Text("total barrier");
+		ImGuiEx::TextRightAlignedSameLine("%llu", pState.Barrier);
+	}
 
 	ImGui::Text("hits");
 	ImGuiEx::TextRightAlignedSameLine("%llu", pState.Hits);
@@ -74,15 +83,30 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	}
 
 	ImGui::Text("healing per second");
-	ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Healing, pState.TimeInCombat));
+	ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, pState.TimeInCombat));
 
 	ImGui::Text("healing per hit");
-	ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Healing, pState.Hits));
+	ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, pState.Hits));
 
 	if (pState.Casts.has_value() == true)
 	{
 		ImGui::Text("healing per cast");
-		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Healing, *pState.Casts));
+		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, *pState.Casts));
+	}
+
+	if (pState.Barrier > 0)
+	{
+		ImGui::Text("barrier per second");
+		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Barrier, pState.TimeInCombat));
+
+		ImGui::Text("barrier per hit");
+		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Barrier, pState.Hits));
+
+		if (pState.Casts.has_value() == true)
+		{
+			ImGui::Text("barrier per cast");
+			ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Barrier, *pState.Casts));
+		}
 	}
 
 	ImGuiEx::BottomText("id %u", pState.Id);
@@ -95,23 +119,26 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetDetails(pDataSource, pState.Id);
 	for (const auto& entry : stats.Entries)
 	{
+		// TODO: Add barrier here?
 		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			entry.Healing,
-			entry.Hits,
-			entry.Casts,
-			divide_safe(entry.Healing, entry.TimeInCombat),
-			divide_safe(entry.Healing, entry.Hits),
-			entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
-			divide_safe(entry.Healing * 100, pState.Healing)};
+				entry.Hits,
+				entry.Casts,
+				divide_safe(entry.Healing, entry.TimeInCombat),
+				divide_safe(entry.Healing, entry.Hits),
+				entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
+				divide_safe(entry.Healing * 100, pState.Healing)};
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.DetailsEntryFormat, entryValues);
 
-		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
+		float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
+		float barrierRatio = static_cast<float>(divide_safe(entry.Barrier, stats.HighestHealing));
+
 		std::string_view name = entry.Name;
 		if (pContext.MaxNameLength > 0)
 		{
 			name = name.substr(0, pContext.MaxNameLength);
 		}
-		ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
+		ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{barrierRatio} : std::nullopt);
 	}
 	ImGui::EndChild();
 
@@ -149,23 +176,27 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	{
 		const auto& entry = stats.Entries[i];
 
+		// TODO: Add barrier here?
 		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			entry.Healing,
-			entry.Hits,
-			entry.Casts,
-			divide_safe(entry.Healing, entry.TimeInCombat),
-			divide_safe(entry.Healing, entry.Hits),
-			entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
-			pContext.DataSourceChoice != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
+				entry.Hits,
+				entry.Casts,
+				divide_safe(entry.Healing, entry.TimeInCombat),
+				divide_safe(entry.Healing, entry.Hits),
+				entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
+				pContext.DataSourceChoice != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
 
-		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
+		float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
+		float barrierRatio = static_cast<float>(divide_safe(entry.Barrier, stats.HighestHealing));
+
 		std::string_view name = entry.Name;
 		if (pContext.MaxNameLength > 0)
 		{
 			name = name.substr(0, pContext.MaxNameLength);
 		}
-		float minSize = ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
+		float minSize = ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{barrierRatio} : std::nullopt);
+
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
 		pContext.CurrentFrameLineCount += 1;
 
@@ -224,89 +255,89 @@ static void Display_WindowOptions_Position(HealTableOptions& pHealingOptions, He
 
 	switch (pContext.PositionRule)
 	{
-		case Position::ScreenRelative:
+	case Position::ScreenRelative:
+	{
+		ImGui::Separator();
+		ImGui::TextUnformatted("relative to corner");
+		ImGuiEx::SmallIndent();
+		ImGuiEx::SmallEnumRadioButton("ScreenCornerPositionEnum", pContext.RelativeScreenCorner, CORNER_POSITION_ITEMS);
+		ImGuiEx::SmallUnindent();
+
+		ImGui::PushItemWidth(39.0f);
+		ImGuiEx::SmallInputInt("x", &pContext.RelativeX);
+		ImGuiEx::SmallInputInt("y", &pContext.RelativeY);
+		ImGui::PopItemWidth();
+
+		break;
+	}
+	case Position::WindowRelative:
+	{
+		ImGui::Separator();
+		ImGui::TextUnformatted("from anchor panel corner");
+		ImGuiEx::SmallIndent();
+		ImGuiEx::SmallEnumRadioButton("AnchorCornerPositionEnum", pContext.RelativeAnchorWindowCorner, CORNER_POSITION_ITEMS);
+		ImGuiEx::SmallUnindent();
+
+		ImGui::TextUnformatted("to this panel corner");
+		ImGuiEx::SmallIndent();
+		ImGuiEx::SmallEnumRadioButton("SelfCornerPositionEnum", pContext.RelativeSelfCorner, CORNER_POSITION_ITEMS);
+		ImGuiEx::SmallUnindent();
+
+		ImGui::PushItemWidth(39.0f);
+		ImGuiEx::SmallInputInt("x", &pContext.RelativeX);
+		ImGuiEx::SmallInputInt("y", &pContext.RelativeY);
+		ImGui::PopItemWidth();
+
+		ImGuiWindow* selectedWindow = ImGui::FindWindowByID(pContext.AnchorWindowId);
+		const char* selectedWindowName = "";
+		if (selectedWindow != nullptr)
 		{
-			ImGui::Separator();
-			ImGui::TextUnformatted("relative to corner");
-			ImGuiEx::SmallIndent();
-			ImGuiEx::SmallEnumRadioButton("ScreenCornerPositionEnum", pContext.RelativeScreenCorner, CORNER_POSITION_ITEMS);
-			ImGuiEx::SmallUnindent();
-
-			ImGui::PushItemWidth(39.0f);
-			ImGuiEx::SmallInputInt("x", &pContext.RelativeX);
-			ImGuiEx::SmallInputInt("y", &pContext.RelativeY);
-			ImGui::PopItemWidth();
-
-			break;
+			selectedWindowName = selectedWindow->Name;
 		}
-		case Position::WindowRelative:
+
+		ImGui::SetNextItemWidth(260.0f);
+		if (ImGui::BeginCombo("anchor window", selectedWindowName) == true)
 		{
-			ImGui::Separator();
-			ImGui::TextUnformatted("from anchor panel corner");
-			ImGuiEx::SmallIndent();
-			ImGuiEx::SmallEnumRadioButton("AnchorCornerPositionEnum", pContext.RelativeAnchorWindowCorner, CORNER_POSITION_ITEMS);
-			ImGuiEx::SmallUnindent();
-
-			ImGui::TextUnformatted("to this panel corner");
-			ImGuiEx::SmallIndent();
-			ImGuiEx::SmallEnumRadioButton("SelfCornerPositionEnum", pContext.RelativeSelfCorner, CORNER_POSITION_ITEMS);
-			ImGuiEx::SmallUnindent();
-
-			ImGui::PushItemWidth(39.0f);
-			ImGuiEx::SmallInputInt("x", &pContext.RelativeX);
-			ImGuiEx::SmallInputInt("y", &pContext.RelativeY);
-			ImGui::PopItemWidth();
-
-			ImGuiWindow* selectedWindow = ImGui::FindWindowByID(pContext.AnchorWindowId);
-			const char* selectedWindowName = "";
-			if (selectedWindow != nullptr)
+			// This doesn't return the same thing as RootWindow interestingly enough, RootWindow returns a "higher" parent
+			ImGuiWindow* parent = ImGui::GetCurrentWindowRead();
+			while (parent->ParentWindow != nullptr)
 			{
-				selectedWindowName = selectedWindow->Name;
+				parent = parent->ParentWindow;
 			}
 
-			ImGui::SetNextItemWidth(260.0f);
-			if (ImGui::BeginCombo("anchor window", selectedWindowName) == true)
+			for (ImGuiWindow* window : ImGui::GetCurrentContext()->Windows)
 			{
-				// This doesn't return the same thing as RootWindow interestingly enough, RootWindow returns a "higher" parent
-				ImGuiWindow* parent = ImGui::GetCurrentWindowRead();
-				while (parent->ParentWindow != nullptr)
+				if (window != parent && // Not the window we're currently in
+					window->ParentWindow == nullptr && // Not a child window of another window
+					window->Hidden == false && // Not hidden
+					window->WasActive == true && // Not closed (we check ->WasActive because ->Active might not be true yet if the window gets rendered after this one)
+					window->IsFallbackWindow == false && // Not default window ("Debug##Default")
+					(window->Flags & ImGuiWindowFlags_Tooltip) == 0) // Not a tooltip window ("##Tooltip_<id>")
 				{
-					parent = parent->ParentWindow;
-				}
+					std::string windowName = "(";
+					windowName += std::to_string(pHealingOptions.AnchoringHighlightedWindows.size());
+					windowName += ") ";
+					windowName += window->Name;
 
-				for (ImGuiWindow* window : ImGui::GetCurrentContext()->Windows)
-				{
-					if (window != parent && // Not the window we're currently in
-						window->ParentWindow == nullptr && // Not a child window of another window
-						window->Hidden == false && // Not hidden
-						window->WasActive == true && // Not closed (we check ->WasActive because ->Active might not be true yet if the window gets rendered after this one)
-						window->IsFallbackWindow == false && // Not default window ("Debug##Default")
-						(window->Flags & ImGuiWindowFlags_Tooltip) == 0) // Not a tooltip window ("##Tooltip_<id>")
+					// Print the window with ##/### part still there - it doesn't really hurt (and with the presence
+					// of ### it's arguably more correct, even though it probably doesn't matter for a Selectable if
+					// the id is unique or not)
+					if (ImGui::Selectable(windowName.c_str()))
 					{
-						std::string windowName = "(";
-						windowName += std::to_string(pHealingOptions.AnchoringHighlightedWindows.size());
-						windowName += ") ";
-						windowName += window->Name;
-
-						// Print the window with ##/### part still there - it doesn't really hurt (and with the presence
-						// of ### it's arguably more correct, even though it probably doesn't matter for a Selectable if
-						// the id is unique or not)
-						if (ImGui::Selectable(windowName.c_str()))
-						{
-							pContext.AnchorWindowId = window->ID;
-							FindAndResolveCyclicDependencies(pHealingOptions, std::distance(pHealingOptions.Windows.data(), &pContext));
-						}
-
-						pHealingOptions.AnchoringHighlightedWindows.emplace_back(window->ID);
+						pContext.AnchorWindowId = window->ID;
+						FindAndResolveCyclicDependencies(pHealingOptions, std::distance(pHealingOptions.Windows.data(), &pContext));
 					}
-				}
-				ImGui::EndCombo();
-			}
 
-			break;
+					pHealingOptions.AnchoringHighlightedWindows.emplace_back(window->ID);
+				}
+			}
+			ImGui::EndCombo();
 		}
-		default:
-			break;
+
+		break;
+	}
+	default:
+		break;
 	}
 }
 
@@ -337,7 +368,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 
 		ImGuiEx::ComboMenu("combat end", pContext.CombatEndConditionChoice, COMBAT_END_CONDITION_ITEMS);
 		ImGuiEx::AddTooltipToLastItem("Decides what should be used for determining combat\n"
-										"end (and consequently time in combat)");
+			"end (and consequently time in combat)");
 
 		ImGuiEx::SmallUnindent();
 		ImGui::Separator();
@@ -418,7 +449,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::SmallEnumCheckBox("title bar", &pContext.WindowFlags, ImGuiWindowFlags_NoTitleBar, true);
 			ImGuiEx::SmallEnumCheckBox("scroll bar", &pContext.WindowFlags, ImGuiWindowFlags_NoScrollbar, true);
 			ImGuiEx::SmallEnumCheckBox("background", &pContext.WindowFlags, ImGuiWindowFlags_NoBackground, true);
-			
+
 			ImGui::Separator();
 
 			ImGuiEx::SmallCheckBox("auto resize window", &pContext.AutoResize);
@@ -469,7 +500,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 
 		ImGui::EndGroup();
 		ImGuiEx::AddTooltipToLastItem("Numerical value (virtual key code) for the key\n"
-										"used to open and close this window");
+			"used to open and close this window");
 
 		ImGui::EndPopup();
 	}
@@ -508,21 +539,22 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (curWindow.DataSourceChoice != DataSource::Totals)
 		{
+			// TODO: Add barrier here?
 			std::array<std::optional<std::variant<uint64_t, double>>, 7> titleValues{
 				aggregatedTotal.Healing,
-				aggregatedTotal.Hits,
-				aggregatedTotal.Casts,
-				divide_safe(aggregatedTotal.Healing, aggregatedTotal.TimeInCombat),
-				divide_safe(aggregatedTotal.Healing, aggregatedTotal.Hits),
-				aggregatedTotal.Casts.has_value() == true ? std::optional{divide_safe(aggregatedTotal.Healing, *aggregatedTotal.Casts)} : std::nullopt,
-				timeInCombat };
+					aggregatedTotal.Hits,
+					aggregatedTotal.Casts,
+					divide_safe(aggregatedTotal.Healing, aggregatedTotal.TimeInCombat),
+					divide_safe(aggregatedTotal.Healing, aggregatedTotal.Hits),
+					aggregatedTotal.Casts.has_value() == true ? std::optional{divide_safe(aggregatedTotal.Healing, *aggregatedTotal.Casts)} : std::nullopt,
+					timeInCombat };
 			size_t written = ReplaceFormatted(buffer, 128ULL, curWindow.TitleFormat, titleValues);
 			snprintf(buffer + written, sizeof(buffer) - written, "###HEALWINDOW%u", i);
 		}
 		else
 		{
 			std::array<std::optional<std::variant<uint64_t, double>>, 7> titleValues{
-			timeInCombat };
+				timeInCombat };
 			size_t written = ReplaceFormatted(buffer, 128ULL, curWindow.TitleFormat, titleValues);
 			snprintf(buffer + written, sizeof(buffer) - written, "###HEALWINDOW%u", i);
 		}
@@ -624,7 +656,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 				iter++;
 			}
 		}
-		
+
 		// Adjust y size. This is based on the current frame line count, so we do it at the end of the frame (meaning
 		// the resize has no lag)
 		if (curWindow.AutoResize == true)
@@ -633,7 +665,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 			size_t lineCount = (std::max)(curWindow.CurrentFrameLineCount, curWindow.MinLinesDisplayed);
 			lineCount = (std::min)(lineCount, curWindow.MaxLinesDisplayed);
-			
+
 			size.y = ImGuiEx::CalcWindowHeight(lineCount);
 
 			LogT("lineCount={} CurrentFrameLineCount={} MinLinesDisplayed={} MaxLinesDisplayed={} y={}",
@@ -698,6 +730,15 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 		"will have a small impact on performance.");
 
 	ImGui::Separator();
+
+
+	if (ImGuiEx::SmallCheckBox("Include barrier", &pHealingOptions.IncludeBarrier) == true)
+	{
+		GlobalObjects::EVENT_PROCESSOR->SetUseBarrier(pHealingOptions.IncludeBarrier);
+	}
+	ImGui::Separator();
+
+
 
 	if (ImGuiEx::SmallCheckBox("log healing to EVTC logs", &pHealingOptions.EvtcLoggingEnabled) == true)
 	{
@@ -856,19 +897,19 @@ static void RepositionWindows(HealTableOptions& pHealingOptions)
 			}
 
 			const HealWindowContext& curWindow = pHealingOptions.Windows[i];
-			ImVec2 posVector{static_cast<float>(curWindow.RelativeX), static_cast<float>(curWindow.RelativeY)};
+			ImVec2 posVector{ static_cast<float>(curWindow.RelativeX), static_cast<float>(curWindow.RelativeY) };
 
 			ImGuiWindow* window = ImGui::FindWindowByID(curWindow.WindowId);
 			if (window != nullptr)
 			{
 				if (ImGuiEx::WindowReposition(
-						window,
-						curWindow.PositionRule,
-						posVector,
-						curWindow.RelativeScreenCorner,
-						curWindow.AnchorWindowId,
-						curWindow.RelativeAnchorWindowCorner,
-						curWindow.RelativeSelfCorner) == true)
+					window,
+					curWindow.PositionRule,
+					posVector,
+					curWindow.RelativeScreenCorner,
+					curWindow.AnchorWindowId,
+					curWindow.RelativeAnchorWindowCorner,
+					curWindow.RelativeSelfCorner) == true)
 				{
 					LogT("Window {} moved!", i);
 					lastChangedPos = i;
@@ -898,7 +939,7 @@ void Display_PreEndFrame(ImGuiContext* pImguiContext, HealTableOptions& pHealing
 		{
 			std::string text = std::to_string(i);
 
-			ImVec2 regionSize{32.0f, 32.0f};
+			ImVec2 regionSize{ 32.0f, 32.0f };
 			ImVec2 regionPos = DrawListEx::CalcCenteredPosition(window->Pos, window->Size, regionSize);
 
 			ImVec2 textSize = pImguiContext->Font->CalcTextSizeA(font_size, FLT_MAX, -1.0f, text.c_str());
