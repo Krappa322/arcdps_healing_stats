@@ -495,7 +495,7 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 	// TODO: Can this be separated into indirect healing and barrier as separate entries? 
 	if (totalIndirectHealing != 0 || totalIndirectTicks != 0 || totalIndirectBarrier != 0)
 	{
-		std::string skillName("Healing/Barrier by Damage Dealt");
+		std::string skillName("From Damage Dealt");
 
 		entry->Add(IndirectHealingSkillId, std::move(skillName), GetCombatTime(), totalIndirectHealing, totalIndirectTicks, std::nullopt, totalIndirectBarrier);
 	}
