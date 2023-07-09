@@ -82,6 +82,8 @@ void EventProcessor::SetEvtcLoggingEnabled(bool pEnabled)
 
 void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t /*pId*/, uint64_t /*pRevision*/)
 {
+	PreProcessEvent(pEvent, false);
+
 	if (pEvent == nullptr)
 	{
 		if (pSourceAgent->elite != 0)
@@ -233,6 +235,8 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t /*pRevision*/, std::optional<cbtevent>* pModifiedEvent)
 {
 	UNREFERENCED_PARAMETER(pId);
+	PreProcessEvent(pEvent, true);
+
 	if (pEvent == nullptr)
 	{
 		if (pSourceAgent->elite != 0)
@@ -448,6 +452,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 {
 	assert(pEvent != nullptr);
+	PreProcessEvent(pEvent, true);
 
 	std::optional<uintptr_t> peerUniqueId = mAgentTable.GetUniqueId(pPeerInstanceId, false);
 	if (peerUniqueId.has_value() == false)
@@ -652,4 +657,20 @@ std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> 
 
 	DEBUGLOG("self %llu, %zu entries", pSelfUniqueId, result.size());
 	return {pSelfUniqueId, result};
+}
+
+void EventProcessor::PreProcessEvent(cbtevent* pEvent, bool pIsLocal)
+{
+	if (pEvent == nullptr)
+	{
+		return;
+	}
+
+	EventType eventType = GetEventType(pEvent, pIsLocal);
+	// Glyph of the Stars (Celestial Avatar)
+	// The game (or maybe arcdps) incorrectly marks this one as not being ress, even though it can in fact only ress. So we patch the event a bit :)
+	if (eventType == EventType::Healing && pEvent->buff != 0 && pEvent->skillid == 55026)
+	{
+		pEvent->pad61 = 1;
+	}
 }
