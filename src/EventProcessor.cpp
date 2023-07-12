@@ -91,6 +91,8 @@ void EventProcessor::SetUseBarrier(bool pEnabled)
 
 void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t /*pId*/, uint64_t /*pRevision*/)
 {
+	PreProcessEvent(pEvent, false);
+
 	if (pEvent == nullptr)
 	{
 		if (pSourceAgent->elite != 0)
@@ -242,6 +244,8 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t /*pRevision*/, std::optional<cbtevent>* pModifiedEvent)
 {
 	UNREFERENCED_PARAMETER(pId);
+	PreProcessEvent(pEvent, true);
+
 	if (pEvent == nullptr)
 	{
 		if (pSourceAgent->elite != 0)
@@ -401,11 +405,13 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		// Flip event values so healed amount is negative
 		logEvent.value *= -1;
 		logEvent.buff_dmg *= -1;
+		// Arcdps currently uses the first 7 values for cbtbuffcycle so this should never remove any bits, but for some
+		// things it just says "non-zero" rather than explicitly calling out the expected value so we do this to be a
+		// bit more robust against arcdps setting random bits
+		logEvent.is_offcycle = logEvent.is_offcycle & ~(HealingEventFlags_EventCameFromSource |
+		                                                HealingEventFlags_EventCameFromDestination |
+			                                            HealingEventFlags_TargetIsDowned);
 
-		if (logEvent.is_offcycle != 0)
-		{
-			logEvent.is_offcycle = HealingEventFlags_IsOffcycle; // Arcdps just says "non-zero"; truncate non-zero to explicitly 0x01
-		}
 		if (logEvent.src_instid == selfInstanceId || logEvent.src_master_instid == selfInstanceId)
 		{
 			logEvent.is_offcycle |= HealingEventFlags_EventCameFromSource;
@@ -413,6 +419,10 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		if (logEvent.dst_instid == selfInstanceId || logEvent.dst_master_instid == selfInstanceId)
 		{
 			logEvent.is_offcycle |= HealingEventFlags_EventCameFromDestination;
+		}
+		if (logEvent.buff != 0 && logEvent.buff_dmg != 0 && logEvent.pad61 == 1)
+		{
+			logEvent.is_offcycle |= HealingEventFlags_TargetIsDowned;
 		}
 
 		GlobalObjects::ARC_E10(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
@@ -467,6 +477,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 {
 	assert(pEvent != nullptr);
+	PreProcessEvent(pEvent, true);
 
 	std::optional<uintptr_t> peerUniqueId = mAgentTable.GetUniqueId(pPeerInstanceId, false);
 	if (peerUniqueId.has_value() == false)
@@ -547,11 +558,13 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		// Flip event values so healed amount is negative
 		logEvent.value *= -1;
 		logEvent.buff_dmg *= -1;
+		// Arcdps currently uses the first 7 values for cbtbuffcycle so this should never remove any bits, but for some
+		// things it just says "non-zero" rather than explicitly calling out the expected value so we do this to be a
+		// bit more robust against arcdps setting random bits
+		logEvent.is_offcycle = logEvent.is_offcycle & ~(HealingEventFlags_EventCameFromSource |
+			HealingEventFlags_EventCameFromDestination |
+			HealingEventFlags_TargetIsDowned);
 
-		if (logEvent.is_offcycle != 0)
-		{
-			logEvent.is_offcycle = HealingEventFlags_IsOffcycle; // Arcdps just says "non-zero"; truncate non-zero to explicitly 0x01
-		}
 		if (logEvent.src_instid == pPeerInstanceId || logEvent.src_master_instid == pPeerInstanceId)
 		{
 			logEvent.is_offcycle |= HealingEventFlags_EventCameFromSource;
@@ -559,6 +572,10 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		if (logEvent.dst_instid == pPeerInstanceId || logEvent.dst_master_instid == pPeerInstanceId)
 		{
 			logEvent.is_offcycle |= HealingEventFlags_EventCameFromDestination;
+		}
+		if (logEvent.buff != 0 && logEvent.buff_dmg != 0 && logEvent.pad61 == 1)
+		{
+			logEvent.is_offcycle |= HealingEventFlags_TargetIsDowned;
 		}
 
 		GlobalObjects::ARC_E10(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
@@ -681,5 +698,21 @@ std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> 
 	}
 
 	DEBUGLOG("self %llu, %zu entries", pSelfUniqueId, result.size());
-	return { pSelfUniqueId, result };
+	return {pSelfUniqueId, result};
+}
+
+void EventProcessor::PreProcessEvent(cbtevent* pEvent, bool pIsLocal)
+{
+	if (pEvent == nullptr)
+	{
+		return;
+	}
+
+	EventType eventType = GetEventType(pEvent, pIsLocal);
+	// Glyph of the Stars (Celestial Avatar)
+	// The game (or maybe arcdps) incorrectly marks this one as not being ress, even though it can in fact only ress. So we patch the event a bit :)
+	if (eventType == EventType::Healing && pEvent->buff != 0 && pEvent->skillid == 55026)
+	{
+		pEvent->pad61 = 1;
+	}
 }

@@ -158,5 +158,5 @@ def Do_Test():
 	asyncio.run(Test(BUILD_PATH))
 	Progress("Do_Test done")
 
-Do_Test()
-#Do_Release("v2.7.rc1")
+#Do_Test()
+Do_Release("v2.8.rc1")

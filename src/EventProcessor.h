@@ -33,6 +33,8 @@ public:
 #ifndef TEST
 private:
 #endif
+	void PreProcessEvent(cbtevent* pEvent, bool pIsLocal);
+
 	PlayerStats mLocalState;
 	std::atomic<uint32_t> mSelfInstanceId = UINT32_MAX;
 	std::atomic<uintptr_t> mSelfUniqueId = UINT64_MAX;

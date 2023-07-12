@@ -15,9 +15,15 @@ struct EvtcVersionHeader
 	uint32_t VersionStringLength : 8;
 };
 
-enum HealingEventFlags
+enum HealingEventFlags : uint8_t
 {
-	HealingEventFlags_IsOffcycle = 1 << 0,
+	// The target of the event is downed. Only gets set for buff damage/healing events since arcdps overrides pad61, for
+	// direct damage/healing, look at the lower bits of is_offcycle instead (as documented in arcdps evtc documentation)
+	HealingEventFlags_TargetIsDowned = 1 << 5,
+	// Signifies that the agent identified by dst_agent/dst_instid generated the event. This lets an event parser figure
+	// out which agents are sending events, and as a result also for which players the healing data is complete
 	HealingEventFlags_EventCameFromDestination = 1 << 6,
+	// Signifies that the agent identified by src_agent/src_instid generated the event. This lets an event parser figure
+	// out which agents are sending events, and as a result also for which players the healing data is complete
 	HealingEventFlags_EventCameFromSource = 1 << 7
 };
