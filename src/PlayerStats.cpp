@@ -6,17 +6,18 @@
 #include <assert.h>
 #include <Windows.h>
 
-HealEvent::HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId)
-	: Time{pTime}
-	, Size{pSize}
-	, AgentId{pAgentId}
-	, SkillId{pSkillId}
+HealEvent::HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId, bool pIsBarrier)
+	: Time{ pTime }
+	, Size{ pSize }
+	, AgentId{ pAgentId }
+	, SkillId{ pSkillId }
+	, IsBarrier{ pIsBarrier }
 {
 }
 
 bool HealEvent::operator==(const HealEvent& pRight) const
 {
-	return std::tie(Time, Size, AgentId, SkillId) == std::tie(pRight.Time, pRight.Size, pRight.AgentId, pRight.SkillId);
+	return std::tie(Time, Size, AgentId, SkillId, IsBarrier) == std::tie(pRight.Time, pRight.Size, pRight.AgentId, pRight.SkillId, pRight.IsBarrier);
 }
 
 bool HealEvent::operator!=(const HealEvent& pRight) const
@@ -78,7 +79,7 @@ uint64_t PlayerStats::ExitedCombat(uint64_t pTime, uint64_t pLastDamageEventTime
 bool PlayerStats::ResetIfNotInCombat()
 {
 	std::lock_guard<std::mutex> lock(myLock);
-	
+
 	if (myStats.IsOutOfCombat() == true)
 	{
 		// Reset everything except the subgroup
@@ -125,7 +126,29 @@ void PlayerStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
 			return;
 		}
 
-		myStats.Events.emplace_back(pEvent->time, healedAmount, pDestinationAgentId, pEvent->skillid);
+		myStats.Events.emplace_back(pEvent->time, healedAmount, pDestinationAgentId, pEvent->skillid, false);
+	}
+}
+
+void PlayerStats::BarrierEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
+{
+	uint32_t barrierAmount = pEvent->value;
+	if (barrierAmount == 0)
+	{
+		barrierAmount = pEvent->buff_dmg;
+		assert(barrierAmount != 0);
+	}
+
+	{
+		std::lock_guard<std::mutex> lock(myLock);
+
+		if (myStats.IsOutOfCombat() == true)
+		{
+			LOG("Event before combat enter %llu", pEvent->time);
+			return;
+		}
+
+		myStats.Events.emplace_back(pEvent->time, barrierAmount, pDestinationAgentId, pEvent->skillid, true);
 	}
 }
 
@@ -133,6 +156,6 @@ HealingStatsSlim PlayerStats::GetState()
 {
 	std::lock_guard<std::mutex> lock(myLock);
 
-	HealingStatsSlim result{myStats};
+	HealingStatsSlim result{ myStats };
 	return result;
 }

@@ -58,7 +58,7 @@ static void PrintEvent(cbtevent* pEvent)
 		pEvent->is_ninety,
 		pEvent->is_fifty,
 		pEvent->is_moving,
-		static_cast<int>(pEvent->is_statechange), 
+		static_cast<int>(pEvent->is_statechange),
 		pEvent->is_flanking,
 		pEvent->is_shields,
 		pEvent->is_offcycle,
@@ -79,6 +79,15 @@ void EventProcessor::SetEvtcLoggingEnabled(bool pEnabled)
 		pEnabled, mEvtcLoggingEnabled.load(std::memory_order_relaxed));
 	mEvtcLoggingEnabled.store(pEnabled, std::memory_order_relaxed);
 }
+
+
+void EventProcessor::SetUseBarrier(bool pEnabled)
+{
+	LogI("Setting use barrier to {} (previous value {})",
+		pEnabled, useBarrier.load(std::memory_order_relaxed));
+	useBarrier.store(pEnabled, std::memory_order_relaxed);
+}
+
 
 void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t /*pId*/, uint64_t /*pRevision*/)
 {
@@ -411,8 +420,9 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 
 	if (pEvent->is_shields != 0)
 	{
-		// Shield application - not tracking for now
-		return;
+		if (useBarrier.load(std::memory_order_relaxed) == false) {
+			return;
+		}
 	}
 
 	if (pSourceAgent->self == 0 &&
@@ -428,7 +438,14 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		mAgentTable.AddAgent(pDestinationAgent->id, pEvent->dst_instid, pDestinationAgent->name, std::nullopt, pEvent->dst_master_instid != 0, std::nullopt);
 	}
 
-	mLocalState.HealingEvent(pEvent, pDestinationAgent->id);
+	if (pEvent->is_shields != 0)
+	{
+		mLocalState.BarrierEvent(pEvent, pDestinationAgent->id);
+	}
+	else
+	{
+		mLocalState.HealingEvent(pEvent, pDestinationAgent->id);
+	}
 
 	uint32_t healedAmount = pEvent->value;
 	if (healedAmount == 0)
@@ -436,7 +453,15 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		healedAmount = pEvent->buff_dmg;
 		assert(healedAmount != 0);
 	}
-	LOG("Registered heal event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+
+	if (pEvent->is_shields != 0)
+	{
+		LOG("Registered barrier event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+	}
+	else
+	{
+		LOG("Registered heal event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+	}
 }
 
 void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
@@ -453,7 +478,7 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 	std::shared_ptr<PlayerStats> state;
 	{
 		std::lock_guard lock(mPeerStatesLock);
-		
+
 		auto [iter, inserted] = mPeerStates.try_emplace(*peerUniqueId);
 		if (inserted == true)
 		{
@@ -553,8 +578,10 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 
 	if (pEvent->is_shields != 0)
 	{
-		// Shield application - not tracking for now
-		return;
+		if (useBarrier.load(std::memory_order_relaxed) == false) {
+			// Shield application - not tracking for now
+			return;
+		}
 	}
 
 	if (pEvent->src_instid != pPeerInstanceId &&
@@ -564,7 +591,14 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		return;
 	}
 
-	state->HealingEvent(pEvent, *dstUniqueId);
+	if (pEvent->is_shields != 0)
+	{
+		state->BarrierEvent(pEvent, *dstUniqueId);
+	}
+	else
+	{
+		state->HealingEvent(pEvent, *dstUniqueId);
+	}
 
 	uint32_t healedAmount = pEvent->value;
 	if (healedAmount == 0)
@@ -572,7 +606,15 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		healedAmount = pEvent->buff_dmg;
 		assert(healedAmount != 0);
 	}
-	LOG("Registered heal event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
+
+	if (pEvent->is_shields != 0)
+	{
+		LOG("Registered barrier event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
+	}
+	else
+	{
+		LOG("Registered heal event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
+	}
 }
 
 std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState(uintptr_t pSelfUniqueId)
@@ -624,7 +666,7 @@ std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> 
 		entry->second.second.CollectionTime = collectionTime;
 		entry->second.second.Agents = mAgentTable.GetState();
 		entry->second.second.Skills = std::shared_ptr(mSkillTable);
-		
+
 		std::optional<std::string> name = mAgentTable.GetName(uniqueId);
 		if (name.has_value())
 		{
@@ -639,5 +681,5 @@ std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> 
 	}
 
 	DEBUGLOG("self %llu, %zu entries", pSelfUniqueId, result.size());
-	return {pSelfUniqueId, result};
+	return { pSelfUniqueId, result };
 }
