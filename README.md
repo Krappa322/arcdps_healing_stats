@@ -12,7 +12,7 @@ Also logs healing to the arcdps evtc, allowing evtc parsers to show healing stat
 ## Installation
 Requires [ArcDPS](https://www.deltaconnected.com/arcdps/).
 
-Download the latest [arcdps_healing_stats.dll](https://github.com/Krappa322/arcdps_healing_stats/releases/latest) from the Releases page. Drag and drop arcdps_healing_stats.dll into the bin64\ directory (same directory as where arcdps d3d9.dll is)
+Download the latest [arcdps_healing_stats.dll](https://github.com/Krappa322/arcdps_healing_stats/releases/latest) from the Releases page. Drag and drop arcdps_healing_stats.dll into the same directory as arcdps (d3d11.dll)
 
 ## Usage
 Toggle any window under the "Heal Stats" menu in the arcdps main menu. Right-click the window to see more options and hover over options to see what they do. All configuration is done per window, and there can be up to 10 different windows.
