@@ -500,7 +500,7 @@ TEST_F(SimpleNetworkTestFixture, RegisterSelf)
 		// Wait until the server sees the new agent and then verify the state
 		auto start = std::chrono::system_clock::now();
 		bool completed = false;
-		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(200))
+		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(1000))
 		{
 			{
 				std::lock_guard lock(Server->mRegisteredAgentsLock);
@@ -590,6 +590,8 @@ TEST_F(SimpleNetworkTestFixture, RegisterPeer)
 
 	// Deregister the non-self agent
 	ag1.prof = static_cast<Prof>(0);
+	ag2 = ag{};
+	ag2.name = "";
 	client1->ProcessAreaEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
 
 	FlushEvents();

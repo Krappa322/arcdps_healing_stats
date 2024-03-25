@@ -166,6 +166,8 @@ uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent,
 			LOG("Deregister agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
 				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
 				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
+			// pDestinationAgent is invalid in deregister events (keep trying to log it though - might have some useful information for debugging :))
+			pDestinationAgent = nullptr;
 		}
 
 		return 0;
@@ -220,15 +222,15 @@ uintptr_t evtc_rpc_client::ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, 
 				assert(pDestinationAgent->name != nullptr && pDestinationAgent->name[0] != '\0');
 
 				std::lock_guard lock(mPeerInfoLock);
-				auto [iter, inserted] = mPeers.try_emplace(static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name);
+				auto [iter, inserted] = mPeers.try_emplace(pSourceAgent->id, PeerInfo{static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name});
 				if (inserted == true)
 				{
-					LogD("Added peer {} {}", iter->first, iter->second);
+					LogD("Added peer {} {} {}", iter->first, iter->second.InstanceId, iter->second.AccountName);
 				}
 				else
 				{
-					LogE("Dropping peer {} {} since they're already registered as {}",
-						static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name, iter->second);
+					LogE("Dropping peer {} {} {} since they're already registered as {} {}",
+						pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name, iter->second.InstanceId, iter->second.AccountName);
 				}
 			}
 		}
@@ -237,21 +239,20 @@ uintptr_t evtc_rpc_client::ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, 
 			LOG("Deregister agent %s %llu %x %x %u %u ; %s %llu %x %x %u %u",
 				pSourceAgent->name, pSourceAgent->id, pSourceAgent->prof, pSourceAgent->elite, pSourceAgent->team, pSourceAgent->self,
 				pDestinationAgent->name, pDestinationAgent->id, pDestinationAgent->prof, pDestinationAgent->elite, pDestinationAgent->team, pDestinationAgent->self);
+			// pDestinationAgent is invalid in deregister events (keep trying to log it though - might have some useful information for debugging :))
+			pDestinationAgent = nullptr;
 
-			// Don't send peer if it's ourselves (that makes no sense) and don't send peer if it has no account name (not a player?)
-			if (pDestinationAgent->self == 0 &&
-				(pDestinationAgent->name != nullptr && pDestinationAgent->name[0] != '\0'))
 			{
 				std::lock_guard lock(mPeerInfoLock);
-				size_t removedCount = mPeers.erase(static_cast<uint16_t>(pDestinationAgent->id));
+				size_t removedCount = mPeers.erase(pSourceAgent->id);
 				if (removedCount == 1)
 				{
-					LogD("Removed peer {}", static_cast<uint16_t>(pDestinationAgent->id));
+					LogD("Removed peer {}", pSourceAgent->id);
 				}
 				else
 				{
-					LogE("Removing peer {} ({}) failed - removedCount={}",
-						static_cast<uint16_t>(pDestinationAgent->id), pDestinationAgent->name, removedCount);
+					LogT("Removing peer {} failed - removedCount={} (probably not a player)",
+						pSourceAgent->id, removedCount);
 				}
 			}
 		}
@@ -269,6 +270,8 @@ void evtc_rpc_client::ThreadStartServe(void* pThis)
 
 void evtc_rpc_client::Serve()
 {
+	LogD(">>");
+
 	while (true)
 	{
 		//LOG("LOOP - mShouldShutdown=%s mWritePending=%s", BOOL_STR(mShouldShutdown), mConnectionContext == nullptr ? "null" : BOOL_STR(mConnectionContext->WritePending));
@@ -536,52 +539,52 @@ evtc_rpc_client::CallDataBase* evtc_rpc_client::TryGetPeerEvent()
 {
 	std::lock_guard lock(mPeerInfoLock);
 
-	auto peers = mPeers.begin();
-	auto registered = mConnectionContext->RegisteredPeers.begin();
-	while (peers != mPeers.end() &&
-		registered != mConnectionContext->RegisteredPeers.end())
+	// First deregister any no longer registered accounts
+	for (auto registered = mConnectionContext->RegisteredPeers.begin();
+		registered != mConnectionContext->RegisteredPeers.end();
+		registered++)
 	{
-		if (peers->first < registered->first)
+		auto peersIter = mPeers.find(registered->first);
+		if (peersIter == mPeers.end())
 		{
-			LogT("1) registering {}", peers->first);
-
-			auto [iter, inserted] = mConnectionContext->RegisteredPeers.try_emplace(peers->first, std::string(peers->second));
-			assert(inserted == true);
-			return new AddPeerCallData(std::shared_ptr(mConnectionContext), peers->first, std::string(peers->second));
+			LogT("Deregistering no longer registered peer {} {} {}",
+				registered->first, registered->second.InstanceId, registered->second.AccountName);
 		}
-		else if (
-			// peer that changed name (likely deregistered then registered again in rapid succession)
-			(peers->first == registered->first && peers->second != registered->second) ||
-			// removed peer
-			(peers->first > registered->first))
+		else if (registered->second.InstanceId != peersIter->second.InstanceId || registered->second.AccountName != peersIter->second.AccountName)
 		{
-			LogT("1) deregistering {}", registered->first);
-
-			uint16_t id = registered->first;
-			mConnectionContext->RegisteredPeers.erase(registered);
-			return new RemovePeerCallData(std::shared_ptr(mConnectionContext), id);
+			LogT("Deregistering peer {} that changed {} {} -> {} {}",
+				registered->first, registered->second.InstanceId, registered->second.AccountName, peersIter->second.InstanceId, peersIter->second.AccountName);
+		}
+		else
+		{
+			continue;
 		}
 
-		peers++;
-		registered++;
-	}
-	// If we reached the end by `registered` reaching the end, we should register everything left in `peers`
-	for (; peers != mPeers.end(); peers++)
-	{
-		LogT("2) registering {}", peers->first);
-
-		auto [iter, inserted] = mConnectionContext->RegisteredPeers.try_emplace(peers->first, std::string(peers->second));
-		assert(inserted == true);
-		return new AddPeerCallData(std::shared_ptr(mConnectionContext), peers->first, std::string(peers->second));
-	}
-	// Otherwise, if we reached the end by `peers` reaching the end, we should deregister everything left in `registered`
-	for (; registered != mConnectionContext->RegisteredPeers.end(); registered++)
-	{
-		LogT("2) deregistering {}", registered->first);
-
-		uint16_t id = registered->first;
+		uint16_t id = registered->second.InstanceId;
 		mConnectionContext->RegisteredPeers.erase(registered);
 		return new RemovePeerCallData(std::shared_ptr(mConnectionContext), id);
+	}
+
+	// Then register any new accounts
+	for (auto peers = mPeers.begin();
+		peers != mPeers.end();
+		peers++)
+	{
+		auto registeredIter = mConnectionContext->RegisteredPeers.find(peers->first);
+		if (registeredIter != mConnectionContext->RegisteredPeers.end())
+		{
+			// Already registered (and we know they match - we checked in the loop above)
+			assert(registeredIter->second.InstanceId == peers->second.InstanceId);
+			assert(registeredIter->second.AccountName == peers->second.AccountName);
+			continue;
+		}
+
+		LogT("Registering new peer {} {} {}",
+			peers->first, peers->second.InstanceId, peers->second.AccountName);
+
+		auto [iter, inserted] = mConnectionContext->RegisteredPeers.try_emplace(peers->first, peers->second);
+		assert(inserted == true);
+		return new AddPeerCallData(std::shared_ptr(mConnectionContext), peers->second.InstanceId, std::string{peers->second.AccountName});
 	}
 
 	return nullptr;

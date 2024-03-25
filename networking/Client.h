@@ -44,12 +44,18 @@ class evtc_rpc_client
 {
 	typedef void(*PeerCombatCallbackSignature)(cbtevent* pEvent);
 
+	struct PeerInfo
+	{
+		uint16_t InstanceId = 0;
+		std::string AccountName;
+	};
+
 	struct ConnectionContext
 	{
 		bool ForceDisconnected = false;
 		bool WritePending = false;
 		uint16_t RegisteredInstanceId = 0;
-		std::map<uint16_t, std::string> RegisteredPeers;
+		std::map<uintptr_t /*UniqueId*/, PeerInfo> RegisteredPeers;
 
 		grpc::ClientContext ClientContext;
 		std::shared_ptr<grpc::Channel> Channel;
@@ -227,7 +233,7 @@ private:
 	uint16_t mInstanceId = 0;
 
 	std::mutex mPeerInfoLock;
-	std::map<uint16_t, std::string> mPeers;
+	std::map<uintptr_t /*UniqueId*/, PeerInfo> mPeers;
 
 	std::mutex mStatusLock;
 	evtc_rpc_client_status mStatus;
