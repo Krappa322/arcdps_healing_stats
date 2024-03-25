@@ -93,7 +93,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NOMINMAX;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;NOMINMAX;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\src;..\modules\arcdps_extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -112,7 +112,7 @@
     <ClCompile>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <PreprocessorDefinitions>NOMINMAX;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;_DEBUG;_CONSOLE;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;NOMINMAX;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING;_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;_DEBUG;_CONSOLE;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>Level4</WarningLevel>
       <AdditionalIncludeDirectories>..\src;..\modules\arcdps_extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -133,7 +133,7 @@
     <ClCompile>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;_CRT_SECURE_NO_WARNINGS;ARCDPS_EXTENSION_NO_LANG_H;X64;TEST;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <WarningLevel>Level4</WarningLevel>
       <AdditionalIncludeDirectories>..\src;..\modules\arcdps_extension;..\arcdps_mock;..\arcdps_mock\json;..\arcdps_mock\xevtc;..\arcdps_mock\imgui;..\spdlog\include;$(SolutionDir)$(Platform)\autogen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
