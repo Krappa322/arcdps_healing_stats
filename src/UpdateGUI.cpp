@@ -35,7 +35,7 @@ void Display_UpdateWindow()
 
 			if (ImGui::Button("Open download page") == true)
 			{
-				ShellExecuteA(nullptr, nullptr, "https://github.com/Krappa322/arcdps_healing_stats/releases", nullptr, nullptr, SW_SHOW);
+				ShellExecuteA(nullptr, nullptr, "https://github.com/bear-on-the-job/arcdps_healing_stats/releases", nullptr, nullptr, SW_SHOW);
 			}
 
 			switch (state->UpdateStatus)

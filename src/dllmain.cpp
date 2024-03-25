@@ -258,7 +258,7 @@ arcdps_exports* mod_init()
 		{
 			const bool enablePreReleases = (HEAL_TABLE_OPTIONS.AutoUpdateSetting == AutoUpdateSettingEnum::PreReleases);
 			GlobalObjects::UPDATE_CHECKER->ClearFiles(GlobalObjects::SELF_HANDLE);
-			GlobalObjects::UPDATE_STATE = GlobalObjects::UPDATE_CHECKER->CheckForUpdate(GlobalObjects::SELF_HANDLE, GlobalObjects::VERSION, "Krappa322/arcdps_healing_stats", enablePreReleases);
+			GlobalObjects::UPDATE_STATE = GlobalObjects::UPDATE_CHECKER->CheckForUpdate(GlobalObjects::SELF_HANDLE, GlobalObjects::VERSION, "bear-on-the-job/arcdps_healing_stats", enablePreReleases);
 		}
 	}
 
