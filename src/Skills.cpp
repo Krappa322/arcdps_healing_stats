@@ -89,6 +89,27 @@ SkillTable::SkillTable()
 	ENTRY(63220); // Dawn's Repose
 	ENTRY(63249); // Mind Shock
 	ENTRY(63362); // Haunt Shot
+	ENTRY(69302); // LifeSiphon
+	ENTRY(71799); // PathOfGluttony
+	ENTRY(71800); // Effervescence
+	ENTRY(71813); // HungeringMaelstrom
+	ENTRY(71850); // EnervationEcho
+	ENTRY(71871); // Gorge
+	ENTRY(71875); // RampartSplitter
+	ENTRY(71882); // EssenceOfLivingShadows
+	ENTRY(71892); // FriendlyFire
+	ENTRY(71897); // Journey
+	ENTRY(71901); // LineBreakerHeal
+	ENTRY(71950); // PathToVictory
+	ENTRY(71970); // FriendlyFireIllu
+	ENTRY(71986); // EnervationBlade
+	ENTRY(71999); // Flourish
+	ENTRY(72002); // ValiantLeap
+	ENTRY(72005); // InspiringImagery
+	ENTRY(72028); // FrigidFlurry
+	ENTRY(72033); // SoothingSplash
+	ENTRY(72051); // DeathlyEnervation
+	ENTRY(72062); // EchoingErosion
 #undef ENTRY
 
 	std::lock_guard lock(mLock);

@@ -32,6 +32,8 @@ evtc_rpc_server::evtc_rpc_server(const char* pListeningEndpoint, const char* pPr
 	mStatistics = std::make_shared<ServerStatistics>(*this);
 	mPrometheusExposer.RegisterCollectable(mStatistics->PrometheusRegistry);
 	mPrometheusExposer.RegisterCollectable(mStatistics);
+
+	LogI("Started listening - pListeningEndpoint={} pPrometheusEndpoint={}", pListeningEndpoint, pPrometheusEndpoint);
 }
 
 evtc_rpc_server::~evtc_rpc_server()
