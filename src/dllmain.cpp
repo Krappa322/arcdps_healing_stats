@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <Windows.h>
 
+#include <ares_version.h>
 #include <grpcpp/grpcpp.h>
 #include <cpr/cpr.h>
 
@@ -263,8 +264,8 @@ arcdps_exports* mod_init()
 
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, GlobalObjects::EVTC_RPC_CLIENT.get());
 
-	LogI("Startup completed, arcdps_version={} healing_stats_version={} cpr_version={} curl_version={} grpc_version={} grpc_core_version={}",
-		ARCDPS_VERSION, ARC_EXPORTS.out_build, CPR_VERSION, LIBCURL_VERSION, grpc::Version(), grpc_version_string());
+	LogI("Startup completed, arcdps_version={} healing_stats_version={} cpr_version={} curl_version={} grpc_version={} grpc_core_version={} c-ares_version={}",
+		ARCDPS_VERSION, ARC_EXPORTS.out_build, CPR_VERSION, LIBCURL_VERSION, grpc::Version(), grpc_version_string(), ARES_VERSION_STR);
 	return &ARC_EXPORTS;
 }
 
