@@ -14,7 +14,11 @@
     {
       "name": "fmt",
       "version": "9.1.0"
+    },
+	{
+      "name": "c-ares",
+      "version": "1.18.1"
     }
   ],
-  "builtin-baseline": "501db0f17ef6df184fcdbfbe0f87cde2313b6ab1"
+  "builtin-baseline": "f7423ee180c4b7f40d43402c2feb3859161ef625"
 }
