@@ -59,8 +59,8 @@ IDR_ROOT_CERTIFICATES   CERTIFICATE             "vcpkg_installed\\x64-windows-st
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,9,1,1
- PRODUCTVERSION 2,9,1,1
+ FILEVERSION 2,10,1,1
+ PRODUCTVERSION 2,10,1,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -76,12 +76,12 @@ BEGIN
         BLOCK "200004b0"
         BEGIN
             VALUE "FileDescription", "arcdps_healing_stats"
-            VALUE "FileVersion", "2.9.1.1"
+            VALUE "FileVersion", "2.10.1.1"
             VALUE "InternalName", "arcdps_healing_stats"
             VALUE "LegalCopyright", "Copyright (C) 2022"
             VALUE "OriginalFilename", "arcdps_healing_stats.dll"
             VALUE "ProductName", "arcdps_healing_stats"
-            VALUE "ProductVersion", "2.9.1.1"
+            VALUE "ProductVersion", "2.10.1.1"
         END
     END
     BLOCK "VarFileInfo"
