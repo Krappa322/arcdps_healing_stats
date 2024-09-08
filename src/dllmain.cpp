@@ -253,6 +253,7 @@ arcdps_exports* mod_init()
 		Log_::SetLevel(HEAL_TABLE_OPTIONS.LogLevel);
 		GlobalObjects::EVENT_PROCESSOR->SetEvtcLoggingEnabled(HEAL_TABLE_OPTIONS.EvtcLoggingEnabled);
 		GlobalObjects::EVTC_RPC_CLIENT->SetEnabledStatus(HEAL_TABLE_OPTIONS.EvtcRpcEnabled);
+		GlobalObjects::EVTC_RPC_CLIENT->SetBudgetMode(HEAL_TABLE_OPTIONS.EvtcRpcBudgetMode);
 
 		if (HEAL_TABLE_OPTIONS.AutoUpdateSetting != AutoUpdateSettingEnum::Off)
 		{
