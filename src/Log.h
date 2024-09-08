@@ -99,7 +99,6 @@ namespace Log_
 	}
 
 	void LogImplementation_(const char* pComponentName, const char* pFunctionName, const char* pFormatString, ...);
-	void LogImplementationArc_(const char* pComponentName, const char* pFunctionName, const char* pFormatString, ...);
 
 	void FlushLogFile();
 	void Init(bool pRotateOnOpen, const char* pLogPath);
