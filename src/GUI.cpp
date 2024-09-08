@@ -731,14 +731,9 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(128, 128, 128, 255));
 	}
-	if (ImGuiEx::SmallCheckBox("live stats sharing budget mode", &pHealingOptions.EvtcRpcBudgetMode) == true)
+	if (ImGuiEx::SmallCheckBox("live stats sharing - budget mode", &pHealingOptions.EvtcRpcBudgetMode) == true)
 	{
 		GlobalObjects::EVTC_RPC_CLIENT->SetBudgetMode(pHealingOptions.EvtcRpcBudgetMode);
-	}
-	if (pHealingOptions.EvtcRpcEnabled == false)
-	{
-		ImGui::PopItemFlag();
-		ImGui::PopStyleColor();
 	}
 	ImGuiEx::AddTooltipToLastItem(
 		"Only send a minimal subset of events to peers. This reduces\n"
@@ -751,6 +746,23 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 		"when out of combat. This option has no effect on download\n"
 		"bandwidth usage, only upload. Expected connection usage with\n"
 		"this option enabled should go down to <1kiB/s up.");
+
+	if (ImGuiEx::SmallCheckBox("live stats sharing - disable encryption", &pHealingOptions.EvtcRpcDisableEncryption) == true)
+	{
+		GlobalObjects::EVTC_RPC_CLIENT->SetDisableEncryption(pHealingOptions.EvtcRpcDisableEncryption);
+	}
+	ImGuiEx::AddTooltipToLastItem(
+		"By default, all messages sent to and from the live stats\n"
+		"sharing server are encrypted using TLS. This option disables\n"
+		"the encryption, which can be useful to work around certain\n"
+		"security applications, as well as to reduce the CPU usage of\n"
+		"live stats sharing");
+
+	if (pHealingOptions.EvtcRpcEnabled == false)
+	{
+		ImGui::PopItemFlag();
+		ImGui::PopStyleColor();
+	}
 
 	float oldPosY = ImGui::GetCursorPosY();
 	ImGui::BeginGroup();
