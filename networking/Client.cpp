@@ -434,6 +434,7 @@ void evtc_rpc_client::Serve()
 
 				std::string endpoint = mEndpointCallback();
 				bool missingPort = false;
+				bool disableEncryption = mDisableEncryption;
 				if (endpoint.find(':') == endpoint.npos)
 				{
 					missingPort = true;
@@ -443,7 +444,7 @@ void evtc_rpc_client::Serve()
 				options.pem_root_certs = mRootCertificatesCallback();
 
 				std::shared_ptr<grpc::ChannelCredentials> channel_creds;
-				if (mDisableEncryption == true)
+				if (disableEncryption == true)
 				{
 					if (missingPort == true)
 					{
@@ -478,6 +479,7 @@ void evtc_rpc_client::Serve()
 				{
 					std::lock_guard status_lock{mStatusLock};
 					mStatus.Endpoint = endpoint;
+					mStatus.Encrypted = !disableEncryption;
 				}
 			}
 		}

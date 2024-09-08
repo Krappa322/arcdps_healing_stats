@@ -36,6 +36,7 @@
 struct evtc_rpc_client_status
 {
 	bool Connected = false;
+	bool Encrypted = false;
 	std::chrono::steady_clock::time_point ConnectTime;
 	std::string Endpoint;
 };

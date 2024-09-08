@@ -651,7 +651,12 @@ static void Display_EvtcRpcStatus(const HealTableOptions& pHealingOptions)
 	if (status.Connected == true)
 	{
 		uint64_t seconds = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - status.ConnectTime).count();
-		ImGui::TextColored(ImVec4(0.0f, 0.75f, 0.0f, 1.0f), "Connected to %s for %llu seconds", status.Endpoint.c_str(), seconds);
+		const char* encryptString = "with";
+		if (status.Encrypted == false)
+		{
+			encryptString = "without";
+		}
+		ImGui::TextColored(ImVec4(0.0f, 0.75f, 0.0f, 1.0f), "Connected to %s for %llu seconds %s encryption", status.Endpoint.c_str(), seconds, encryptString);
 	}
 	else if (pHealingOptions.EvtcRpcEnabled == false)
 	{
