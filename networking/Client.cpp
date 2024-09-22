@@ -132,6 +132,11 @@ void evtc_rpc_client::SetBudgetMode(bool pBudgetMode)
 	LogI("Changed budget mode to {}", pBudgetMode);
 }
 
+void evtc_rpc_client::SetDisableEncryption(bool pDisableEncryption)
+{
+	mDisableEncryption = pDisableEncryption;
+	LogI("Changed disable encryption mode to {}", pDisableEncryption);
+}
 
 uintptr_t evtc_rpc_client::ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* /*pSkillname*/, uint64_t pId, uint64_t /*pRevision*/)
 {
@@ -425,15 +430,40 @@ void evtc_rpc_client::Serve()
 		{
 			if ((std::chrono::steady_clock::now() - mLastConnectionAttempt) > std::chrono::seconds{5})
 			{
-				std::string endpoint = mEndpointCallback();
-
 				mConnectionContext = std::make_shared<ConnectionContext>();
+
+				std::string endpoint = mEndpointCallback();
+				bool missingPort = false;
+				bool disableEncryption = mDisableEncryption;
+				if (endpoint.find(':') == endpoint.npos)
+				{
+					missingPort = true;
+				}
+
 				grpc::SslCredentialsOptions options;
 				options.pem_root_certs = mRootCertificatesCallback();
 
-				auto channel_creds = grpc::SslCredentials(options);
+				std::shared_ptr<grpc::ChannelCredentials> channel_creds;
+				if (disableEncryption == true)
+				{
+					if (missingPort == true)
+					{
+						endpoint += ":80";
+					}
+
+					channel_creds = grpc::InsecureChannelCredentials();
+				}
+				else
+				{
+					if (missingPort == true)
+					{
+						endpoint += ":443";
+					}
+
+					channel_creds = grpc::SslCredentials(options);
+				}
+
 				mConnectionContext->Channel = grpc::CreateChannel(endpoint, channel_creds);
-				//mConnectionContext->Channel = grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials());
 				mConnectionContext->Stub = evtc_rpc::evtc_rpc::NewStub(std::shared_ptr(mConnectionContext->Channel));
 
 				ConnectCallData* queuedData1 = new ConnectCallData{std::shared_ptr(mConnectionContext)};
@@ -449,6 +479,7 @@ void evtc_rpc_client::Serve()
 				{
 					std::lock_guard status_lock{mStatusLock};
 					mStatus.Endpoint = endpoint;
+					mStatus.Encrypted = !disableEncryption;
 				}
 			}
 		}

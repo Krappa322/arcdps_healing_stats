@@ -59,9 +59,10 @@ struct HealTableOptions
 
 	bool EvtcLoggingEnabled = true;
 
-	char EvtcRpcEndpoint[128] = "evtc-rpc.kappa322.com:443";
+	char EvtcRpcEndpoint[128] = "evtc-rpc.kappa322.com";
 	bool EvtcRpcEnabled = false;
 	bool EvtcRpcBudgetMode = false;
+	bool EvtcRpcDisableEncryption = false;
 	int EvtcRpcEnabledHotkey = 0;
 
 	std::array<HealWindowContext, HEAL_WINDOW_COUNT> Windows;

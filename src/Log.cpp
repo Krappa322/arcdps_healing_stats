@@ -1,5 +1,9 @@
 #include "Log.h"
 
+#include <absl/log/absl_log.h>
+#include <absl/log/log_sink_registry.h>
+#include <absl/log/globals.h>
+
 #include <spdlog/async.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 
@@ -18,6 +22,36 @@
 #include <chrono>
 #include <ctime>
 
+class AbslLogRedirector final : public absl::LogSink
+{
+public:
+	AbslLogRedirector() {}
+	~AbslLogRedirector() {}
+
+	void Send(const absl::LogEntry& entry) override
+	{
+		spdlog::level::level_enum level = spdlog::level::info;
+		switch (entry.log_severity())
+		{
+		case absl::LogSeverity::kInfo:
+			level = spdlog::level::info;
+			break;
+		case absl::LogSeverity::kWarning:
+			level = spdlog::level::warn;
+			break;
+		case absl::LogSeverity::kError:
+			level = spdlog::level::err;
+			break;
+		case absl::LogSeverity::kFatal:
+			level = spdlog::level::critical;
+			break;
+		};
+
+		return Log_::LOGGER->log(level, FMT_STRING("ABSL|{}:{}|{}"),
+			static_cast<std::string>(entry.source_basename()), entry.source_line(), static_cast<std::string>(entry.text_message()));
+	}
+};
+
 namespace
 {
 void SetThreadNameLogThread()
@@ -28,6 +62,7 @@ void SetThreadNameLogThread()
 	SetThreadDescription(GetCurrentThread(), L"spdlog-worker");
 #endif
 }
+std::shared_ptr<AbslLogRedirector> ABSL_LOGGER;
 };
 
 void Log_::LogImplementation_(const char* pComponentName, const char* pFunctionName, const char* pFormatString, ...)
@@ -59,6 +94,9 @@ void Log_::Init(bool pRotateOnOpen, const char* pLogPath)
 	Log_::LOGGER->set_pattern("%b %d %H:%M:%S.%f %t %L %v");
 	Log_::LOGGER->flush_on(spdlog::level::err);
 	spdlog::flush_every(std::chrono::seconds(5));
+
+	ABSL_LOGGER = std::make_shared<AbslLogRedirector>();
+	absl::AddLogSink(ABSL_LOGGER.get());
 }
 
 // SetLevel can still be used after calling this, the sink levels and logger levels are different things - e.g if logger
@@ -85,6 +123,9 @@ void Log_::InitMultiSink(bool pRotateOnOpen, const char* pLogPathTrace, const ch
 	spdlog::register_logger(Log_::LOGGER);
 
 	spdlog::flush_every(std::chrono::seconds(5));
+	
+	ABSL_LOGGER = std::make_shared<AbslLogRedirector>();
+	absl::AddLogSink(ABSL_LOGGER.get());
 }
 
 void Log_::Shutdown()

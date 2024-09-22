@@ -320,6 +320,7 @@ void HealTableOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "EvtcRpcEndpoint", EvtcRpcEndpoint);
 	GetJsonValue(pJsonObject, "EvtcRpcEnabled", EvtcRpcEnabled);
 	GetJsonValue(pJsonObject, "EvtcRpcBudgetMode", EvtcRpcBudgetMode);
+	GetJsonValue(pJsonObject, "EvtcRpcDisableEncryption", EvtcRpcDisableEncryption);
 	GetJsonValue(pJsonObject, "EvtcRpcEnabledHotkey", EvtcRpcEnabledHotkey);
 	GetJsonValue(pJsonObject, "IncludeBarrier", IncludeBarrier);
 
@@ -379,6 +380,7 @@ do {\
 	SET_JSON_VAL_CSTR_ARRAY(EvtcRpcEndpoint);
 	SET_JSON_VAL(EvtcRpcEnabled);
 	SET_JSON_VAL(EvtcRpcBudgetMode);
+	SET_JSON_VAL(EvtcRpcDisableEncryption);
 	SET_JSON_VAL(EvtcRpcEnabledHotkey);
 	SET_JSON_VAL(IncludeBarrier);
 
