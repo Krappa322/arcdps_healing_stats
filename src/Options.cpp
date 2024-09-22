@@ -286,7 +286,7 @@ void GetJsonValue(const nlohmann::json& pJsonObject, const char* pFieldName, Res
 }
 
 template <size_t StringSize>
-void GetJsonValue(const nlohmann::json& pJsonObject, const char* pFieldName, char(&pResult)[StringSize])
+void GetJsonValue(const nlohmann::json& pJsonObject, const char* pFieldName, char (&pResult)[StringSize])
 {
 	const auto iter = pJsonObject.find(pFieldName);
 	if (iter != pJsonObject.end())
@@ -424,7 +424,7 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "ExcludeOffGroup", ExcludeOffGroup);
 	GetJsonValue(pJsonObject, "ExcludeOffSquad", ExcludeOffSquad);
 	GetJsonValue(pJsonObject, "ExcludeMinions", ExcludeMinions);
-	GetJsonValue(pJsonObject, "ExcludeUnmapped", ExcludeUnmapped);
+	GetJsonValue(pJsonObject,  "ExcludeUnmapped", ExcludeUnmapped);
 
 	GetJsonValue(pJsonObject, "ShowProgressBars", ShowProgressBars);
 	GetJsonValue(pJsonObject, "Name", Name);

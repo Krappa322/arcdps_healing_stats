@@ -58,7 +58,7 @@ static void PrintEvent(cbtevent* pEvent)
 		pEvent->is_ninety,
 		pEvent->is_fifty,
 		pEvent->is_moving,
-		static_cast<int>(pEvent->is_statechange),
+		static_cast<int>(pEvent->is_statechange), 
 		pEvent->is_flanking,
 		pEvent->is_shields,
 		pEvent->is_offcycle,
@@ -80,14 +80,12 @@ void EventProcessor::SetEvtcLoggingEnabled(bool pEnabled)
 	mEvtcLoggingEnabled.store(pEnabled, std::memory_order_relaxed);
 }
 
-
 void EventProcessor::SetUseBarrier(bool pEnabled)
 {
 	LogI("Setting use barrier to {} (previous value {})",
 		pEnabled, useBarrier.load(std::memory_order_relaxed));
 	useBarrier.store(pEnabled, std::memory_order_relaxed);
 }
-
 
 void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t /*pId*/, uint64_t /*pRevision*/)
 {
@@ -433,7 +431,8 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 
 	if (pEvent->is_shields != 0)
 	{
-		if (useBarrier.load(std::memory_order_relaxed) == false) {
+		if (useBarrier.load(std::memory_order_relaxed) == false)
+		{
 			return;
 		}
 	}
@@ -492,7 +491,7 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 	std::shared_ptr<PlayerStats> state;
 	{
 		std::lock_guard lock(mPeerStatesLock);
-
+		
 		auto [iter, inserted] = mPeerStates.try_emplace(*peerUniqueId);
 		if (inserted == true)
 		{
@@ -598,7 +597,8 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 
 	if (pEvent->is_shields != 0)
 	{
-		if (useBarrier.load(std::memory_order_relaxed) == false) {
+		if (useBarrier.load(std::memory_order_relaxed) == false)
+		{
 			// Shield application - not tracking for now
 			return;
 		}
@@ -686,7 +686,7 @@ std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> 
 		entry->second.second.CollectionTime = collectionTime;
 		entry->second.second.Agents = mAgentTable.GetState();
 		entry->second.second.Skills = std::shared_ptr(mSkillTable);
-
+		
 		std::optional<std::string> name = mAgentTable.GetName(uniqueId);
 		if (name.has_value())
 		{

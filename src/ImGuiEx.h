@@ -116,7 +116,7 @@ namespace ImGuiEx
 	{
 		static_assert(std::is_enum_v<EnumType>, "Accidental loss of type safety?");
 
-		ImVec2 size{ 0, 0 };
+		ImVec2 size{0, 0};
 		for (const char* item : pItems)
 		{
 			ImVec2 itemSize = ImGui::CalcTextSize(item);

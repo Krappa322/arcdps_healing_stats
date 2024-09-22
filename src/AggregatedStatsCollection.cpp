@@ -5,14 +5,14 @@
 const static AggregatedVector EMPTY_STATS;
 
 AggregatedStatsCollection::Player::Player(std::string&& pName, HealingStats&& pStats, const HealWindowOptions& pOptions, bool pDebugMode)
-	: Name{ std::move(pName) }
-	, Stats{ std::move(pStats), pOptions, pDebugMode }
+	: Name{std::move(pName)}
+	, Stats{std::move(pStats), pOptions, pDebugMode}
 {
 }
 
 AggregatedStatsCollection::AggregatedStatsCollection(std::map<uintptr_t, std::pair<std::string, HealingStats>>&& pPeerStates, uintptr_t pLocalUniqueId, const HealWindowOptions& pOptions, bool pDebugMode)
-	: mOptions{ pOptions }
-	, mDebugMode{ pDebugMode }
+	: mOptions{pOptions}
+	, mDebugMode{pDebugMode}
 {
 	mLocalState = mSourceData.end();
 	for (auto& [id, state] : pPeerStates)

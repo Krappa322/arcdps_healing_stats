@@ -55,7 +55,7 @@ static BOOL EnumNamesFunc(HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_P
 
 static BOOL EnumTypesFunc(HMODULE hModule, LPTSTR lpType, LONG_PTR lParam)
 {
-	LOG("EnumTypesFunc - %p %p '%ls' %llu", hModule, lpType, IS_INTRESOURCE(lpType) ? L"IS_RESOURCE" : lpType, lParam);
+	LOG("EnumTypesFunc - %p %p '%ls' %llu", hModule, lpType, IS_INTRESOURCE(lpType) ? L"IS_RESOURCE" : lpType , lParam);
 
 	bool res = EnumResourceNames(hModule, lpType, &EnumNamesFunc, 12345);
 	LOG("EnumResourceNames returned %s", BOOL_STR(res));
@@ -108,7 +108,7 @@ static const char* LoadRootCertificatesFromFile()
 		LOG("roots.pem doesn't exist");
 		return "file doesn't exist";
 	}
-
+	
 	filestream.seekg(0, std::ios::end);
 	GlobalObjects::ROOT_CERTIFICATES.resize(filestream.tellg());
 	filestream.seekg(0, std::ios::beg);
@@ -130,7 +130,7 @@ static void FreeWrapper(void* pPointer, void* /*pUserData*/)
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
-extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, void*, HMODULE pArcModule, MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
+extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, void*, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree)
 {
 	GlobalObjects::ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(GlobalObjects::ARC_E3 != nullptr);
@@ -232,15 +232,15 @@ arcdps_exports* mod_init()
 	}
 
 	auto getEndpoint = []() -> std::string
-	{
-		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
+		{
+			std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 
-		return std::string{HEAL_TABLE_OPTIONS.EvtcRpcEndpoint};
-	};
+			return std::string{HEAL_TABLE_OPTIONS.EvtcRpcEndpoint};
+		};
 	auto getCertificates = []() -> std::string
-	{
-		return std::string{GlobalObjects::ROOT_CERTIFICATES};
-	};
+		{
+			return std::string{GlobalObjects::ROOT_CERTIFICATES};
+		}; 
 
 	GlobalObjects::EVENT_SEQUENCER = std::make_unique<EventSequencer>(ProcessLocalEvent);
 	GlobalObjects::EVENT_PROCESSOR = std::make_unique<EventProcessor>();
@@ -261,7 +261,7 @@ arcdps_exports* mod_init()
 		{
 			const bool enablePreReleases = (HEAL_TABLE_OPTIONS.AutoUpdateSetting == AutoUpdateSettingEnum::PreReleases);
 			GlobalObjects::UPDATE_CHECKER->ClearFiles(GlobalObjects::SELF_HANDLE);
-			GlobalObjects::UPDATE_STATE = GlobalObjects::UPDATE_CHECKER->CheckForUpdate(GlobalObjects::SELF_HANDLE, GlobalObjects::VERSION, "bear-on-the-job/arcdps_healing_stats", enablePreReleases);
+			GlobalObjects::UPDATE_STATE = GlobalObjects::UPDATE_CHECKER->CheckForUpdate(GlobalObjects::SELF_HANDLE, GlobalObjects::VERSION, "Krappa322/arcdps_healing_stats", enablePreReleases);
 		}
 	}
 
@@ -278,7 +278,7 @@ uintptr_t mod_release()
 	LogD("Shutting down, sequencer={}, processor={}, client={} client_thread={}",
 		static_cast<void*>(GlobalObjects::EVENT_SEQUENCER.get()),
 		static_cast<void*>(GlobalObjects::EVENT_PROCESSOR.get()),
-		static_cast<void*>(GlobalObjects::EVTC_RPC_CLIENT.get()),
+		static_cast<void*>(GlobalObjects::EVTC_RPC_CLIENT.get()), 
 		static_cast<void*>(GlobalObjects::EVTC_RPC_CLIENT_THREAD.get()));
 
 	{
@@ -297,7 +297,7 @@ uintptr_t mod_release()
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 		HEAL_TABLE_OPTIONS.Save(JSON_CONFIG_PATH);
 	}
-
+	
 	if (GlobalObjects::UPDATE_STATE != nullptr)
 	{
 		GlobalObjects::UPDATE_STATE->FinishPendingTasks();

@@ -42,7 +42,7 @@ struct AggregatedStatsEntry
 struct AggregatedVector
 {
 	std::vector<AggregatedStatsEntry> Entries;
-	uint64_t HighestHealing{ 0 };
+	uint64_t HighestHealing{0};
 
 	void Add(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrier);
 };

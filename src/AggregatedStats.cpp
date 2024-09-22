@@ -14,13 +14,13 @@ constexpr const char* GROUP_FILTER_STRING[] = { "Group", "Squad", "All (Excludin
 static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
 
 AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrier)
-	: Id{ pId }
-	, Name{ pName }
-	, TimeInCombat{ pTimeInCombat }
-	, Healing{ pHealing }
-	, Hits{ pHits }
-	, Casts{ pCasts }
-	, Barrier{ pBarrier }
+	: Id{pId}
+	, Name{pName}
+	, TimeInCombat{pTimeInCombat}
+	, Healing{pHealing}
+	, Hits{pHits}
+	, Casts{pCasts}
+	, Barrier{pBarrier}
 {
 }
 
@@ -286,10 +286,10 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 		uint64_t Barrier;
 
 		TempAgent(std::map<uintptr_t, HealedAgent>::const_iterator&& pIterator, uint64_t pTicks, uint64_t pHealing, uint64_t pBarrier)
-			: Iterator{ std::move(pIterator) }
-			, Ticks{ pTicks }
-			, Healing{ pHealing }
-			, Barrier{ pBarrier }
+			: Iterator{std::move(pIterator)}
+			, Ticks{pTicks}
+			, Healing{pHealing}
+			, Barrier{pBarrier}
 		{
 		}
 	};
@@ -405,9 +405,9 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 		uint64_t Barrier;
 
 		TempSkill(uint64_t pTicks, uint64_t pHealing, uint64_t pBarrier)
-			: Ticks{ pTicks }
-			, Healing{ pHealing }
-			, Barrier{ pBarrier }
+			: Ticks{pTicks}
+			, Healing{pHealing}
+			, Barrier{pBarrier}
 		{
 		}
 	};

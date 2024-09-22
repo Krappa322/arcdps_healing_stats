@@ -7,11 +7,11 @@
 #include <Windows.h>
 
 HealEvent::HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId, bool pIsBarrier)
-	: Time{ pTime }
-	, Size{ pSize }
-	, AgentId{ pAgentId }
-	, SkillId{ pSkillId }
-	, IsBarrier{ pIsBarrier }
+	: Time{pTime}
+	, Size{pSize}
+	, AgentId{pAgentId}
+	, SkillId{pSkillId}
+	, IsBarrier{pIsBarrier}
 {
 }
 
@@ -79,7 +79,7 @@ uint64_t PlayerStats::ExitedCombat(uint64_t pTime, uint64_t pLastDamageEventTime
 bool PlayerStats::ResetIfNotInCombat()
 {
 	std::lock_guard<std::mutex> lock(myLock);
-
+	
 	if (myStats.IsOutOfCombat() == true)
 	{
 		// Reset everything except the subgroup
@@ -156,6 +156,6 @@ HealingStatsSlim PlayerStats::GetState()
 {
 	std::lock_guard<std::mutex> lock(myLock);
 
-	HealingStatsSlim result{ myStats };
+	HealingStatsSlim result{myStats};
 	return result;
 }
