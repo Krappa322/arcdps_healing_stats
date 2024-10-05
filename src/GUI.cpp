@@ -39,7 +39,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	// in turn means that the name of the window can change if necessary)
 	snprintf(buffer, sizeof(buffer), "%s###HEALDETAILS.%i.%llu", pState.Name.c_str(), static_cast<int>(pDataSource), pState.Id);
 	ImGui::SetNextWindowSize(ImVec2(600, 360), ImGuiCond_FirstUseEver);
-	ImGui::Begin(buffer, &pState.IsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
+	ImGui::Begin(buffer, &pState.IsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNavFocus);
 
 	if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 	{
