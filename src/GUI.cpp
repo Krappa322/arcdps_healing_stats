@@ -16,7 +16,7 @@ static constexpr EnumStringArray<AutoUpdateSettingEnum> AUTO_UPDATE_SETTING_ITEM
 static constexpr EnumStringArray<DataSource> DATA_SOURCE_ITEMS{
 	"targets", "skills", "totals", "combined", "peers outgoing"};
 static constexpr EnumStringArray<SortOrder> SORT_ORDER_ITEMS{
-	"alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending"};
+	"alphabetical ascending", "alphabetical descending", "total outgoing per second ascending", "total outgoing per second descending", "heal per second ascending", "heal per second descending", "barrier generation per second ascending", "barrier generation per second descending"};
 static constexpr EnumStringArray<CombatEndCondition> COMBAT_END_CONDITION_ITEMS{
 	"combat exit", "last damage event", "last heal event", "last damage / heal event"};
 static constexpr EnumStringArray<spdlog::level::level_enum, 7> LOG_LEVEL_ITEMS{

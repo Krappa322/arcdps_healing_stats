@@ -552,7 +552,7 @@ void AggregatedStats::Sort(std::vector<AggregatedStatsEntry>& pVector, SortOrder
 			});
 		break;
 
-	case SortOrder::AscendingSize:
+	case SortOrder::AscendingTotalOutgoingSize:
 		std::sort(pVector.begin(), pVector.end(),
 			[](const auto& pLeft, const auto& pRight)
 			{
@@ -560,11 +560,43 @@ void AggregatedStats::Sort(std::vector<AggregatedStatsEntry>& pVector, SortOrder
 			});
 		break;
 
-	case SortOrder::DescendingSize:
+	case SortOrder::DescendingTotalOutgoingSize:
 		std::sort(pVector.begin(), pVector.end(),
 			[](const auto& pLeft, const auto& pRight)
 			{
 				return pLeft.Healing > pRight.Healing;
+			});
+		break;
+
+	case SortOrder::AscendingHealSize:
+		std::sort(pVector.begin(), pVector.end(),
+			[](const auto& pLeft, const auto& pRight)
+			{
+				return (pLeft.Healing - pLeft.BarrierGeneration) < (pRight.Healing - pRight.BarrierGeneration);
+			});
+		break;
+
+	case SortOrder::DescendingHealSize:
+		std::sort(pVector.begin(), pVector.end(),
+			[](const auto& pLeft, const auto& pRight)
+			{
+				return (pLeft.Healing - pLeft.BarrierGeneration) > (pRight.Healing - pRight.BarrierGeneration);
+			});
+		break;
+
+	case SortOrder::AscendingBarrierGenerationSize:
+		std::sort(pVector.begin(), pVector.end(),
+			[](const auto& pLeft, const auto& pRight)
+			{
+				return pLeft.BarrierGeneration < pRight.BarrierGeneration;
+			});
+		break;
+
+	case SortOrder::DescendingBarrierGenerationSize:
+		std::sort(pVector.begin(), pVector.end(),
+			[](const auto& pLeft, const auto& pRight)
+			{
+				return pLeft.BarrierGeneration > pRight.BarrierGeneration;
 			});
 		break;
 
