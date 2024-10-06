@@ -131,6 +131,12 @@ HealTableOptions::HealTableOptions()
 	snprintf(Windows[5].Name, sizeof(Windows[5].Name), "%s", "Peers outgoing");
 	snprintf(Windows[5].TitleFormat, sizeof(Windows[5].TitleFormat), "%s", "Outgoing healing {1} ({4}/s, {7}s in combat)");
 
+	Windows[6].DataSourceChoice = DataSource::PeersOutgoing;
+	Windows[6].ExcludeHealing = true;
+	Windows[6].ExcludeBarrierGeneration = false;
+	snprintf(Windows[6].Name, sizeof(Windows[6].Name), "%s", "Peers barrier generation");
+	snprintf(Windows[6].TitleFormat, sizeof(Windows[6].TitleFormat), "%s", "Barrier generation {1} ({4}/s, {7}s in combat)");
+
 	Windows[9].DataSourceChoice = DataSource::Combined;
 	snprintf(Windows[9].Name, sizeof(Windows[9].Name), "%s", "Combined");
 	snprintf(Windows[9].TitleFormat, sizeof(Windows[9].TitleFormat), "%s", "Combined {1} ({4}/s, {7}s in combat)");
