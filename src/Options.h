@@ -32,6 +32,9 @@ struct DetailsWindowState : AggregatedStatsEntry
 {
 	bool IsOpen = false;
 
+	float LastFrameLeftSideMinWidth = 0.0f; // In-Memory only
+	float LastFrameRightSideMinWidth = 0.0f; // In-Memory only
+
 	explicit DetailsWindowState(const AggregatedStatsEntry& pEntry);
 };
 

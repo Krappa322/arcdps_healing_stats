@@ -72,14 +72,29 @@ namespace ImGuiEx
 	}
 
 	template <typename... Args>
-	void TextRightAlignedSameLine(const char* pFormatString, Args... pArgs)
+	float TextRightAlignedSameLine(const char* pFormatString, Args... pArgs)
 	{
 		char buffer[1024];
 
 		snprintf(buffer, sizeof(buffer), pFormatString, pArgs...);
+		float textSize = ImGui::CalcTextSize(buffer).x;
+
 		ImGui::SameLine();
-		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(buffer).x); // Sending x in SameLine messes with alignment when inside of a group
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - textSize); // Sending x in SameLine messes with alignment when inside of a group
 		ImGui::Text("%s", buffer);
+
+		return textSize;
+	}
+
+	template <typename... Args>
+	float DetailsSummaryEntry(const char* pCategoryName, const char* pFormatString, Args... pArgs)
+	{
+		float leftTextSize = ImGui::CalcTextSize(pCategoryName).x;
+		ImGui::Text(pCategoryName);
+
+		float rightTextSize = TextRightAlignedSameLine(pFormatString, pArgs...);
+		// Two item spacings between the left and right text, and WindowPadding on each side of the left and right text.
+		return leftTextSize + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetCurrentWindowRead()->WindowPadding.x * 2.0f + rightTextSize;
 	}
 
 	template <typename... Args>
