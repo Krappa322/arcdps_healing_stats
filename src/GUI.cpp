@@ -72,7 +72,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 
 	if (pState.BarrierGeneration > 0)
 	{
-		ImGui::Text("total barrier");
+		ImGui::Text("total barrier gen");
 		ImGuiEx::TextRightAlignedSameLine("%llu", pState.BarrierGeneration);
 	}
 
@@ -111,7 +111,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 
 		if (pState.Casts.has_value() == true)
 		{
-			ImGui::Text("barrier generation per cast");
+			ImGui::Text("barrier gen per cast");
 			ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.BarrierGeneration, *pState.Casts));
 		}
 	}
@@ -138,14 +138,14 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.DetailsEntryFormat, entryValues);
 
 		float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
-		float barrierRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
+		float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
 
 		std::string_view name = entry.Name;
 		if (pContext.MaxNameLength > 0)
 		{
 			name = name.substr(0, pContext.MaxNameLength);
 		}
-		ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{barrierRatio} : std::nullopt);
+		ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt);
 	}
 	ImGui::EndChild();
 

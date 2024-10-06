@@ -132,11 +132,11 @@ void PlayerStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
 
 void PlayerStats::BarrierGenerationEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
 {
-	uint32_t barrierAmount = pEvent->value;
-	if (barrierAmount == 0)
+	uint32_t barrierGenerationAmount = pEvent->value;
+	if (barrierGenerationAmount == 0)
 	{
-		barrierAmount = pEvent->buff_dmg;
-		assert(barrierAmount != 0);
+		barrierGenerationAmount = pEvent->buff_dmg;
+		assert(barrierGenerationAmount != 0);
 	}
 
 	{
@@ -148,7 +148,7 @@ void PlayerStats::BarrierGenerationEvent(cbtevent* pEvent, uintptr_t pDestinatio
 			return;
 		}
 
-		myStats.Events.emplace_back(pEvent->time, barrierAmount, pDestinationAgentId, pEvent->skillid, true);
+		myStats.Events.emplace_back(pEvent->time, barrierGenerationAmount, pDestinationAgentId, pEvent->skillid, true);
 	}
 }
 

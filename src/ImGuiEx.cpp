@@ -78,11 +78,11 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 
 		if (pBarrierGenerationRatio.has_value() == true)
 		{
-			float barrierRatio = *pBarrierGenerationRatio;
-			healingRatio -= barrierRatio;
+			float barrierGenerationRatio = *pBarrierGenerationRatio;
+			healingRatio -= barrierGenerationRatio;
 
 			ImVec2 barrierStart = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * healingRatio, pos.y);
-			ImVec2 barrierEnd = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * (healingRatio + barrierRatio), pos.y + ImGui::GetTextLineHeight());
+			ImVec2 barrierEnd = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * (healingRatio + barrierGenerationRatio), pos.y + ImGui::GetTextLineHeight());
 
 			ImGui::GetWindowDrawList()->AddRectFilled(barrierStart, barrierEnd, IM_COL32(255, 225, 0, 128));
 		}
