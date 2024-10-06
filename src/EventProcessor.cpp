@@ -80,13 +80,6 @@ void EventProcessor::SetEvtcLoggingEnabled(bool pEnabled)
 	mEvtcLoggingEnabled.store(pEnabled, std::memory_order_relaxed);
 }
 
-void EventProcessor::SetUseBarrier(bool pEnabled)
-{
-	LogI("Setting use barrier to {} (previous value {})",
-		pEnabled, useBarrier.load(std::memory_order_relaxed));
-	useBarrier.store(pEnabled, std::memory_order_relaxed);
-}
-
 void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t /*pId*/, uint64_t /*pRevision*/)
 {
 	PreProcessEvent(pEvent, false);
@@ -429,14 +422,6 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		GlobalObjects::ARC_E10(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
 	}
 
-	if (pEvent->is_shields != 0)
-	{
-		if (useBarrier.load(std::memory_order_relaxed) == false)
-		{
-			return;
-		}
-	}
-
 	if (pSourceAgent->self == 0 &&
 		pEvent->src_master_instid != selfInstanceId)
 	{
@@ -593,15 +578,6 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 	{
 		LOG("Dropping event to %hu since destination agent is unknown", pEvent->dst_instid);
 		return;
-	}
-
-	if (pEvent->is_shields != 0)
-	{
-		if (useBarrier.load(std::memory_order_relaxed) == false)
-		{
-			// Shield application - not tracking for now
-			return;
-		}
 	}
 
 	if (pEvent->src_instid != pPeerInstanceId &&

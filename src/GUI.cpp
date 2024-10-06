@@ -361,6 +361,8 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 				ImGuiEx::SmallCheckBox("off-squad", &pContext.ExcludeOffSquad);
 				ImGuiEx::SmallCheckBox("summons", &pContext.ExcludeMinions);
 				ImGuiEx::SmallCheckBox("unmapped", &pContext.ExcludeUnmapped);
+				ImGuiEx::SmallCheckBox("healing", &pContext.ExcludeHealing);
+				ImGuiEx::SmallCheckBox("barrier generation", &pContext.ExcludeBarrierGeneration);
 
 				ImGui::EndMenu();
 			}
@@ -734,12 +736,6 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 		"Logs are saved in addons\\logs\\arcdps_healing_stats\\. Logging\n"
 		"will have a small impact on performance.");
 
-	ImGui::Separator();
-
-	if (ImGuiEx::SmallCheckBox("Include barrier", &pHealingOptions.IncludeBarrier) == true)
-	{
-		GlobalObjects::EVENT_PROCESSOR->SetUseBarrier(pHealingOptions.IncludeBarrier);
-	}
 	ImGui::Separator();
 
 	if (ImGuiEx::SmallCheckBox("log healing to EVTC logs", &pHealingOptions.EvtcLoggingEnabled) == true)

@@ -252,7 +252,6 @@ arcdps_exports* mod_init()
 
 		Log_::SetLevel(HEAL_TABLE_OPTIONS.LogLevel);
 		GlobalObjects::EVENT_PROCESSOR->SetEvtcLoggingEnabled(HEAL_TABLE_OPTIONS.EvtcLoggingEnabled);
-		GlobalObjects::EVENT_PROCESSOR->SetUseBarrier(HEAL_TABLE_OPTIONS.IncludeBarrier);
 		GlobalObjects::EVTC_RPC_CLIENT->SetEnabledStatus(HEAL_TABLE_OPTIONS.EvtcRpcEnabled);
 		GlobalObjects::EVTC_RPC_CLIENT->SetBudgetMode(HEAL_TABLE_OPTIONS.EvtcRpcBudgetMode);
 		GlobalObjects::EVTC_RPC_CLIENT->SetDisableEncryption(HEAL_TABLE_OPTIONS.EvtcRpcDisableEncryption);

@@ -54,6 +54,8 @@ struct HealWindowOptions
 	bool ExcludeOffSquad = false;
 	bool ExcludeMinions = true;
 	bool ExcludeUnmapped = true;
+	bool ExcludeHealing = false;
+	bool ExcludeBarrierGeneration = true;
 
 	bool ShowProgressBars = true;
 	char Name[MAX_HEAL_WINDOW_NAME + 1] = {};

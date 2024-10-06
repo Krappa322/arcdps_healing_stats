@@ -54,7 +54,6 @@ struct HealTableOptions
 {
 	AutoUpdateSettingEnum AutoUpdateSetting = AutoUpdateSettingEnum::On;
 	bool DebugMode = false;
-	bool IncludeBarrier = false;
 	spdlog::level::level_enum LogLevel = spdlog::level::off;
 	
 	bool EvtcLoggingEnabled = true;

@@ -67,6 +67,8 @@ TEST(ConfigTest, Serialize_Deserialize)
 		window.ExcludeOffSquad = rand_t<bool>();
 		window.ExcludeMinions = rand_t<bool>();
 		window.ExcludeUnmapped = rand_t<bool>();
+		window.ExcludeHealing = rand_t<bool>();
+		window.ExcludeBarrierGeneration = rand_t<bool>();
 
 		window.ShowProgressBars = rand_t<bool>();
 		rand_string(window.Name);
@@ -123,6 +125,8 @@ TEST(ConfigTest, Serialize_Deserialize)
 		ASSERT_EQ(windowLeft.ExcludeOffSquad, windowRight.ExcludeOffSquad);
 		ASSERT_EQ(windowLeft.ExcludeMinions, windowRight.ExcludeMinions);
 		ASSERT_EQ(windowLeft.ExcludeUnmapped, windowRight.ExcludeUnmapped);
+		ASSERT_EQ(windowLeft.ExcludeHealing, windowRight.ExcludeHealing);
+		ASSERT_EQ(windowLeft.ExcludeBarrierGeneration, windowRight.ExcludeBarrierGeneration);
 
 		ASSERT_EQ(windowLeft.ShowProgressBars, windowRight.ShowProgressBars);
 		ASSERT_EQ(strcmp(windowLeft.Name, windowRight.Name), 0);

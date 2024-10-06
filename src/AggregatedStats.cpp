@@ -114,6 +114,15 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 			continue;
 		}
 
+		if (curEvent.IsBarrier && myOptions.ExcludeBarrierGeneration == true)
+		{
+			continue;
+		}
+		else if (!curEvent.IsBarrier && myOptions.ExcludeHealing == true)
+		{
+			continue;
+		}
+
 		auto mapAgent = std::as_const(mySourceData.Agents).find(curEvent.AgentId);
 
 		// Loop through the array and pretend index is GroupFilter, if agent does not get filtered by that filter then add
@@ -304,6 +313,15 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 			continue;
 		}
 
+		if (curEvent.IsBarrier && myOptions.ExcludeBarrierGeneration == true)
+		{
+			continue;
+		}
+		else if (!curEvent.IsBarrier && myOptions.ExcludeHealing == true)
+		{
+			continue;
+		}
+
 		if (pSkillId.has_value() == true)
 		{
 			if (curEvent.SkillId != *pSkillId)
@@ -421,6 +439,15 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 	for (const HealEvent& curEvent : mySourceData.Events)
 	{
 		if (curEvent.Time > combatEnd)
+		{
+			continue;
+		}
+
+		if (curEvent.IsBarrier && myOptions.ExcludeBarrierGeneration == true)
+		{
+			continue;
+		}
+		else if (!curEvent.IsBarrier && myOptions.ExcludeHealing == true)
 		{
 			continue;
 		}

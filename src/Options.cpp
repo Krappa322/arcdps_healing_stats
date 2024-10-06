@@ -56,6 +56,8 @@ bool ReadIni(HealTableOptions& pOptions)
 		pOptions.Windows[i].ExcludeOffSquad = healtable_ini.GetBoolValue(section, "exclude_off_squad", pOptions.Windows[i].ExcludeOffSquad);
 		pOptions.Windows[i].ExcludeMinions = healtable_ini.GetBoolValue(section, "exclude_minions", pOptions.Windows[i].ExcludeMinions);
 		pOptions.Windows[i].ExcludeUnmapped = healtable_ini.GetBoolValue(section, "exclude_unmapped", pOptions.Windows[i].ExcludeUnmapped);
+		pOptions.Windows[i].ExcludeHealing = healtable_ini.GetBoolValue(section, "exclude_healing", pOptions.Windows[i].ExcludeHealing);
+		pOptions.Windows[i].ExcludeBarrierGeneration = healtable_ini.GetBoolValue(section, "exclude_barrier_generation", pOptions.Windows[i].ExcludeBarrierGeneration);
 
 		pOptions.Windows[i].ShowProgressBars = healtable_ini.GetBoolValue(section, "show_progress_bars", pOptions.Windows[i].ShowProgressBars);
 
@@ -85,8 +87,8 @@ bool ReadIni(HealTableOptions& pOptions)
 
 		pOptions.Windows[i].WindowFlags = static_cast<ImGuiWindowFlags_>(healtable_ini.GetLongValue(section, "window_flags", pOptions.Windows[i].WindowFlags));
 
-		LOG("Read window %u from ini file: show_window=%s data_source_choice=%i sort_order_choice=%i combat_end_condition_choice=%i, exclude_group=%s exclude_off_group=%s exclude_off_squad=%s exclude_minions=%s exclude_unmapped=%s show_progress_bars=%s, name='%s' title_format='%s' entry_format='%s' details_entry_format='%s'",
-			i, BOOL_STR(pOptions.Windows[i].Shown), pOptions.Windows[i].DataSourceChoice, pOptions.Windows[i].SortOrderChoice, pOptions.Windows[i].CombatEndConditionChoice, BOOL_STR(pOptions.Windows[i].ExcludeGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffSquad), BOOL_STR(pOptions.Windows[i].ExcludeMinions), BOOL_STR(pOptions.Windows[i].ExcludeUnmapped), BOOL_STR(pOptions.Windows[i].ShowProgressBars), pOptions.Windows[i].Name, pOptions.Windows[i].TitleFormat, pOptions.Windows[i].EntryFormat, pOptions.Windows[i].DetailsEntryFormat);
+		LOG("Read window %u from ini file: show_window=%s data_source_choice=%i sort_order_choice=%i combat_end_condition_choice=%i, exclude_group=%s exclude_off_group=%s exclude_off_squad=%s exclude_minions=%s exclude_unmapped=%s exclude_healing=%s exclude_barrier_generation=%s show_progress_bars=%s, name='%s' title_format='%s' entry_format='%s' details_entry_format='%s'",
+			i, BOOL_STR(pOptions.Windows[i].Shown), pOptions.Windows[i].DataSourceChoice, pOptions.Windows[i].SortOrderChoice, pOptions.Windows[i].CombatEndConditionChoice, BOOL_STR(pOptions.Windows[i].ExcludeGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffSquad), BOOL_STR(pOptions.Windows[i].ExcludeMinions), BOOL_STR(pOptions.Windows[i].ExcludeUnmapped), BOOL_STR(pOptions.Windows[i].ExcludeHealing), BOOL_STR(pOptions.Windows[i].ExcludeBarrierGeneration), BOOL_STR(pOptions.Windows[i].ShowProgressBars), pOptions.Windows[i].Name, pOptions.Windows[i].TitleFormat, pOptions.Windows[i].EntryFormat, pOptions.Windows[i].DetailsEntryFormat);
 	}
 
 	LOG("Read ini file debug_mode=%s", BOOL_STR(pOptions.DebugMode));
@@ -322,7 +324,6 @@ void HealTableOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "EvtcRpcBudgetMode", EvtcRpcBudgetMode);
 	GetJsonValue(pJsonObject, "EvtcRpcDisableEncryption", EvtcRpcDisableEncryption);
 	GetJsonValue(pJsonObject, "EvtcRpcEnabledHotkey", EvtcRpcEnabledHotkey);
-	GetJsonValue(pJsonObject, "IncludeBarrier", IncludeBarrier);
 
 	const auto iter = pJsonObject.find("Windows");
 	if (iter != pJsonObject.end())
@@ -382,7 +383,6 @@ do {\
 	SET_JSON_VAL(EvtcRpcBudgetMode);
 	SET_JSON_VAL(EvtcRpcDisableEncryption);
 	SET_JSON_VAL(EvtcRpcEnabledHotkey);
-	SET_JSON_VAL(IncludeBarrier);
 
 	nlohmann::json windows;
 	for (size_t i = 0; i < Windows.size(); i++)
@@ -425,6 +425,8 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "ExcludeOffSquad", ExcludeOffSquad);
 	GetJsonValue(pJsonObject, "ExcludeMinions", ExcludeMinions);
 	GetJsonValue(pJsonObject,  "ExcludeUnmapped", ExcludeUnmapped);
+	GetJsonValue(pJsonObject, "ExcludeHealing", ExcludeHealing);
+	GetJsonValue(pJsonObject, "ExcludeBarrierGeneration", ExcludeBarrierGeneration);
 
 	GetJsonValue(pJsonObject, "ShowProgressBars", ShowProgressBars);
 	GetJsonValue(pJsonObject, "Name", Name);
@@ -478,6 +480,8 @@ do {\
 	SET_JSON_VAL(ExcludeOffSquad);
 	SET_JSON_VAL(ExcludeMinions);
 	SET_JSON_VAL(ExcludeUnmapped);
+	SET_JSON_VAL(ExcludeHealing);
+	SET_JSON_VAL(ExcludeBarrierGeneration);
 
 	SET_JSON_VAL(ShowProgressBars);
 	SET_JSON_VAL_CSTR_ARRAY(Name);
