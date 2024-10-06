@@ -64,8 +64,11 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 
 	uint64_t adjustedHealing = (pState.Healing - pState.BarrierGeneration);
 
-	ImGui::Text("total healing");
-	ImGuiEx::TextRightAlignedSameLine("%llu", adjustedHealing);
+	if (adjustedHealing > 0)
+	{
+		ImGui::Text("total healing");
+		ImGuiEx::TextRightAlignedSameLine("%llu", adjustedHealing);
+	}
 
 	if (pState.BarrierGeneration > 0)
 	{
@@ -82,24 +85,28 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		ImGuiEx::TextRightAlignedSameLine("%llu", *pState.Casts);
 	}
 
-	ImGui::Text("healing per second");
-	ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, pState.TimeInCombat));
-
-	ImGui::Text("healing per hit");
-	ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, pState.Hits));
-
-	if (pState.Casts.has_value() == true)
+	if (adjustedHealing > 0)
 	{
-		ImGui::Text("healing per cast");
-		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, *pState.Casts));
+		ImGui::Text("healing per second");
+		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, pState.TimeInCombat));
+
+		ImGui::Text("healing per hit");
+		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, pState.Hits));
+
+		if (pState.Casts.has_value() == true)
+		{
+			ImGui::Text("healing per cast");
+			ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, *pState.Casts));
+		}
+
 	}
 
 	if (pState.BarrierGeneration > 0)
 	{
-		ImGui::Text("barrier generation per second");
+		ImGui::Text("barrier gen per second");
 		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.BarrierGeneration, pState.TimeInCombat));
 
-		ImGui::Text("barrier generation per hit");
+		ImGui::Text("barrier gen per hit");
 		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.BarrierGeneration, pState.Hits));
 
 		if (pState.Casts.has_value() == true)
