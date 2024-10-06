@@ -437,7 +437,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 
 	if (pEvent->is_shields != 0)
 	{
-		mLocalState.BarrierEvent(pEvent, pDestinationAgent->id);
+		mLocalState.BarrierGenerationEvent(pEvent, pDestinationAgent->id);
 	}
 	else
 	{
@@ -453,7 +453,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 
 	if (pEvent->is_shields != 0)
 	{
-		LOG("Registered barrier event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+		LOG("Registered barrier generation event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
 	}
 	else
 	{
@@ -589,7 +589,7 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 
 	if (pEvent->is_shields != 0)
 	{
-		state->BarrierEvent(pEvent, *dstUniqueId);
+		state->BarrierGenerationEvent(pEvent, *dstUniqueId);
 	}
 	else
 	{
@@ -605,7 +605,7 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 
 	if (pEvent->is_shields != 0)
 	{
-		LOG("Registered barrier event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
+		LOG("Registered barrier generation event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
 	}
 	else
 	{

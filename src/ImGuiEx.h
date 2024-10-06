@@ -43,7 +43,7 @@ namespace ImGuiEx
 	void SmallUnindent();
 
 	// returns minimum size needed to display the entry
-	float StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierRatio);
+	float StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio);
 
 	template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
 	bool SmallInputInt(const char* pLabel, T* pInt)

@@ -29,13 +29,13 @@ struct AggregatedStatsEntry
 	uint64_t Healing;
 	uint64_t Hits;
 	std::optional<uint64_t> Casts;
-	uint64_t Barrier;
+	uint64_t BarrierGeneration;
 
-	AggregatedStatsEntry(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrier);
+	AggregatedStatsEntry(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration);
 
 	auto GetTie() const
 	{
-		return std::tie(Id, Name, TimeInCombat, Healing, Hits, Casts, Barrier);
+		return std::tie(Id, Name, TimeInCombat, Healing, Hits, Casts, BarrierGeneration);
 	}
 };
 
@@ -44,7 +44,7 @@ struct AggregatedVector
 	std::vector<AggregatedStatsEntry> Entries;
 	uint64_t HighestHealing{0};
 
-	void Add(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrier);
+	void Add(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration);
 };
 
 

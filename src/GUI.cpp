@@ -62,15 +62,15 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.TOTALS.%i.%llu", static_cast<int>(pDataSource), pState.Id);
 	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.35f, 0));
 
-	uint64_t adjustedHealing = (pState.Healing - pState.Barrier);
+	uint64_t adjustedHealing = (pState.Healing - pState.BarrierGeneration);
 
 	ImGui::Text("total healing");
 	ImGuiEx::TextRightAlignedSameLine("%llu", adjustedHealing);
 
-	if (pState.Barrier > 0)
+	if (pState.BarrierGeneration > 0)
 	{
 		ImGui::Text("total barrier");
-		ImGuiEx::TextRightAlignedSameLine("%llu", pState.Barrier);
+		ImGuiEx::TextRightAlignedSameLine("%llu", pState.BarrierGeneration);
 	}
 
 	ImGui::Text("hits");
@@ -94,18 +94,18 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, *pState.Casts));
 	}
 
-	if (pState.Barrier > 0)
+	if (pState.BarrierGeneration > 0)
 	{
-		ImGui::Text("barrier per second");
-		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Barrier, pState.TimeInCombat));
+		ImGui::Text("barrier generation per second");
+		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.BarrierGeneration, pState.TimeInCombat));
 
-		ImGui::Text("barrier per hit");
-		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Barrier, pState.Hits));
+		ImGui::Text("barrier generation per hit");
+		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.BarrierGeneration, pState.Hits));
 
 		if (pState.Casts.has_value() == true)
 		{
-			ImGui::Text("barrier per cast");
-			ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.Barrier, *pState.Casts));
+			ImGui::Text("barrier generation per cast");
+			ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.BarrierGeneration, *pState.Casts));
 		}
 	}
 
@@ -119,7 +119,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetDetails(pDataSource, pState.Id);
 	for (const auto& entry : stats.Entries)
 	{
-		// TODO: Add barrier here?
+		// TODO: Add barrier generation here?
 		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			entry.Healing,
 			entry.Hits,
@@ -131,7 +131,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.DetailsEntryFormat, entryValues);
 
 		float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
-		float barrierRatio = static_cast<float>(divide_safe(entry.Barrier, stats.HighestHealing));
+		float barrierRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
 
 		std::string_view name = entry.Name;
 		if (pContext.MaxNameLength > 0)
@@ -176,7 +176,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	{
 		const auto& entry = stats.Entries[i];
 
-		// TODO: Add barrier here?
+		// TODO: Add barrier generation here?
 		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			entry.Healing,
 			entry.Hits,
@@ -188,14 +188,14 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
 
 		float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
-		float barrierRatio = static_cast<float>(divide_safe(entry.Barrier, stats.HighestHealing));
+		float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
 
 		std::string_view name = entry.Name;
 		if (pContext.MaxNameLength > 0)
 		{
 			name = name.substr(0, pContext.MaxNameLength);
 		}
-		float minSize = ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{barrierRatio} : std::nullopt);
+		float minSize = ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{barrierGenerationRatio} : std::nullopt);
 
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
 		pContext.CurrentFrameLineCount += 1;
@@ -541,7 +541,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (curWindow.DataSourceChoice != DataSource::Totals)
 		{
-			// TODO: Add barrier here?
+			// TODO: Add barrier generation here?
 			std::array<std::optional<std::variant<uint64_t, double>>, 7> titleValues{
 				aggregatedTotal.Healing,
 				aggregatedTotal.Hits,

@@ -42,17 +42,17 @@ const AggregatedStatsEntry& AggregatedStatsCollection::GetTotal(DataSource pData
 
 	uint64_t healing = 0;
 	uint64_t hits = 0;
-	uint64_t barrier = 0;
+	uint64_t barrierGeneration = 0;
 	const AggregatedVector& sourceStats = GetStats(pDataSource);
 
 	for (const AggregatedStatsEntry& entry : sourceStats.Entries)
 	{
 		healing += entry.Healing;
 		hits += entry.Hits;
-		barrier += entry.Barrier;
+		barrierGeneration += entry.BarrierGeneration;
 	}
 
-	mPeersOutgoingTotal = std::make_unique<AggregatedStatsEntry>(0, "__SUPERTOTAL__", mLocalState->second.Stats.GetCombatTime(), healing, hits, std::nullopt, barrier);
+	mPeersOutgoingTotal = std::make_unique<AggregatedStatsEntry>(0, "__SUPERTOTAL__", mLocalState->second.Stats.GetCombatTime(), healing, hits, std::nullopt, barrierGeneration);
 	return *mPeersOutgoingTotal;
 }
 
@@ -73,7 +73,7 @@ const AggregatedVector& AggregatedStatsCollection::GetStats(DataSource pDataSour
 	for (auto& [id, source] : mSourceData)
 	{
 		const AggregatedStatsEntry& entry = source.Stats.GetTotal();
-		mPeersOutgoingStats->Add(id, std::string{source.Name}, source.Stats.GetCombatTime(), entry.Healing, entry.Hits, entry.Casts, entry.Barrier);
+		mPeersOutgoingStats->Add(id, std::string{source.Name}, source.Stats.GetCombatTime(), entry.Healing, entry.Hits, entry.Casts, entry.BarrierGeneration);
 	}
 
 	AggregatedStats::Sort(mPeersOutgoingStats->Entries, mOptions.SortOrderChoice);

@@ -6,18 +6,18 @@
 #include <assert.h>
 #include <Windows.h>
 
-HealEvent::HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId, bool pIsBarrier)
+HealEvent::HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId, bool pIsBarrierGeneration)
 	: Time{pTime}
 	, Size{pSize}
 	, AgentId{pAgentId}
 	, SkillId{pSkillId}
-	, IsBarrier{pIsBarrier}
+	, IsBarrierGeneration{pIsBarrierGeneration}
 {
 }
 
 bool HealEvent::operator==(const HealEvent& pRight) const
 {
-	return std::tie(Time, Size, AgentId, SkillId, IsBarrier) == std::tie(pRight.Time, pRight.Size, pRight.AgentId, pRight.SkillId, pRight.IsBarrier);
+	return std::tie(Time, Size, AgentId, SkillId, IsBarrierGeneration) == std::tie(pRight.Time, pRight.Size, pRight.AgentId, pRight.SkillId, pRight.IsBarrierGeneration);
 }
 
 bool HealEvent::operator!=(const HealEvent& pRight) const
@@ -130,7 +130,7 @@ void PlayerStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
 	}
 }
 
-void PlayerStats::BarrierEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
+void PlayerStats::BarrierGenerationEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
 {
 	uint32_t barrierAmount = pEvent->value;
 	if (barrierAmount == 0)

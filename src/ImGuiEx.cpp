@@ -57,7 +57,7 @@ void ImGuiEx::SmallUnindent()
 	ImGui::Unindent(ImGui::GetCurrentContext()->FontSize);
 }
 
-float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierRatio)
+float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio)
 {
 	ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(204, 204, 212, 255));
 	ImGui::BeginGroup();
@@ -76,9 +76,9 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 
 		float healingRatio = *pFillRatio;
 
-		if (pBarrierRatio.has_value() == true)
+		if (pBarrierGenerationRatio.has_value() == true)
 		{
-			float barrierRatio = *pBarrierRatio;
+			float barrierRatio = *pBarrierGenerationRatio;
 			healingRatio -= barrierRatio;
 
 			ImVec2 barrierStart = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * healingRatio, pos.y);
