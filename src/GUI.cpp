@@ -41,6 +41,21 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImGui::SetNextWindowSize(ImVec2(600, 360), ImGuiCond_FirstUseEver);
 	ImGui::Begin(buffer, &pState.IsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
 
+	// Adjust x size. This is based on last frame width and has to happen before we draw anything since some items are
+	// aligned to the right edge of the window.
+	{
+		ImVec2 size = ImGui::GetCurrentWindowRead()->SizeFull;
+		float minWidth = pState.LastFrameLeftSideMinWidth + pState.LastFrameRightSideMinWidth;
+		if (minWidth != 0)
+		{
+			size.x = minWidth + ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
+		}
+
+		LogT("LastFrameLeftSideMinWidth={} LastFrameRightSideMinWidth={} x={}",
+			pState.LastFrameLeftSideMinWidth, pState.LastFrameRightSideMinWidth, size.x);
+		ImGui::SetWindowSize(size);
+	}
+
 	if (ImGui::BeginPopupContextWindow("Options##HEAL") == true)
 	{
 		ImGui::InputText("entry format", pContext.DetailsEntryFormat, sizeof(pContext.DetailsEntryFormat));
@@ -60,59 +75,70 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	bgColor.w = 0.0f;
 	ImGui::PushStyleColor(ImGuiCol_ChildBg, bgColor);
 	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.TOTALS.%i.%llu", static_cast<int>(pDataSource), pState.Id);
-	ImGui::BeginChild(buffer, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.35f, 0));
+	ImGui::BeginChild(buffer, ImVec2(pState.LastFrameLeftSideMinWidth, 0));
+
+	pState.LastFrameLeftSideMinWidth = 0;
+	// Make sure the right side is never truncated too far so the user understands that there is room for empty entries
+	pState.LastFrameRightSideMinWidth = 400;
 
 	uint64_t adjustedHealing = (pState.Healing - pState.BarrierGeneration);
 
 	if (adjustedHealing > 0 || pState.BarrierGeneration == 0)
 	{
-		ImGui::Text("total healing");
-		ImGuiEx::TextRightAlignedSameLine("%llu", adjustedHealing);
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("total healing", "%llu", adjustedHealing));
 	}
 
 	if (pState.BarrierGeneration > 0)
 	{
-		ImGui::Text("total barrier gen");
-		ImGuiEx::TextRightAlignedSameLine("%llu", pState.BarrierGeneration);
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("total barrier gen", "%llu", pState.BarrierGeneration));
 	}
 
-	ImGui::Text("hits");
-	ImGuiEx::TextRightAlignedSameLine("%llu", pState.Hits);
+	pState.LastFrameLeftSideMinWidth = (std::max)(
+		pState.LastFrameLeftSideMinWidth,
+		ImGuiEx::DetailsSummaryEntry("hits", "%llu", pState.Hits));
 
 	if (pState.Casts.has_value() == true)
 	{
-		ImGui::Text("casts");
-		ImGuiEx::TextRightAlignedSameLine("%llu", *pState.Casts);
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("casts", "%llu", *pState.Casts));
 	}
 
 	if (adjustedHealing > 0 || pState.BarrierGeneration == 0)
 	{
-		ImGui::Text("healing per second");
-		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, pState.TimeInCombat));
-
-		ImGui::Text("healing per hit");
-		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, pState.Hits));
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("healing per second", "%.1f", divide_safe(adjustedHealing, pState.TimeInCombat)));
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("healing per hit", "%.1f", divide_safe(adjustedHealing, pState.Hits)));
 
 		if (pState.Casts.has_value() == true)
 		{
-			ImGui::Text("healing per cast");
-			ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, *pState.Casts));
+			pState.LastFrameLeftSideMinWidth = (std::max)(
+				pState.LastFrameLeftSideMinWidth,
+				ImGuiEx::DetailsSummaryEntry("healing per cast", "%.1f", divide_safe(adjustedHealing, *pState.Casts)));
 		}
-
 	}
 
 	if (pState.BarrierGeneration > 0)
 	{
-		ImGui::Text("barrier gen per second");
-		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.BarrierGeneration, pState.TimeInCombat));
-
-		ImGui::Text("barrier gen per hit");
-		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.BarrierGeneration, pState.Hits));
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("barrier gen per second", "%.1f", divide_safe(pState.BarrierGeneration, pState.TimeInCombat)));
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("barrier gen per hit", "%.1f", divide_safe(pState.BarrierGeneration, pState.Hits)));
 
 		if (pState.Casts.has_value() == true)
 		{
-			ImGui::Text("barrier gen per cast");
-			ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(pState.BarrierGeneration, *pState.Casts));
+			pState.LastFrameLeftSideMinWidth = (std::max)(
+				pState.LastFrameLeftSideMinWidth,
+				ImGuiEx::DetailsSummaryEntry("barrier gen per cast", "%.1f", divide_safe(pState.BarrierGeneration, *pState.Casts)));
 		}
 	}
 
@@ -145,7 +171,9 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		{
 			name = name.substr(0, pContext.MaxNameLength);
 		}
-		ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt);
+		pState.LastFrameRightSideMinWidth = (std::max)(
+			pState.LastFrameRightSideMinWidth,
+			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt));
 	}
 	ImGui::EndChild();
 
