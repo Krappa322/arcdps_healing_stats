@@ -64,7 +64,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 
 	uint64_t adjustedHealing = (pState.Healing - pState.BarrierGeneration);
 
-	if (adjustedHealing > 0)
+	if (adjustedHealing > 0 || pState.BarrierGeneration == 0)
 	{
 		ImGui::Text("total healing");
 		ImGuiEx::TextRightAlignedSameLine("%llu", adjustedHealing);
@@ -85,7 +85,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		ImGuiEx::TextRightAlignedSameLine("%llu", *pState.Casts);
 	}
 
-	if (adjustedHealing > 0)
+	if (adjustedHealing > 0 || pState.BarrierGeneration == 0)
 	{
 		ImGui::Text("healing per second");
 		ImGuiEx::TextRightAlignedSameLine("%.1f", divide_safe(adjustedHealing, pState.TimeInCombat));
