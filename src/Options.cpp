@@ -56,8 +56,6 @@ bool ReadIni(HealTableOptions& pOptions)
 		pOptions.Windows[i].ExcludeOffSquad = healtable_ini.GetBoolValue(section, "exclude_off_squad", pOptions.Windows[i].ExcludeOffSquad);
 		pOptions.Windows[i].ExcludeMinions = healtable_ini.GetBoolValue(section, "exclude_minions", pOptions.Windows[i].ExcludeMinions);
 		pOptions.Windows[i].ExcludeUnmapped = healtable_ini.GetBoolValue(section, "exclude_unmapped", pOptions.Windows[i].ExcludeUnmapped);
-		pOptions.Windows[i].ExcludeHealing = healtable_ini.GetBoolValue(section, "exclude_healing", pOptions.Windows[i].ExcludeHealing);
-		pOptions.Windows[i].ExcludeBarrierGeneration = healtable_ini.GetBoolValue(section, "exclude_barrier_generation", pOptions.Windows[i].ExcludeBarrierGeneration);
 
 		pOptions.Windows[i].ShowProgressBars = healtable_ini.GetBoolValue(section, "show_progress_bars", pOptions.Windows[i].ShowProgressBars);
 
