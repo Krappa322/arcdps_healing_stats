@@ -16,7 +16,7 @@ static constexpr EnumStringArray<AutoUpdateSettingEnum> AUTO_UPDATE_SETTING_ITEM
 static constexpr EnumStringArray<DataSource> DATA_SOURCE_ITEMS{
 	"targets", "skills", "totals", "combined", "peers outgoing"};
 static constexpr EnumStringArray<SortOrder> SORT_ORDER_ITEMS{
-	"alphabetical ascending", "alphabetical descending", "heal per second ascending", "heal per second descending"};
+	"alphabetical ascending", "alphabetical descending", "total outgoing per second ascending", "total outgoing per second descending", "heal per second ascending", "heal per second descending", "barrier generation per second ascending", "barrier generation per second descending"};
 static constexpr EnumStringArray<CombatEndCondition> COMBAT_END_CONDITION_ITEMS{
 	"combat exit", "last damage event", "last heal event", "last damage / heal event"};
 static constexpr EnumStringArray<spdlog::level::level_enum, 7> LOG_LEVEL_ITEMS{
@@ -81,9 +81,22 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	// Make sure the right side is never truncated too far so the user understands that there is room for empty entries
 	pState.LastFrameRightSideMinWidth = 400;
 
-	pState.LastFrameLeftSideMinWidth = (std::max)(
-		pState.LastFrameLeftSideMinWidth,
-		ImGuiEx::DetailsSummaryEntry("total healing", "%llu", pState.Healing));
+	uint64_t adjustedHealing = (pState.Healing - pState.BarrierGeneration);
+
+	if (adjustedHealing > 0 || pState.BarrierGeneration == 0)
+	{
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("total healing", "%llu", adjustedHealing));
+	}
+
+	if (pState.BarrierGeneration > 0)
+	{
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("total barrier gen", "%llu", pState.BarrierGeneration));
+	}
+
 	pState.LastFrameLeftSideMinWidth = (std::max)(
 		pState.LastFrameLeftSideMinWidth,
 		ImGuiEx::DetailsSummaryEntry("hits", "%llu", pState.Hits));
@@ -95,18 +108,38 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 			ImGuiEx::DetailsSummaryEntry("casts", "%llu", *pState.Casts));
 	}
 
-	pState.LastFrameLeftSideMinWidth = (std::max)(
-		pState.LastFrameLeftSideMinWidth,
-		ImGuiEx::DetailsSummaryEntry("healing per second", "%.1f", divide_safe(pState.Healing, pState.TimeInCombat)));
-	pState.LastFrameLeftSideMinWidth = (std::max)(
-		pState.LastFrameLeftSideMinWidth,
-		ImGuiEx::DetailsSummaryEntry("healing per hit", "%.1f", divide_safe(pState.Healing, pState.Hits)));
-
-	if (pState.Casts.has_value() == true)
+	if (adjustedHealing > 0 || pState.BarrierGeneration == 0)
 	{
 		pState.LastFrameLeftSideMinWidth = (std::max)(
 			pState.LastFrameLeftSideMinWidth,
-			ImGuiEx::DetailsSummaryEntry("healing per cast", "%.1f", divide_safe(pState.Healing, *pState.Casts)));
+			ImGuiEx::DetailsSummaryEntry("healing per second", "%.1f", divide_safe(adjustedHealing, pState.TimeInCombat)));
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("healing per hit", "%.1f", divide_safe(adjustedHealing, pState.Hits)));
+
+		if (pState.Casts.has_value() == true)
+		{
+			pState.LastFrameLeftSideMinWidth = (std::max)(
+				pState.LastFrameLeftSideMinWidth,
+				ImGuiEx::DetailsSummaryEntry("healing per cast", "%.1f", divide_safe(adjustedHealing, *pState.Casts)));
+		}
+	}
+
+	if (pState.BarrierGeneration > 0)
+	{
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("barrier gen per second", "%.1f", divide_safe(pState.BarrierGeneration, pState.TimeInCombat)));
+		pState.LastFrameLeftSideMinWidth = (std::max)(
+			pState.LastFrameLeftSideMinWidth,
+			ImGuiEx::DetailsSummaryEntry("barrier gen per hit", "%.1f", divide_safe(pState.BarrierGeneration, pState.Hits)));
+
+		if (pState.Casts.has_value() == true)
+		{
+			pState.LastFrameLeftSideMinWidth = (std::max)(
+				pState.LastFrameLeftSideMinWidth,
+				ImGuiEx::DetailsSummaryEntry("barrier gen per cast", "%.1f", divide_safe(pState.BarrierGeneration, *pState.Casts)));
+		}
 	}
 
 	ImGuiEx::BottomText("id %u", pState.Id);
@@ -119,6 +152,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetDetails(pDataSource, pState.Id);
 	for (const auto& entry : stats.Entries)
 	{
+		// TODO: Add barrier generation here?
 		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			entry.Healing,
 			entry.Hits,
@@ -129,7 +163,9 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 			divide_safe(entry.Healing * 100, pState.Healing)};
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.DetailsEntryFormat, entryValues);
 
-		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
+		float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
+		float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
+
 		std::string_view name = entry.Name;
 		if (pContext.MaxNameLength > 0)
 		{
@@ -137,7 +173,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		}
 		pState.LastFrameRightSideMinWidth = (std::max)(
 			pState.LastFrameRightSideMinWidth,
-			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt));
+			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt));
 	}
 	ImGui::EndChild();
 
@@ -175,6 +211,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	{
 		const auto& entry = stats.Entries[i];
 
+		// TODO: Add barrier generation here?
 		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			entry.Healing,
 			entry.Hits,
@@ -185,13 +222,16 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			pContext.DataSourceChoice != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
 		ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
 
-		float fillRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
+		float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
+		float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
+
 		std::string_view name = entry.Name;
 		if (pContext.MaxNameLength > 0)
 		{
 			name = name.substr(0, pContext.MaxNameLength);
 		}
-		float minSize = ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{fillRatio} : std::nullopt);
+		float minSize = ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{barrierGenerationRatio} : std::nullopt);
+
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
 		pContext.CurrentFrameLineCount += 1;
 
@@ -356,6 +396,8 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 				ImGuiEx::SmallCheckBox("off-squad", &pContext.ExcludeOffSquad);
 				ImGuiEx::SmallCheckBox("summons", &pContext.ExcludeMinions);
 				ImGuiEx::SmallCheckBox("unmapped", &pContext.ExcludeUnmapped);
+				ImGuiEx::SmallCheckBox("healing", &pContext.ExcludeHealing);
+				ImGuiEx::SmallCheckBox("barrier generation", &pContext.ExcludeBarrierGeneration);
 
 				ImGui::EndMenu();
 			}
@@ -534,6 +576,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		if (curWindow.DataSourceChoice != DataSource::Totals)
 		{
+			// TODO: Add barrier generation here?
 			std::array<std::optional<std::variant<uint64_t, double>>, 7> titleValues{
 				aggregatedTotal.Healing,
 				aggregatedTotal.Hits,

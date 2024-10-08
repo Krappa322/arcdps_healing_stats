@@ -6,17 +6,18 @@
 #include <assert.h>
 #include <Windows.h>
 
-HealEvent::HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId)
+HealEvent::HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId, bool pIsBarrierGeneration)
 	: Time{pTime}
 	, Size{pSize}
 	, AgentId{pAgentId}
 	, SkillId{pSkillId}
+	, IsBarrierGeneration{pIsBarrierGeneration}
 {
 }
 
 bool HealEvent::operator==(const HealEvent& pRight) const
 {
-	return std::tie(Time, Size, AgentId, SkillId) == std::tie(pRight.Time, pRight.Size, pRight.AgentId, pRight.SkillId);
+	return std::tie(Time, Size, AgentId, SkillId, IsBarrierGeneration) == std::tie(pRight.Time, pRight.Size, pRight.AgentId, pRight.SkillId, pRight.IsBarrierGeneration);
 }
 
 bool HealEvent::operator!=(const HealEvent& pRight) const
@@ -125,7 +126,29 @@ void PlayerStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
 			return;
 		}
 
-		myStats.Events.emplace_back(pEvent->time, healedAmount, pDestinationAgentId, pEvent->skillid);
+		myStats.Events.emplace_back(pEvent->time, healedAmount, pDestinationAgentId, pEvent->skillid, false);
+	}
+}
+
+void PlayerStats::BarrierGenerationEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
+{
+	uint32_t barrierGenerationAmount = pEvent->value;
+	if (barrierGenerationAmount == 0)
+	{
+		barrierGenerationAmount = pEvent->buff_dmg;
+		assert(barrierGenerationAmount != 0);
+	}
+
+	{
+		std::lock_guard<std::mutex> lock(myLock);
+
+		if (myStats.IsOutOfCombat() == true)
+		{
+			LOG("Event before combat enter %llu", pEvent->time);
+			return;
+		}
+
+		myStats.Events.emplace_back(pEvent->time, barrierGenerationAmount, pDestinationAgentId, pEvent->skillid, true);
 	}
 }
 

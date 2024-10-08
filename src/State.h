@@ -27,8 +27,12 @@ enum class SortOrder
 {
 	AscendingAlphabetical = 0,
 	DescendingAlphabetical = 1,
-	AscendingSize = 2,
-	DescendingSize = 3,
+	AscendingTotalOutgoingSize = 2,
+	DescendingTotalOutgoingSize = 3,
+	AscendingHealSize = 4,
+	DescendingHealSize = 5,
+	AscendingBarrierGenerationSize = 6,
+	DescendingBarrierGenerationSize = 7,
 	Max
 };
 
@@ -46,7 +50,7 @@ struct HealWindowOptions
 	bool Shown = false;
 
 	DataSource DataSourceChoice = DataSource::Agents;
-	SortOrder SortOrderChoice = SortOrder::DescendingSize;
+	SortOrder SortOrderChoice = SortOrder::DescendingTotalOutgoingSize;
 	CombatEndCondition CombatEndConditionChoice = CombatEndCondition::LastDamageEvent;
 
 	bool ExcludeGroup = false;
@@ -54,6 +58,8 @@ struct HealWindowOptions
 	bool ExcludeOffSquad = false;
 	bool ExcludeMinions = true;
 	bool ExcludeUnmapped = true;
+	bool ExcludeHealing = false;
+	bool ExcludeBarrierGeneration = true;
 
 	bool ShowProgressBars = true;
 	char Name[MAX_HEAL_WINDOW_NAME + 1] = {};

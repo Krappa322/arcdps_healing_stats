@@ -13,13 +13,14 @@
 constexpr const char* GROUP_FILTER_STRING[] = { "Group", "Squad", "All (Excluding Summons)", "All (Including Summons)" };
 static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
 
-AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts)
+AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration)
 	: Id{pId}
 	, Name{pName}
 	, TimeInCombat{pTimeInCombat}
 	, Healing{pHealing}
 	, Hits{pHits}
 	, Casts{pCasts}
+	, BarrierGeneration{pBarrierGeneration}
 {
 }
 
@@ -35,9 +36,9 @@ AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealWindowOpt
 	assert(myOptions.DataSourceChoice < DataSource::Max);
 }
 
-void AggregatedVector::Add(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts)
+void AggregatedVector::Add(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration)
 {
-	const AggregatedStatsEntry& newEntry = Entries.emplace_back(pId, std::move(pName), pTimeInCombat, pHealing, pHits, std::move(pCasts));
+	const AggregatedStatsEntry& newEntry = Entries.emplace_back(pId, std::move(pName), pTimeInCombat, pHealing, pHits, std::move(pCasts), pBarrierGeneration);
 	HighestHealing = (std::max)(HighestHealing, newEntry.Healing);
 }
 
@@ -50,13 +51,15 @@ const AggregatedStatsEntry& AggregatedStats::GetTotal()
 
 	uint64_t healing = 0;
 	uint64_t hits = 0;
+	uint64_t barrierGeneration = 0;
 	for (const AggregatedStatsEntry& entry : GetSkills(std::nullopt).Entries)
 	{
 		healing += entry.Healing;
 		hits += entry.Hits;
+		barrierGeneration += entry.BarrierGeneration;
 	}
 
-	myTotal = std::make_unique<AggregatedStatsEntry>(0, "__TOTAL__", GetCombatTime(), healing, hits, std::nullopt);
+	myTotal = std::make_unique<AggregatedStatsEntry>(0, "__TOTAL__", GetCombatTime(), healing, hits, std::nullopt, barrierGeneration);
 	return *myTotal;
 }
 
@@ -97,7 +100,7 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 	myGroupFilterTotals = std::make_unique<AggregatedVector>();
 	for (uint32_t i = 0; i < static_cast<uint32_t>(GroupFilter::Max); i++)
 	{
-		myGroupFilterTotals->Add(0, GROUP_FILTER_STRING[i], GetCombatTime(), 0, 0, std::nullopt);
+		myGroupFilterTotals->Add(0, GROUP_FILTER_STRING[i], GetCombatTime(), 0, 0, std::nullopt, 0);
 	}
 
 	HealWindowOptions fakeOptions;
@@ -107,6 +110,15 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 	for (const HealEvent& curEvent : mySourceData.Events)
 	{
 		if (curEvent.Time > combatEnd)
+		{
+			continue;
+		}
+
+		if (curEvent.IsBarrierGeneration && myOptions.ExcludeBarrierGeneration == true)
+		{
+			continue;
+		}
+		else if (!curEvent.IsBarrierGeneration && myOptions.ExcludeHealing == true)
 		{
 			continue;
 		}
@@ -154,7 +166,14 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 			if (FilterInternal(mapAgent, fakeOptions) == false)
 			{
 				myGroupFilterTotals->Entries[i].Hits += 1;
+				// Healing always contains the total of both healing and barrier generation (if enabled)
 				myGroupFilterTotals->Entries[i].Healing += curEvent.Size;
+				// Check if current event is a barrier generation hit
+				if (curEvent.IsBarrierGeneration)
+				{
+					// For barrier generation hits, track the total barrier generation separately as a sub-total of healing.
+					myGroupFilterTotals->Entries[i].BarrierGeneration += curEvent.Size;
+				}
 			}
 		}
 	}
@@ -273,11 +292,13 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 		std::map<uintptr_t, HealedAgent>::const_iterator Iterator;
 		uint64_t Ticks;
 		uint64_t Healing;
+		uint64_t BarrierGeneration;
 
-		TempAgent(std::map<uintptr_t, HealedAgent>::const_iterator&& pIterator, uint64_t pTicks, uint64_t pHealing)
+		TempAgent(std::map<uintptr_t, HealedAgent>::const_iterator&& pIterator, uint64_t pTicks, uint64_t pHealing, uint64_t pBarrierGeneration)
 			: Iterator{std::move(pIterator)}
 			, Ticks{pTicks}
 			, Healing{pHealing}
+			, BarrierGeneration{pBarrierGeneration}
 		{
 		}
 	};
@@ -288,6 +309,15 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 	for (const HealEvent& curEvent : mySourceData.Events)
 	{
 		if (curEvent.Time > combatEnd)
+		{
+			continue;
+		}
+
+		if (curEvent.IsBarrierGeneration && myOptions.ExcludeBarrierGeneration == true)
+		{
+			continue;
+		}
+		else if (!curEvent.IsBarrierGeneration && myOptions.ExcludeHealing == true)
 		{
 			continue;
 		}
@@ -306,10 +336,17 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 			continue;
 		}
 
-		auto [agent, _inserted] = tempMap.try_emplace(curEvent.AgentId, std::move(mapAgent), 0, 0);
+		auto [agent, _inserted] = tempMap.try_emplace(curEvent.AgentId, std::move(mapAgent), 0, 0, 0);
 
 		agent->second.Ticks += 1;
+		// Healing always contains the total of both healing and barrier generation (if enabled)
 		agent->second.Healing += curEvent.Size;
+		// Check if current event is a barrier generation hit
+		if (curEvent.IsBarrierGeneration)
+		{
+			// For barrier generation hits, track the total barrier generation separately as a sub-total of healing.
+			agent->second.BarrierGeneration += curEvent.Size;
+		}			
 	}
 
 	// Caching the result in a display friendly way
@@ -344,7 +381,7 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 			agentName = buffer;
 		}
 
-		entry->Add(agentId, std::move(agentName), GetCombatTime(), agent.Healing, agent.Ticks, std::nullopt);
+		entry->Add(agentId, std::move(agentName), GetCombatTime(), agent.Healing, agent.Ticks, std::nullopt, agent.BarrierGeneration);
 	}
 
 	Sort(entry->Entries, myOptions.SortOrderChoice);
@@ -383,10 +420,12 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 	{
 		uint64_t Ticks;
 		uint64_t Healing;
+		uint64_t BarrierGeneration;
 
-		TempSkill(uint64_t pTicks, uint64_t pHealing)
+		TempSkill(uint64_t pTicks, uint64_t pHealing, uint64_t pBarrierGeneration)
 			: Ticks{pTicks}
 			, Healing{pHealing}
+			, BarrierGeneration{pBarrierGeneration}
 		{
 		}
 	};
@@ -395,10 +434,20 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 	uint64_t combatEnd = GetCombatEnd();
 	uint64_t totalIndirectHealing = 0;
 	uint64_t totalIndirectTicks = 0;
+	uint64_t totalIndirectBarrierGeneration = 0;
 
 	for (const HealEvent& curEvent : mySourceData.Events)
 	{
 		if (curEvent.Time > combatEnd)
+		{
+			continue;
+		}
+
+		if (curEvent.IsBarrierGeneration && myOptions.ExcludeBarrierGeneration == true)
+		{
+			continue;
+		}
+		else if (!curEvent.IsBarrierGeneration && myOptions.ExcludeHealing == true)
 		{
 			continue;
 		}
@@ -419,10 +468,17 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 			}
 		}
 
-		auto [skill, _inserted] = tempMap.try_emplace(curEvent.SkillId, 0, 0);
+		auto [skill, _inserted] = tempMap.try_emplace(curEvent.SkillId, 0, 0, 0);
 
 		skill->second.Ticks += 1;
+		// Healing always contains the total of both healing and barrier generation (if enabled)
 		skill->second.Healing += curEvent.Size;
+		// Check if current event is a barrier generation hit
+		if (curEvent.IsBarrierGeneration)
+		{
+			// For barrier generation hits, track the total barrier generation separately as a sub-total of healing.
+			skill->second.BarrierGeneration += curEvent.Size;
+		}
 	}
 
 	for (const auto& [skillId, skill] : tempMap)
@@ -445,6 +501,7 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 
 			totalIndirectHealing += skill.Healing;
 			totalIndirectTicks += skill.Ticks;
+			totalIndirectBarrierGeneration += skill.BarrierGeneration;
 			isIndirectHealing = true;
 
 			if (myDebugMode == false)
@@ -459,14 +516,15 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 			skillName = buffer;
 		}
 
-		entry->Add(skillId, std::string{skillName}, GetCombatTime(), skill.Healing, skill.Ticks, std::nullopt);
+		entry->Add(skillId, std::string{skillName}, GetCombatTime(), skill.Healing, skill.Ticks, std::nullopt, skill.BarrierGeneration);
 	}
 
-	if (totalIndirectHealing != 0 || totalIndirectTicks != 0)
+	// TODO: Can this be separated into indirect healing and barrier generation as separate entries? 
+	if (totalIndirectHealing != 0 || totalIndirectTicks != 0 || totalIndirectBarrierGeneration != 0)
 	{
-		std::string skillName("Healing by Damage Dealt");
+		std::string skillName("From Damage Dealt");
 
-		entry->Add(IndirectHealingSkillId, std::move(skillName), GetCombatTime(), totalIndirectHealing, totalIndirectTicks, std::nullopt);
+		entry->Add(IndirectHealingSkillId, std::move(skillName), GetCombatTime(), totalIndirectHealing, totalIndirectTicks, std::nullopt, totalIndirectBarrierGeneration);
 	}
 
 	Sort(entry->Entries, myOptions.SortOrderChoice);
@@ -494,7 +552,7 @@ void AggregatedStats::Sort(std::vector<AggregatedStatsEntry>& pVector, SortOrder
 			});
 		break;
 
-	case SortOrder::AscendingSize:
+	case SortOrder::AscendingTotalOutgoingSize:
 		std::sort(pVector.begin(), pVector.end(),
 			[](const auto& pLeft, const auto& pRight)
 			{
@@ -502,11 +560,43 @@ void AggregatedStats::Sort(std::vector<AggregatedStatsEntry>& pVector, SortOrder
 			});
 		break;
 
-	case SortOrder::DescendingSize:
+	case SortOrder::DescendingTotalOutgoingSize:
 		std::sort(pVector.begin(), pVector.end(),
 			[](const auto& pLeft, const auto& pRight)
 			{
 				return pLeft.Healing > pRight.Healing;
+			});
+		break;
+
+	case SortOrder::AscendingHealSize:
+		std::sort(pVector.begin(), pVector.end(),
+			[](const auto& pLeft, const auto& pRight)
+			{
+				return (pLeft.Healing - pLeft.BarrierGeneration) < (pRight.Healing - pRight.BarrierGeneration);
+			});
+		break;
+
+	case SortOrder::DescendingHealSize:
+		std::sort(pVector.begin(), pVector.end(),
+			[](const auto& pLeft, const auto& pRight)
+			{
+				return (pLeft.Healing - pLeft.BarrierGeneration) > (pRight.Healing - pRight.BarrierGeneration);
+			});
+		break;
+
+	case SortOrder::AscendingBarrierGenerationSize:
+		std::sort(pVector.begin(), pVector.end(),
+			[](const auto& pLeft, const auto& pRight)
+			{
+				return pLeft.BarrierGeneration < pRight.BarrierGeneration;
+			});
+		break;
+
+	case SortOrder::DescendingBarrierGenerationSize:
+		std::sort(pVector.begin(), pVector.end(),
+			[](const auto& pLeft, const auto& pRight)
+			{
+				return pLeft.BarrierGeneration > pRight.BarrierGeneration;
 			});
 		break;
 

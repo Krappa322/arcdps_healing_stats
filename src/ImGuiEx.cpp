@@ -57,7 +57,7 @@ void ImGuiEx::SmallUnindent()
 	ImGui::Unindent(ImGui::GetCurrentContext()->FontSize);
 }
 
-float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio)
+float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio)
 {
 	ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(204, 204, 212, 255));
 	ImGui::BeginGroup();
@@ -73,7 +73,24 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 	if (pFillRatio.has_value() == true)
 	{
 		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImGui::GetWindowDrawList()->AddRectFilled(pos, ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * *pFillRatio, pos.y + ImGui::GetTextLineHeight()), IM_COL32(102, 178, 102, 128));
+
+		float healingRatio = *pFillRatio;
+
+		if (pBarrierGenerationRatio.has_value() == true)
+		{
+			float barrierGenerationRatio = *pBarrierGenerationRatio;
+			healingRatio -= barrierGenerationRatio;
+
+			ImVec2 barrierStart = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * healingRatio, pos.y);
+			ImVec2 barrierEnd = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * (healingRatio + barrierGenerationRatio), pos.y + ImGui::GetTextLineHeight());
+
+			ImGui::GetWindowDrawList()->AddRectFilled(barrierStart, barrierEnd, IM_COL32(255, 225, 0, 128));
+		}
+
+		ImVec2 healingStart = pos;
+		ImVec2 healingEnd = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * healingRatio, pos.y + ImGui::GetTextLineHeight());
+
+		ImGui::GetWindowDrawList()->AddRectFilled(healingStart, healingEnd, IM_COL32(102, 178, 102, 128));
 	}
 
 	// Add ItemInnerSpacing even if no box is being drawn, that way it looks consistent with and without progress bars

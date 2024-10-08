@@ -422,12 +422,6 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		GlobalObjects::ARC_E10(&logEvent, HEALING_STATS_ADDON_SIGNATURE);
 	}
 
-	if (pEvent->is_shields != 0)
-	{
-		// Shield application - not tracking for now
-		return;
-	}
-
 	if (pSourceAgent->self == 0 &&
 		pEvent->src_master_instid != selfInstanceId)
 	{
@@ -441,7 +435,14 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		mAgentTable.AddAgent(pDestinationAgent->id, pEvent->dst_instid, pDestinationAgent->name, std::nullopt, pEvent->dst_master_instid != 0, std::nullopt);
 	}
 
-	mLocalState.HealingEvent(pEvent, pDestinationAgent->id);
+	if (pEvent->is_shields != 0)
+	{
+		mLocalState.BarrierGenerationEvent(pEvent, pDestinationAgent->id);
+	}
+	else
+	{
+		mLocalState.HealingEvent(pEvent, pDestinationAgent->id);
+	}
 
 	uint32_t healedAmount = pEvent->value;
 	if (healedAmount == 0)
@@ -449,7 +450,15 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 		healedAmount = pEvent->buff_dmg;
 		assert(healedAmount != 0);
 	}
-	LOG("Registered heal event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+
+	if (pEvent->is_shields != 0)
+	{
+		LOG("Registered barrier generation event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+	}
+	else
+	{
+		LOG("Registered heal event id %llu size %i from %s:%u to %s:%llu", pId, healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, pDestinationAgent->name, pDestinationAgent->id);
+	}
 }
 
 void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
@@ -571,12 +580,6 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		return;
 	}
 
-	if (pEvent->is_shields != 0)
-	{
-		// Shield application - not tracking for now
-		return;
-	}
-
 	if (pEvent->src_instid != pPeerInstanceId &&
 		pEvent->src_master_instid != pPeerInstanceId)
 	{
@@ -584,7 +587,14 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		return;
 	}
 
-	state->HealingEvent(pEvent, *dstUniqueId);
+	if (pEvent->is_shields != 0)
+	{
+		state->BarrierGenerationEvent(pEvent, *dstUniqueId);
+	}
+	else
+	{
+		state->HealingEvent(pEvent, *dstUniqueId);
+	}
 
 	uint32_t healedAmount = pEvent->value;
 	if (healedAmount == 0)
@@ -592,7 +602,15 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 		healedAmount = pEvent->buff_dmg;
 		assert(healedAmount != 0);
 	}
-	LOG("Registered heal event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
+
+	if (pEvent->is_shields != 0)
+	{
+		LOG("Registered barrier generation event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
+	}
+	else
+	{
+		LOG("Registered heal event size %i from %s:%u to %llu", healedAmount, mSkillTable->GetSkillName(pEvent->skillid), pEvent->skillid, *dstUniqueId);
+	}
 }
 
 std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState(uintptr_t pSelfUniqueId)
