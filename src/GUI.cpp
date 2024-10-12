@@ -37,7 +37,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	char buffer[1024];
 	// Using "###" means the id of the window is calculated only from the part after the hashes (which
 	// in turn means that the name of the window can change if necessary)
-	snprintf(buffer, sizeof(buffer), "%s###HEALDETAILS.%i.%llu", pState.Name.c_str(), static_cast<int>(pDataSource), pState.Id);
+	snprintf(buffer, sizeof(buffer), "%s###HEALDETAILS.%u.%i.%llu", pState.Name.c_str(), pContext.WindowId, static_cast<int>(pDataSource), pState.Id);
 	ImGui::SetNextWindowSize(ImVec2(600, 360), ImGuiCond_FirstUseEver);
 	ImGui::Begin(buffer, &pState.IsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
 
@@ -74,7 +74,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImVec4 bgColor = ImGui::GetStyle().Colors[ImGuiCol_WindowBg];
 	bgColor.w = 0.0f;
 	ImGui::PushStyleColor(ImGuiCol_ChildBg, bgColor);
-	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.TOTALS.%i.%llu", static_cast<int>(pDataSource), pState.Id);
+	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.%u.TOTALS.%i.%llu", pContext.WindowId, static_cast<int>(pDataSource), pState.Id);
 	ImGui::BeginChild(buffer, ImVec2(pState.LastFrameLeftSideMinWidth, 0));
 
 	pState.LastFrameLeftSideMinWidth = 0;
@@ -145,7 +145,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImGuiEx::BottomText("id %u", pState.Id);
 	ImGui::EndChild();
 
-	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.ENTRIES.%i.%llu", static_cast<int>(pDataSource), pState.Id);
+	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.%u.ENTRIES.%i.%llu", pContext.WindowId, static_cast<int>(pDataSource), pState.Id);
 	ImGui::SameLine();
 	ImGui::BeginChild(buffer, ImVec2(0, 0));
 
