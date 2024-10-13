@@ -15,9 +15,9 @@
  *
  * This has the edge case of lifestealing skills as well as skills which do both damage and heal, which are registered
  * on a per skill basis as "hybrid skills" inside of Skills.cpp. Non-registered skills of this category will
- * (incorrectly) show up as "Healing by Damage Dealt" even though there is no such effect active. There is no way to
+ * (incorrectly) show up as "From Damage Dealt" even though there is no such effect active. There is no way to
  * distinguish between healing from hybrid skills and indirect healing, and as such the healing statistics for hybrid
- * skills can be shown as too high (and "Healing by Damage Dealt" shown as too low) when there are both hybrid skills
+ * skills can be shown as too high (and "From Damage Dealt" shown as too low) when there are both hybrid skills
  * and indirect healing skills present.
  *
  * RegisterDamagingSkill is called to signify that a skill does damage (called for every damage tick in area combat)

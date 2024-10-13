@@ -866,10 +866,10 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 		EXPECT_EQ(totalEntry.Hits, 727);
 
 		AggregatedVector expectedTotals;
-		expectedTotals.Add(0, "Group", combatTime, 207634, 449, std::nullopt);
-		expectedTotals.Add(0, "Squad", combatTime, 304967, 727, std::nullopt);
-		expectedTotals.Add(0, "All (Excluding Summons)", combatTime, 304967, 727, std::nullopt);
-		expectedTotals.Add(0, "All (Including Summons)", combatTime, 409220, 1186, std::nullopt);
+		expectedTotals.Add(0, "Group", combatTime, 207634, 449, std::nullopt, 0);
+		expectedTotals.Add(0, "Squad", combatTime, 304967, 727, std::nullopt, 0);
+		expectedTotals.Add(0, "All (Excluding Summons)", combatTime, 304967, 727, std::nullopt, 0);
+		expectedTotals.Add(0, "All (Including Summons)", combatTime, 409220, 1186, std::nullopt, 0);
 
 		const AggregatedVector& totals = stats.GetStats(DataSource::Totals);
 		ASSERT_EQ(totals.Entries.size(), expectedTotals.Entries.size());
@@ -880,16 +880,16 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 		}
 
 		AggregatedVector expectedAgents;
-		expectedAgents.Add(2000, "Zarwae", combatTime, 51011, 135, std::nullopt);
-		expectedAgents.Add(3148, "Apocalypse Dawn", combatTime, 47929, 89, std::nullopt);
-		expectedAgents.Add(3150, "Waiana Sulis", combatTime, 40005, 86, std::nullopt);
-		expectedAgents.Add(3149, "And Avr Two L Q E A", combatTime, 39603, 71, std::nullopt);
-		expectedAgents.Add(3144, "Taya Celeste", combatTime, 29086, 68, std::nullopt);
-		expectedAgents.Add(3145, "Teivarus", combatTime, 26490, 71, std::nullopt);
-		expectedAgents.Add(3151, "Janna Larion", combatTime, 21902, 71, std::nullopt);
-		expectedAgents.Add(3137, "Lady Manyak", combatTime, 20637, 52, std::nullopt);
-		expectedAgents.Add(3146, "Akashi Vi Britannia", combatTime, 20084, 55, std::nullopt);
-		expectedAgents.Add(3147, u8"Moa Fhómhair", combatTime, 8220, 29, std::nullopt);
+		expectedAgents.Add(2000, "Zarwae", combatTime, 51011, 135, std::nullopt, 0);
+		expectedAgents.Add(3148, "Apocalypse Dawn", combatTime, 47929, 89, std::nullopt, 0);
+		expectedAgents.Add(3150, "Waiana Sulis", combatTime, 40005, 86, std::nullopt, 0);
+		expectedAgents.Add(3149, "And Avr Two L Q E A", combatTime, 39603, 71, std::nullopt, 0);
+		expectedAgents.Add(3144, "Taya Celeste", combatTime, 29086, 68, std::nullopt, 0);
+		expectedAgents.Add(3145, "Teivarus", combatTime, 26490, 71, std::nullopt, 0);
+		expectedAgents.Add(3151, "Janna Larion", combatTime, 21902, 71, std::nullopt, 0);
+		expectedAgents.Add(3137, "Lady Manyak", combatTime, 20637, 52, std::nullopt, 0);
+		expectedAgents.Add(3146, "Akashi Vi Britannia", combatTime, 20084, 55, std::nullopt, 0);
+		expectedAgents.Add(3147, u8"Moa Fhómhair", combatTime, 8220, 29, std::nullopt, 0);
 
 		const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
 		ASSERT_EQ(agents.Entries.size(), expectedAgents.Entries.size());
@@ -910,8 +910,8 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 
 	float combatTime = stats.GetCombatTime();
 	AggregatedVector expectedStats;
-	expectedStats.Add(2000, "Zarwae", combatTime, 304967, 727, std::nullopt);
-	expectedStats.Add(100000, "Local Fake Self", combatTime, 304967, 727, std::nullopt);
+	expectedStats.Add(2000, "Zarwae", combatTime, 304967, 727, std::nullopt, 0);
+	expectedStats.Add(100000, "Local Fake Self", combatTime, 304967, 727, std::nullopt, 0);
 
 	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
 	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());
@@ -948,10 +948,10 @@ TEST_P(NetworkXevtcTestFixture, berserker_solo)
 		EXPECT_EQ(totalEntry.Hits, totalHits);
 
 		AggregatedVector expectedTotals;
-		expectedTotals.Add(0, "Group", combatTime, totalHealing, totalHits, std::nullopt);
-		expectedTotals.Add(0, "Squad", combatTime, totalHealing, totalHits, std::nullopt);
-		expectedTotals.Add(0, "All (Excluding Summons)", combatTime, totalHealing, totalHits, std::nullopt);
-		expectedTotals.Add(0, "All (Including Summons)", combatTime, totalHealing, totalHits, std::nullopt);
+		expectedTotals.Add(0, "Group", combatTime, totalHealing, totalHits, std::nullopt, 0);
+		expectedTotals.Add(0, "Squad", combatTime, totalHealing, totalHits, std::nullopt, 0);
+		expectedTotals.Add(0, "All (Excluding Summons)", combatTime, totalHealing, totalHits, std::nullopt, 0);
+		expectedTotals.Add(0, "All (Including Summons)", combatTime, totalHealing, totalHits, std::nullopt, 0);
 
 		const AggregatedVector& totals = stats.GetStats(DataSource::Totals);
 		ASSERT_EQ(totals.Entries.size(), expectedTotals.Entries.size());
@@ -962,7 +962,7 @@ TEST_P(NetworkXevtcTestFixture, berserker_solo)
 		}
 
 		AggregatedVector expectedAgents;
-		expectedAgents.Add(2000, "Khalagur", combatTime, totalHealing, totalHits, std::nullopt);
+		expectedAgents.Add(2000, "Khalagur", combatTime, totalHealing, totalHits, std::nullopt, 0);
 
 		const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
 		ASSERT_EQ(agents.Entries.size(), expectedAgents.Entries.size());
@@ -973,8 +973,8 @@ TEST_P(NetworkXevtcTestFixture, berserker_solo)
 		}
 
 		AggregatedVector expectedSkills;
-		expectedSkills.Add(0, "Healing by Damage Dealt", combatTime, 163393, 79, std::nullopt);
-		expectedSkills.Add(30189, "Blood Reckoning", combatTime, 32300, 10, std::nullopt);
+		expectedSkills.Add(0, "From Damage Dealt", combatTime, 163393, 79, std::nullopt, 0);
+		expectedSkills.Add(30189, "Blood Reckoning", combatTime, 32300, 10, std::nullopt, 0);
 
 		const AggregatedVector& skills = stats.GetStats(DataSource::Skills);
 		ASSERT_EQ(skills.Entries.size(), expectedSkills.Entries.size());
@@ -995,8 +995,8 @@ TEST_P(NetworkXevtcTestFixture, berserker_solo)
 
 	float combatTime = stats.GetCombatTime();
 	AggregatedVector expectedStats;
-	expectedStats.Add(2000, "Khalagur", combatTime, totalHealing, totalHits, std::nullopt);
-	expectedStats.Add(100000, "Local Fake Self", combatTime, totalHealing, totalHits, std::nullopt);
+	expectedStats.Add(2000, "Khalagur", combatTime, totalHealing, totalHits, std::nullopt, 0);
+	expectedStats.Add(100000, "Local Fake Self", combatTime, totalHealing, totalHits, std::nullopt, 0);
 
 	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
 	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());
@@ -1033,10 +1033,10 @@ TEST_P(NetworkXevtcTestFixture, renegade_solo)
 		EXPECT_EQ(totalEntry.Hits, totalHits);
 
 		AggregatedVector expectedTotals;
-		expectedTotals.Add(0, "Group", combatTime, totalHealing, totalHits, std::nullopt);
-		expectedTotals.Add(0, "Squad", combatTime, totalHealing, totalHits, std::nullopt);
-		expectedTotals.Add(0, "All (Excluding Summons)", combatTime, totalHealing, totalHits, std::nullopt);
-		expectedTotals.Add(0, "All (Including Summons)", combatTime, totalHealing, totalHits, std::nullopt);
+		expectedTotals.Add(0, "Group", combatTime, totalHealing, totalHits, std::nullopt, 0);
+		expectedTotals.Add(0, "Squad", combatTime, totalHealing, totalHits, std::nullopt, 0);
+		expectedTotals.Add(0, "All (Excluding Summons)", combatTime, totalHealing, totalHits, std::nullopt, 0);
+		expectedTotals.Add(0, "All (Including Summons)", combatTime, totalHealing, totalHits, std::nullopt, 0);
 
 		const AggregatedVector& totals = stats.GetStats(DataSource::Totals);
 		ASSERT_EQ(totals.Entries.size(), expectedTotals.Entries.size());
@@ -1047,7 +1047,7 @@ TEST_P(NetworkXevtcTestFixture, renegade_solo)
 		}
 
 		AggregatedVector expectedAgents;
-		expectedAgents.Add(2000, "Enagyy", combatTime, totalHealing, totalHits, std::nullopt);
+		expectedAgents.Add(2000, "Enagyy", combatTime, totalHealing, totalHits, std::nullopt, 0);
 
 		const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
 		ASSERT_EQ(agents.Entries.size(), expectedAgents.Entries.size());
@@ -1058,12 +1058,12 @@ TEST_P(NetworkXevtcTestFixture, renegade_solo)
 		}
 
 		AggregatedVector expectedSkills;
-		expectedSkills.Add(26646, "Battle Scars", combatTime, 33792, 295, std::nullopt);
-		expectedSkills.Add(57409, "Nourishment", combatTime, 7181, 24, std::nullopt);
-		expectedSkills.Add(45686, "Breakrazor's Bastion (Self)", combatTime, 3923, 1, std::nullopt);
-		expectedSkills.Add(28313, "Enchanted Daggers (Siphon)", combatTime, 3870, 6, std::nullopt);
-		expectedSkills.Add(46232, "Breakrazor's Bastion (Area)", combatTime, 3218, 10, std::nullopt);
-		expectedSkills.Add(26937, "Enchanted Daggers (Initial)", combatTime, 1560, 1, std::nullopt);
+		expectedSkills.Add(26646, "Battle Scars", combatTime, 33792, 295, std::nullopt, 0);
+		expectedSkills.Add(57409, "Nourishment", combatTime, 7181, 24, std::nullopt, 0);
+		expectedSkills.Add(45686, "Breakrazor's Bastion (Self)", combatTime, 3923, 1, std::nullopt, 0);
+		expectedSkills.Add(28313, "Enchanted Daggers (Siphon)", combatTime, 3870, 6, std::nullopt, 0);
+		expectedSkills.Add(46232, "Breakrazor's Bastion (Area)", combatTime, 3218, 10, std::nullopt, 0);
+		expectedSkills.Add(26937, "Enchanted Daggers (Initial)", combatTime, 1560, 1, std::nullopt, 0);
 
 		const AggregatedVector& skills = stats.GetStats(DataSource::Skills);
 		ASSERT_EQ(skills.Entries.size(), expectedSkills.Entries.size());
@@ -1084,8 +1084,8 @@ TEST_P(NetworkXevtcTestFixture, renegade_solo)
 
 	float combatTime = stats.GetCombatTime();
 	AggregatedVector expectedStats;
-	expectedStats.Add(2000, "Enagyy", combatTime, totalHealing, totalHits, std::nullopt);
-	expectedStats.Add(100000, "Local Fake Self", combatTime, totalHealing, totalHits, std::nullopt);
+	expectedStats.Add(2000, "Enagyy", combatTime, totalHealing, totalHits, std::nullopt, 0);
+	expectedStats.Add(100000, "Local Fake Self", combatTime, totalHealing, totalHits, std::nullopt, 0);
 
 	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
 	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());
