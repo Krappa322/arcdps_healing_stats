@@ -48,8 +48,14 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		float minWidth = pState.LastFrameLeftSideMinWidth + pState.LastFrameRightSideMinWidth;
 		if (minWidth != 0)
 		{
-			size.x = minWidth + ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
+			// ItemSpacing.x is the width incurred because of the ImGui::SameLine() call between the children
+			// ImGui::GetStyle().WindowPadding.x * 2 is the width incurred because of the two ImGui::BeginChild() calls
+			// which internally apply padding between each other
+			size.x = minWidth + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().WindowPadding.x * 2;
 		}
+		// Make sure the window always has room for 32 lines (regardless of font size). ImGui::GetCursorPosY() accounts
+		// for the height of the window title.
+		size.y = ImGui::GetCursorPosY() + ImGui::GetTextLineHeightWithSpacing() * 32;
 
 		LogT("LastFrameLeftSideMinWidth={} LastFrameRightSideMinWidth={} x={}",
 			pState.LastFrameLeftSideMinWidth, pState.LastFrameRightSideMinWidth, size.x);
@@ -75,7 +81,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	bgColor.w = 0.0f;
 	ImGui::PushStyleColor(ImGuiCol_ChildBg, bgColor);
 	snprintf(buffer, sizeof(buffer), "##HEALDETAILS.%u.TOTALS.%i.%llu", pContext.WindowId, static_cast<int>(pDataSource), pState.Id);
-	ImGui::BeginChild(buffer, ImVec2(pState.LastFrameLeftSideMinWidth, 0));
+	ImGui::BeginChild(buffer, ImVec2(pState.LastFrameLeftSideMinWidth, 0), false, ImGuiWindowFlags_NoScrollbar);
 
 	pState.LastFrameLeftSideMinWidth = 0;
 	// Make sure the right side is never truncated too far so the user understands that there is room for empty entries
@@ -142,6 +148,8 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		}
 	}
 
+	pState.LastFrameLeftSideMinWidth += ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
+
 	ImGuiEx::BottomText("id %u", pState.Id);
 	ImGui::EndChild();
 
@@ -175,6 +183,9 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 			pState.LastFrameRightSideMinWidth,
 			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt));
 	}
+	
+	pState.LastFrameRightSideMinWidth += ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
+
 	ImGui::EndChild();
 
 	ImGui::PopStyleColor();
