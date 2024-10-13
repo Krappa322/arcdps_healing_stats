@@ -188,7 +188,11 @@ bool EventSequencer::QueueIsEmpty()
 {
 	bool isEmpty = (mQueuedEventCount.load(std::memory_order_acquire) == 0);
 
-	LogD("isEmpty={}, highestQueueSize={}", BOOL_STR(isEmpty), mHighestQueueSize.load(std::memory_order_relaxed));
+	LogD("isEmpty={}, highestQueueSize={} highestId={} queuedEventCount={}",
+		BOOL_STR(isEmpty),
+		mHighestQueueSize.load(std::memory_order_relaxed),
+		mHighestId.load(std::memory_order_relaxed),
+		mQueuedEventCount.load(std::memory_order_relaxed));
 	return isEmpty;
 }
 
