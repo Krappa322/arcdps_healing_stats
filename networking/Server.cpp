@@ -507,8 +507,8 @@ const char* evtc_rpc_server::HandleAddPeer(uint16_t pInstanceId, std::string_vie
 	auto [newEntry, inserted] = pClient->Peers.try_emplace(std::move(accountName), pInstanceId);
 	if (inserted == false)
 	{
-		LogW("(client {}) peer {} is already registered (instance id {}, new instance id is {})", fmt::ptr(pClient.get()), accountName.c_str(), newEntry->second, pInstanceId);
-		return "peer already registered";
+		LogW("(client {}) peer {} is already registered (instance id {}, new instance id is {}). Overriding existing peer.", fmt::ptr(pClient.get()), accountName.c_str(), newEntry->second, pInstanceId);
+		newEntry->second = pInstanceId;
 	}
 
 	LogI("(client {}) added peer {} {}", fmt::ptr(pClient.get()), newEntry->first.c_str(), newEntry->second);
