@@ -532,6 +532,178 @@ TEST_F(SimpleNetworkTestFixture, RegisterSelf)
 	}
 }
 
+TEST_F(SimpleNetworkTestFixture, RegisterSelfDuplicate)
+{
+	ClientInstance& client1 = NewClient();
+	ClientInstance& client2 = NewClient();
+
+	// Send a self agent registration event
+	ag ag1{};
+	ag ag2{};
+	ag1.elite = 0;
+	ag1.prof = static_cast<Prof>(1);
+	ag2.self = 1;
+	ag2.id = 13;
+	ag2.name = "testagent.1234";
+
+	client1->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+	client1->FlushEvents();
+
+	// Wait until the server sees the new agent
+	{
+		bool completed = false;
+		auto start = std::chrono::system_clock::now();
+		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(1000))
+		{
+			{
+				std::lock_guard lock(Server->mRegisteredAgentsLock);
+				if (Server->mRegisteredAgents.size() >= 1)
+				{
+					auto iter = Server->mRegisteredAgents.find("testagent.1234");
+					if (iter != Server->mRegisteredAgents.end() && iter->second->InstanceId == 13)
+					{
+						completed = true;
+						break;
+					}
+				}
+			}
+
+			Sleep(1);
+		}
+		EXPECT_TRUE(completed);
+	}
+
+	std::chrono::steady_clock::time_point beforeConflictingEvent = std::chrono::steady_clock::now();
+
+	// Send a conflicting registration
+	client2->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+	client2->FlushEvents();
+
+	// Wait until the server disconnects the second client
+	{
+		bool completed = false;
+		auto start = std::chrono::system_clock::now();
+		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(1000))
+		{
+			evtc_rpc_client_status status = client2->GetStatus();
+			if (status.Connected == false || status.ConnectTime > beforeConflictingEvent)
+			{
+				completed = true;
+				break;
+			}
+
+			Sleep(1);
+		}
+		EXPECT_TRUE(completed);
+	}
+
+	// Verify that the first client is still there and was not disconnected
+	{
+		evtc_rpc_client_status status = client1->GetStatus();
+		EXPECT_TRUE(status.Connected);
+		EXPECT_LE(status.ConnectTime, beforeConflictingEvent);
+	}
+	{
+		std::lock_guard lock(Server->mRegisteredAgentsLock);
+
+		EXPECT_EQ(Server->mRegisteredAgents.size(), 1U);
+		auto iter = Server->mRegisteredAgents.find("testagent.1234");
+		ASSERT_NE(iter, Server->mRegisteredAgents.end());
+		EXPECT_EQ(iter->first, "testagent.1234");
+		EXPECT_EQ(iter->second->Iterator, iter);
+		EXPECT_EQ(iter->second->InstanceId, 13);
+		EXPECT_EQ(iter->second->Peers.size(), 0);
+	}
+}
+
+
+TEST_F(SimpleNetworkTestFixture, RegisterSelfDuplicateTimeout)
+{
+	ClientInstance& client1 = NewClient();
+	ClientInstance& client2 = NewClient();
+
+	// Send a self agent registration event
+	ag ag1{};
+	ag ag2{};
+	ag1.elite = 0;
+	ag1.prof = static_cast<Prof>(1);
+	ag2.self = 1;
+	ag2.id = 13;
+	ag2.name = "testagent.1234";
+
+	client1->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+	client1->FlushEvents();
+
+	// Wait until the server sees the new agent
+	{
+		bool completed = false;
+		auto start = std::chrono::system_clock::now();
+		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(1000))
+		{
+			{
+				std::lock_guard lock(Server->mRegisteredAgentsLock);
+				if (Server->mRegisteredAgents.size() >= 1)
+				{
+					auto iter = Server->mRegisteredAgents.find("testagent.1234");
+					if (iter != Server->mRegisteredAgents.end() && iter->second->InstanceId == 13)
+					{
+						completed = true;
+						break;
+					}
+				}
+			}
+
+			Sleep(1);
+		}
+		EXPECT_TRUE(completed);
+	}
+
+	// Reduce the duplicate client timeout to 0, making it always exceeded
+	Server->mConflictingClientDisconnectThresholdMs = 0;
+
+	std::chrono::steady_clock::time_point beforeConflictingEvent = std::chrono::steady_clock::now();
+
+	// Send a conflicting registration
+	client2->ProcessLocalEvent(nullptr, &ag1, &ag2, nullptr, 0, 0);
+	client2->FlushEvents();
+
+	// Wait until the server disconnects the first client
+	{
+		bool completed = false;
+		auto start = std::chrono::system_clock::now();
+		while ((std::chrono::system_clock::now() - start) < std::chrono::milliseconds(1000))
+		{
+			evtc_rpc_client_status status = client1->GetStatus();
+			if (status.Connected == false || status.ConnectTime > beforeConflictingEvent)
+			{
+				completed = true;
+				break;
+			}
+
+			Sleep(1);
+		}
+		EXPECT_TRUE(completed);
+	}
+
+	// Verify that the second client is still there and was not disconnected
+	{
+		evtc_rpc_client_status status = client2->GetStatus();
+		EXPECT_TRUE(status.Connected);
+		EXPECT_LE(status.ConnectTime, beforeConflictingEvent);
+	}
+	{
+		std::lock_guard lock(Server->mRegisteredAgentsLock);
+
+		EXPECT_EQ(Server->mRegisteredAgents.size(), 1U);
+		auto iter = Server->mRegisteredAgents.find("testagent.1234");
+		ASSERT_NE(iter, Server->mRegisteredAgents.end());
+		EXPECT_EQ(iter->first, "testagent.1234");
+		EXPECT_EQ(iter->second->Iterator, iter);
+		EXPECT_EQ(iter->second->InstanceId, 13);
+		EXPECT_EQ(iter->second->Peers.size(), 0);
+	}
+}
+
 TEST_F(SimpleNetworkTestFixture, RegisterPeer)
 {
 	ClientInstance& client1 = NewClient();

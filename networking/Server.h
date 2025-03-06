@@ -32,6 +32,7 @@
 
 #include "evtc_rpc_messages.h"
 
+#include <chrono>
 #include <deque>
 #include <shared_mutex>
 
@@ -42,6 +43,8 @@ class evtc_rpc_server
 		std::map<std::string, std::shared_ptr<ConnectionContext>>::iterator Iterator{}; // Protected by mRegisteredAgentsLock on the server that owns this ConnectionContext
 		uint16_t InstanceId = 0; // Protected by mRegisteredAgentsLock on the server that owns this ConnectionContext
 		std::map<std::string, uint16_t> Peers; // Protected by mRegisteredAgentsLock on the server that owns this ConnectionContext
+
+		std::atomic<std::chrono::steady_clock::time_point> LastCallTime;
 
 		grpc::ServerContext ServerContext;
 		// Reads against the stream are protected since they are serialized, writes are protected with WriteLock
@@ -149,6 +152,7 @@ private:
 
 	void SendEvent(const evtc_rpc::messages::CombatEvent& pEvent, WriteEventCallData* pCallData, const std::shared_ptr<ConnectionContext>& pClient);
 	void ForceDisconnect(const char* pErrorMessage, const std::shared_ptr<ConnectionContext>& pClient);
+	void ForceDisconnectInternal(const char* pErrorMessage, const std::shared_ptr<ConnectionContext>& pClient, bool pRemovedFromTable);
 
 	std::mutex mRegisteredAgentsLock;
 	std::map<std::string, std::shared_ptr<ConnectionContext>> mRegisteredAgents;
@@ -162,4 +166,6 @@ private:
 
 	std::shared_mutex mShutdownLock;
 	std::atomic<ShutdownState> mShutdownState = ShutdownState::Online;
+	
+	std::atomic<uint64_t> mConflictingClientDisconnectThresholdMs = 30000;
 };

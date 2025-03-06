@@ -428,6 +428,8 @@ void evtc_rpc_server::HandleReadMessage(ReadMessageCallData* pCallData)
 		LogE("(client {} tag {}) incorrect type {}", fmt::ptr(pCallData->Context.get()), fmt::ptr(pCallData), static_cast<int>(header.MessageType));
 		return;
 	}
+	
+	pCallData->Context->LastCallTime.store(std::chrono::steady_clock::now(), std::memory_order_relaxed);
 }
 
 void evtc_rpc_server::HandleWriteEvent(WriteEventCallData* pCallData)
@@ -451,6 +453,12 @@ void evtc_rpc_server::HandleWriteEvent(WriteEventCallData* pCallData)
 
 const char* evtc_rpc_server::HandleRegisterSelf(uint16_t pInstanceId, std::string_view pAccountName, std::shared_ptr<ConnectionContext>& pClient)
 {
+	if (pClient->ForceDisconnected == true)
+	{
+		LogD("client is already disconnected");
+		return "client is already disconnected";
+	}
+
 	std::lock_guard lock(mRegisteredAgentsLock);
 
 	// Check this under lock, mRegisteredAgentsLock also guards the ReceivedAccountName flag
@@ -464,8 +472,23 @@ const char* evtc_rpc_server::HandleRegisterSelf(uint16_t pInstanceId, std::strin
 	auto [newEntry, inserted] = mRegisteredAgents.try_emplace(std::move(accountName), std::shared_ptr{pClient});
 	if (inserted == false)
 	{
-		LogW("(client {}) account name {} is already registered from another connection", fmt::ptr(pClient.get()), accountName.c_str());
-		return "account name collision";
+		std::chrono::steady_clock::time_point lastCallTime = newEntry->second->LastCallTime.load(std::memory_order_relaxed);
+		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+
+		uint64_t millisecondsSinceLastCall = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallTime).count();
+		LogW("(client {}) account name {} is already registered from another connection {} ({} since last call)",
+			fmt::ptr(pClient.get()), accountName.c_str(), fmt::ptr(newEntry->second.get()), millisecondsSinceLastCall);
+		if (millisecondsSinceLastCall < mConflictingClientDisconnectThresholdMs.load(std::memory_order_relaxed))
+		{
+			return "account name collision";
+		}
+
+		std::shared_ptr<ConnectionContext> oldClient = std::move(newEntry->second);
+		oldClient->Iterator = mRegisteredAgents.end();
+		LogW("Force disconnect of old client {}", fmt::ptr(oldClient.get()));
+		ForceDisconnectInternal("superseded by new client", oldClient, true);
+
+		newEntry->second = pClient;
 	}
 
 	pClient->Iterator = newEntry;
@@ -629,15 +652,10 @@ void evtc_rpc_server::SendEvent(const evtc_rpc::messages::CombatEvent& pEvent, W
 
 void evtc_rpc_server::ForceDisconnect(const char* pErrorMessage, const std::shared_ptr<ConnectionContext>& pClient)
 {
-	if (pClient->ForceDisconnected == true)
-	{
-		LogD("Ignoring ForceDisconnect since client is already disconnected");
-		return;
-	}
+	std::lock_guard lock(mRegisteredAgentsLock);
 
 	bool removedFromTable = false;
 	{
-		std::lock_guard lock(mRegisteredAgentsLock);
 
 		if (pClient->Iterator != mRegisteredAgents.end())
 		{
@@ -647,17 +665,30 @@ void evtc_rpc_server::ForceDisconnect(const char* pErrorMessage, const std::shar
 		}
 	}
 	
+	ForceDisconnectInternal(pErrorMessage, pClient, removedFromTable);
+}
+
+void evtc_rpc_server::ForceDisconnectInternal(const char* pErrorMessage, const std::shared_ptr<ConnectionContext>& pClient, bool pRemovedFromTable)
+{
+	std::lock_guard lock(pClient->WriteLock);
+
+	if (pClient->ForceDisconnected == true)
+	{
+		LogD("client is already disconnected");
+		return;
+	}
+
 	pClient->ForceDisconnected = true;
 
 	if (mShutdownState.load(std::memory_order_relaxed) == ShutdownState::ShuttingDown)
 	{
 		LogI("(client {}) force disconnected (removedFromTable={}) - '{}'. Server is shutting down so not queueing a Finish",
-			fmt::ptr(pClient.get()), BOOL_STR(removedFromTable), pErrorMessage);
+			fmt::ptr(pClient.get()), BOOL_STR(pRemovedFromTable), pErrorMessage);
 		return;
 	}
 
-	DisconnectCallData* queuedData = new DisconnectCallData{std::shared_ptr(pClient)};
-	pClient->Stream.Finish(grpc::Status{grpc::StatusCode::INVALID_ARGUMENT, pErrorMessage}, queuedData);
-	
-	LogI("(client {} tag {}) force disconnected (removedFromTable={}) - '{}'", fmt::ptr(pClient.get()), fmt::ptr(queuedData), BOOL_STR(removedFromTable), pErrorMessage);
+	DisconnectCallData* queuedData = new DisconnectCallData{ std::shared_ptr{pClient} };
+	pClient->Stream.Finish(grpc::Status{ grpc::StatusCode::INVALID_ARGUMENT, pErrorMessage }, queuedData);
+
+	LogI("(client {} tag {}) force disconnected (removedFromTable={}) - '{}'", fmt::ptr(pClient.get()), fmt::ptr(queuedData), BOOL_STR(pRemovedFromTable), pErrorMessage);
 }
