@@ -242,15 +242,22 @@ arcdps_exports* mod_init()
 			return std::string{GlobalObjects::ROOT_CERTIFICATES};
 		}; 
 
-	GlobalObjects::EVENT_SEQUENCER = std::make_unique<EventSequencer>(ProcessLocalEvent);
-	GlobalObjects::EVENT_PROCESSOR = std::make_unique<EventProcessor>();
-	GlobalObjects::EVTC_RPC_CLIENT = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), std::move(getCertificates), std::function{ProcessPeerEvent});
-
 	{
 		std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 		HEAL_TABLE_OPTIONS.Load(JSON_CONFIG_PATH);
 
 		Log_::SetLevel(HEAL_TABLE_OPTIONS.LogLevel);
+		
+		if (HEAL_TABLE_OPTIONS.GrpcDnsResolverCAres == false)
+		{
+			BOOL res = SetEnvironmentVariableA("GRPC_DNS_RESOLVER", "native");
+			LogI("Set GRPC_DNS_RESOLVER to \"native\" (result {})", res);
+		}
+
+		GlobalObjects::EVENT_SEQUENCER = std::make_unique<EventSequencer>(ProcessLocalEvent);
+		GlobalObjects::EVENT_PROCESSOR = std::make_unique<EventProcessor>();
+		GlobalObjects::EVTC_RPC_CLIENT = std::make_unique<evtc_rpc_client>(std::move(getEndpoint), std::move(getCertificates), std::function{ProcessPeerEvent});
+
 		GlobalObjects::EVENT_PROCESSOR->SetEvtcLoggingEnabled(HEAL_TABLE_OPTIONS.EvtcLoggingEnabled);
 		GlobalObjects::EVTC_RPC_CLIENT->SetEnabledStatus(HEAL_TABLE_OPTIONS.EvtcRpcEnabled);
 		GlobalObjects::EVTC_RPC_CLIENT->SetBudgetMode(HEAL_TABLE_OPTIONS.EvtcRpcBudgetMode);
