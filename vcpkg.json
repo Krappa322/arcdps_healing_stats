@@ -26,6 +26,10 @@
 	{
 		"name": "cpr",
 		"version": "1.10.5#2"
+	},
+	{
+		"name": "civetweb",
+		"version": "1.15#1"
 	}
   ],
   "builtin-baseline": "f7423ee180c4b7f40d43402c2feb3859161ef625"

@@ -13,7 +13,7 @@ rule("protobuf")
 
 		target:add("includedirs", outputdir)
 
-		local grpc_cpp_plugin = os.iorunv("which grpc_cpp_plugin"):sub(1, -2)
+		local grpc_cpp_plugin = "vcpkg_installed/x64-linux/x64-linux/tools/grpc/grpc_cpp_plugin"
 		local protoc = "vcpkg_installed/x64-linux/x64-linux/tools/protobuf/protoc"
 
 		batchcmds:show_progress(opt.progress, "${color.build.object}compiling.proto_source %s", sourcefile)
@@ -72,9 +72,10 @@ target("evtc_rpc_server")
 
 	set_kind("binary")
 	set_warnings("all")
-	set_languages("c++17")
-	set_toolset("cxx", "clang++")
-	set_toolset("ld", "clang++")
+	set_languages("c++20")
+	local toolset = "clang++"
+	set_toolset("cxx", toolset)
+	set_toolset("ld", toolset)
 
 	compilerflags = {}
 	if is_mode("debug") then
@@ -126,91 +127,100 @@ target("evtc_rpc_server")
 	add_includedirs("modules/arcdps_extension", "vcpkg_installed/x64-linux/x64-linux/include")
 	add_linkdirs("vcpkg_installed/x64-linux/x64-linux/lib")
 
-	-- Add everything absl as a group since they have circular dependencies
-	absl_libs = {
-		"failure_signal_handler",
-		"flags_usage",
-		"spinlock_wait",
-		"malloc_internal",
-		"cordz_functions",
-		"strings_internal",
-		"random_internal_randen_slow",
-		"hash",
-		"hashtablez_sampler",
-		"random_seed_sequences",
-		"demangle_internal",
-		"bad_variant_access",
-		"random_internal_randen_hwaes_impl",
-		"flags_parse",
-		"time_zone",
-		"flags_marshalling",
-		"random_internal_seed_material",
-		"low_level_hash",
-		"log_severity",
-		"periodic_sampler",
-		"raw_logging_internal",
-		"cordz_sample_token",
-		"civil_time",
-		"graphcycles_internal",
-		"leak_check",
-		"symbolize",
-		"examine_stack",
-		"random_internal_pool_urbg",
-		"random_internal_platform",
-		"random_internal_distribution_test_util",
-		"flags_usage_internal",
-		"flags_commandlineflag",
-		"int128",
-		"synchronization",
-		"scoped_set_env",
-		"time",
-		"status",
-		"random_internal_randen_hwaes",
-		"cord",
-		"base",
-		"flags_commandlineflag_internal",
-		"random_distributions",
-		"random_internal_randen",
-		"strings",
-		"strerror",
-		"flags_config",
-		"str_format_internal",
-		"flags_program_name",
-		"debugging_internal",
-		"cordz_info",
-		"bad_any_cast_impl",
-		"cord_internal",
-		"leak_check_disable",
-		"raw_hash_set",
-		"flags",
-		"throw_delegate",
-		"statusor",
-		"stacktrace",
-		"cordz_handle",
-		"random_seed_gen_exception",
-		"flags_internal",
-		"flags_reflection",
-		"exponential_biased",
-		"city",
-		"bad_optional_access",
-		"flags_private_handle_accessor",
-	}
-	absl_linker_command = "-Wl,--start-group"
-	for i, v in pairs(absl_libs) do
-		absl_linker_command = absl_linker_command .. " -labsl_" .. v
-	end
-	absl_linker_command = absl_linker_command .. " -Wl,--end-group"
-	
-	add_ldflags(absl_linker_command)
+	-- Add everything absl as a group since they have circular dependencies (doesn't seem to be the case anymore?)
+	add_linkgroups(
+		"absl_failure_signal_handler",
+		"absl_flags_usage",
+		"absl_crc32c",
+		"absl_spinlock_wait",
+		"absl_log_internal_nullguard",
+		"absl_malloc_internal",
+		"absl_cordz_functions",
+		"absl_strings_internal",
+		"absl_random_internal_randen_slow",
+		"absl_hash",
+		"absl_hashtablez_sampler",
+		"absl_random_seed_sequences",
+		"absl_log_flags",
+		"absl_vlog_config_internal",
+		"absl_demangle_internal",
+		"absl_bad_variant_access",
+		"absl_crc_internal",
+		"absl_random_internal_randen_hwaes_impl",
+		"absl_flags_parse",
+		"absl_time_zone",
+		"absl_flags_marshalling",
+		"absl_log_internal_check_op",
+		"absl_random_internal_seed_material",
+		"absl_low_level_hash",
+		"absl_log_severity",
+		"absl_log_internal_format",
+		"absl_periodic_sampler",
+		"absl_raw_logging_internal",
+		"absl_cordz_sample_token",
+		"absl_civil_time",
+		"absl_graphcycles_internal",
+		"absl_leak_check",
+		"absl_log_internal_globals",
+		"absl_string_view",
+		"absl_symbolize",
+		"absl_examine_stack",
+		"absl_random_internal_pool_urbg",
+		"absl_log_internal_proto",
+		"absl_random_internal_platform",
+		"absl_random_internal_distribution_test_util",
+		"absl_flags_usage_internal",
+		"absl_flags_commandlineflag",
+		"absl_int128",
+		"absl_synchronization",
+		"absl_scoped_set_env",
+		"absl_time",
+		"absl_status",
+		"absl_random_internal_randen_hwaes",
+		"absl_cord",
+		"absl_base",
+		"absl_log_sink",
+		"absl_log_initialize",
+		"absl_log_globals",
+		"absl_flags_commandlineflag_internal",
+		"absl_log_internal_message",
+		"absl_random_distributions",
+		"absl_random_internal_randen",
+		"absl_strings",
+		"absl_strerror",
+		"absl_flags_config",
+		"absl_log_internal_conditions",
+		"absl_str_format_internal",
+		"absl_log_internal_log_sink_set",
+		"absl_flags_program_name",
+		"absl_die_if_null",
+		"absl_debugging_internal",
+		"absl_cordz_info",
+		"absl_crc_cord_state",
+		"absl_bad_any_cast_impl",
+		"absl_cord_internal",
+		"absl_kernel_timeout_internal",
+		"absl_raw_hash_set",
+		"absl_throw_delegate",
+		"absl_statusor",
+		"absl_stacktrace",
+		"absl_cordz_handle",
+		"absl_random_seed_gen_exception",
+		"absl_flags_internal",
+		"absl_flags_reflection",
+		"absl_exponential_biased",
+		"absl_city",
+		"absl_bad_optional_access",
+		"absl_log_entry",
+		"absl_crc_cpu_detect",
+		"absl_flags_private_handle_accessor",
+		"absl_log_internal_fnmatch",
+		{name = "absl", group = false, static = true})
 
-	-- Add all libraries from vcpkg (just mined from a directory listing, excluding the absl libraries above)
-	add_links(
-		"grpc_upbdefs",
-		"grpc++_unsecure",
+	-- Add all libraries from vcpkg (just mined from a directory listing, excluding the absl libraries above). Then libraries removed one by one and checking if it still links.
+	add_linkgroups(
 		"upb",
 		"address_sorting",
-		"utf8_range",
-		"grpcpp_channelz",
 		"gpr",
 		"prometheus-cpp-core",
 		"grpc++",
@@ -219,26 +229,22 @@ target("evtc_rpc_server")
 		"ssl",
 		"cares",
 		"re2",
-		"grpc++_error_details",
 		"fmt",
+		"upb_json",
 		"z",
 		"protobuf",
-		"gtest",
 		"civetweb-cpp",
 		"upb_textformat",
-		"protobuf-lite",
-		"json",
+		"upb_mini_table",
+		"upb_collections",
+		"upb_utf8_range",
 		"upb_fastdecode",
 		"upb_reflection",
-		"grpc_plugin_support",
-		"grpc++_alts",
-		"grpc_unsecure",
+		"upb_extension_registry",
 		"spdlog",
 		"civetweb",
-		"grpc++_reflection",
-		"protoc",
-		"gmock",
-		"grpc")
+		"grpc",
+		{name = "others", group = false, static = true})
 
 	add_files("src/Log.cpp", {cxxflags = compilerflags})
 	add_files("evtc_rpc_server/**.cpp", {cxxflags = compilerflags})
@@ -249,7 +255,11 @@ target("evtc_rpc_server")
 	add_cxxflags("-ggdb3")
 	add_cxxflags("-march=native")
 	add_cxxflags("-Wextra", "-Weffc++", "-pedantic")
-	add_cxxflags("-Werror=shadow", "-Werror=duplicate-decl-specifier", "-Werror=ignored-qualifiers", "-Werror=return-type")
+	add_cxxflags("-Werror=ignored-qualifiers", "-Werror=return-type")
+	if toolset == "clang++" then
+		add_cxxflags("-Werror=shadow") 
+		add_cxxflags("-Werror=duplicate-decl-specifier")
+	end
 	add_cxxflags("-Wno-format") -- unsigned long long vs unsigned long issues (linux is stupid...)
 	add_cxxflags("-Wno-gnu-zero-variadic-macro-arguments", "-Wno-format-pedantic")
 	add_ldflags("-fuse-ld=lld")
