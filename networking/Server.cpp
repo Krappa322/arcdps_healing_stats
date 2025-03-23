@@ -592,7 +592,7 @@ const char* evtc_rpc_server::HandleCombatEvent(const cbtevent& pEvent, std::shar
 			{
 				if (iter->second->InstanceId != peerId)
 				{
-					LogW("(client {}) peer {} has incorrect instance id (expected {}, found {})", fmt::ptr(pClient.get()), fmt::ptr(iter->second.get()), iter->second->InstanceId, peerId);
+					LogT("(client {}) peer {} has incorrect instance id (expected {}, found {})", fmt::ptr(pClient.get()), fmt::ptr(iter->second.get()), iter->second->InstanceId, peerId);
 					continue;
 				}
 
