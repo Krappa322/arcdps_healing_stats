@@ -219,6 +219,7 @@ target("evtc_rpc_server")
 
 	-- Add all libraries from vcpkg (just mined from a directory listing, excluding the absl libraries above). Then libraries removed one by one and checking if it still links.
 	add_linkgroups(
+		"jemalloc",
 		"upb",
 		"address_sorting",
 		"gpr",

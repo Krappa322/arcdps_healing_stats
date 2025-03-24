@@ -8,6 +8,7 @@
 "fmt:x64-linux                  9.1.0\n"\
 "grpc:x64-linux                 1.51.1#3\n"\
 "gtest:x64-linux                1.14.0#1\n"\
+"jemalloc:x64-linux             5.3.0#1\n"\
 "nlohmann-json:x64-linux        3.11.3\n"\
 "openssl:x64-linux              3.3.1\n"\
 "prometheus-cpp:x64-linux       1.2.4\n"\

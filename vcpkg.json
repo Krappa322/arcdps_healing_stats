@@ -6,6 +6,7 @@
     "cpr",
     "grpc",
     "gtest",
+	"jemalloc",
     "nlohmann-json",
     "prometheus-cpp",
     "spdlog"
