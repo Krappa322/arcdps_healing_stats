@@ -182,7 +182,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		}
 		pState.LastFrameRightSideMinWidth = (std::max)(
 			pState.LastFrameRightSideMinWidth,
-			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt));
+			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt, false));
 	}
 	
 	pState.LastFrameRightSideMinWidth += ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
@@ -245,7 +245,8 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 		float minSize = ImGuiEx::StatsEntry(name, buffer,
 			pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt,
 			pContext.ShowProgressBars == true ? std::optional{barrierGenerationRatio} : std::nullopt,
-			pContext.IndexNumbers == true ? std::optional{i + 1} : std::nullopt);
+			pContext.IndexNumbers == true ? std::optional{i + 1} : std::nullopt,
+			pContext.SelfUniqueId == entry.Id);
 
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
 		pContext.CurrentFrameLineCount += 1;
@@ -586,6 +587,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			auto [localId, states] = GlobalObjects::EVENT_PROCESSOR->GetState();
 			curWindow.CurrentAggregatedStats = std::make_unique<AggregatedStatsCollection>(std::move(states), localId, curWindow, pHealingOptions.DebugMode);
 			curWindow.LastAggregatedTime = curTime;
+			curWindow.SelfUniqueId = localId;
 		}
 
 		float timeInCombat = curWindow.CurrentAggregatedStats->GetCombatTime();
