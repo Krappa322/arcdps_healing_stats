@@ -114,8 +114,8 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 	ImGui::EndGroup();
 	ImGui::PopStyleColor();
 
-	// index number - window padding - inner spacing - left text - item spacing * 2 - right text - inner spacing - window padding
-	return indexNumberSize.x + leftTextSize.x + rightTextSize.x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetStyle().ItemInnerSpacing.x * 2.0f + ImGui::GetCurrentWindowRead()->WindowPadding.x * 2.0f;
+	// index number - window padding - inner spacing - left text - item spacing * 3 - right text - inner spacing - window padding
+	return indexNumberSize.x + leftTextSize.x + rightTextSize.x + ImGui::GetStyle().ItemSpacing.x * 3.0f + ImGui::GetStyle().ItemInnerSpacing.x * 2.0f + ImGui::GetCurrentWindowRead()->WindowPadding.x * 2.0f;
 }
 
 void ImGuiEx::TextColoredUnformatted(std::optional<ImU32> pColor, const char* pText, const char* pTextEnd)
