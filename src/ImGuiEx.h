@@ -43,7 +43,7 @@ namespace ImGuiEx
 	void SmallUnindent();
 
 	// returns minimum size needed to display the entry
-	float StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio, std::optional<size_t> indexNumber);
+	float StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio, std::optional<size_t> indexNumber, bool self);
 
 	template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
 	bool SmallInputInt(const char* pLabel, T* pInt)
@@ -106,6 +106,8 @@ namespace ImGuiEx
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * 0.5f - ImGui::CalcTextSize(buffer).x * 0.5f);
 		ImGui::TextColored(pColor, "%s", buffer);
 	}
+
+	void TextColoredUnformatted(std::optional<ImU32> pColor, const char* pText, const char* pTextEnd = nullptr);
 
 	template <typename... Args>
 	void BottomText(const char* pFormatString, Args... pArgs)
