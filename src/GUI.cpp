@@ -182,7 +182,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		}
 		pState.LastFrameRightSideMinWidth = (std::max)(
 			pState.LastFrameRightSideMinWidth,
-			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt));
+			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt));
 	}
 	
 	pState.LastFrameRightSideMinWidth += ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
@@ -242,7 +242,10 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 		{
 			name = name.substr(0, pContext.MaxNameLength);
 		}
-		float minSize = ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{barrierGenerationRatio} : std::nullopt);
+		float minSize = ImGuiEx::StatsEntry(name, buffer,
+			pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt,
+			pContext.ShowProgressBars == true ? std::optional{barrierGenerationRatio} : std::nullopt,
+			pContext.IndexNumbers == true ? std::optional{i + 1} : std::nullopt);
 
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
 		pContext.CurrentFrameLineCount += 1;
@@ -427,6 +430,8 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::SmallCheckBox("draw bars", &pContext.ShowProgressBars);
 			ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
 				"that entry is in proportion to the largest entry");
+
+			ImGuiEx::SmallCheckBox("index numbers", &pContext.IndexNumbers);
 
 			ImGui::SetNextItemWidth(260.0f);
 			ImGuiEx::SmallInputText("short name", pContext.Name, sizeof(pContext.Name));
