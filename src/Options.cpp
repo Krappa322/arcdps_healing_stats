@@ -58,6 +58,7 @@ bool ReadIni(HealTableOptions& pOptions)
 		pOptions.Windows[i].ExcludeUnmapped = healtable_ini.GetBoolValue(section, "exclude_unmapped", pOptions.Windows[i].ExcludeUnmapped);
 
 		pOptions.Windows[i].ShowProgressBars = healtable_ini.GetBoolValue(section, "show_progress_bars", pOptions.Windows[i].ShowProgressBars);
+		pOptions.Windows[i].IndexNumbers = healtable_ini.GetBoolValue(section, "index_numbers", pOptions.Windows[i].IndexNumbers);
 
 		val = healtable_ini.GetValue(section, "name", nullptr);
 		if (val != nullptr)
@@ -85,8 +86,8 @@ bool ReadIni(HealTableOptions& pOptions)
 
 		pOptions.Windows[i].WindowFlags = static_cast<ImGuiWindowFlags_>(healtable_ini.GetLongValue(section, "window_flags", pOptions.Windows[i].WindowFlags));
 
-		LOG("Read window %u from ini file: show_window=%s data_source_choice=%i sort_order_choice=%i combat_end_condition_choice=%i, exclude_group=%s exclude_off_group=%s exclude_off_squad=%s exclude_minions=%s exclude_unmapped=%s show_progress_bars=%s, name='%s' title_format='%s' entry_format='%s' details_entry_format='%s'",
-			i, BOOL_STR(pOptions.Windows[i].Shown), pOptions.Windows[i].DataSourceChoice, pOptions.Windows[i].SortOrderChoice, pOptions.Windows[i].CombatEndConditionChoice, BOOL_STR(pOptions.Windows[i].ExcludeGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffSquad), BOOL_STR(pOptions.Windows[i].ExcludeMinions), BOOL_STR(pOptions.Windows[i].ExcludeUnmapped), BOOL_STR(pOptions.Windows[i].ShowProgressBars), pOptions.Windows[i].Name, pOptions.Windows[i].TitleFormat, pOptions.Windows[i].EntryFormat, pOptions.Windows[i].DetailsEntryFormat);
+		LOG("Read window %u from ini file: show_window=%s data_source_choice=%i sort_order_choice=%i combat_end_condition_choice=%i, exclude_group=%s exclude_off_group=%s exclude_off_squad=%s exclude_minions=%s exclude_unmapped=%s show_progress_bars=%s, index_numbers=%s, name='%s' title_format='%s' entry_format='%s' details_entry_format='%s'",
+			i, BOOL_STR(pOptions.Windows[i].Shown), pOptions.Windows[i].DataSourceChoice, pOptions.Windows[i].SortOrderChoice, pOptions.Windows[i].CombatEndConditionChoice, BOOL_STR(pOptions.Windows[i].ExcludeGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffGroup), BOOL_STR(pOptions.Windows[i].ExcludeOffSquad), BOOL_STR(pOptions.Windows[i].ExcludeMinions), BOOL_STR(pOptions.Windows[i].ExcludeUnmapped), BOOL_STR(pOptions.Windows[i].ShowProgressBars), BOOL_STR(pOptions.Windows[i].IndexNumbers), pOptions.Windows[i].Name, pOptions.Windows[i].TitleFormat, pOptions.Windows[i].EntryFormat, pOptions.Windows[i].DetailsEntryFormat);
 	}
 
 	LOG("Read ini file debug_mode=%s", BOOL_STR(pOptions.DebugMode));
@@ -435,6 +436,7 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "ExcludeBarrierGeneration", ExcludeBarrierGeneration);
 
 	GetJsonValue(pJsonObject, "ShowProgressBars", ShowProgressBars);
+	GetJsonValue(pJsonObject, "IndexNumbers", IndexNumbers);
 	GetJsonValue(pJsonObject, "Name", Name);
 	GetJsonValue(pJsonObject, "TitleFormat", TitleFormat);
 	GetJsonValue(pJsonObject, "EntryFormat", EntryFormat);
@@ -490,6 +492,7 @@ do {\
 	SET_JSON_VAL(ExcludeBarrierGeneration);
 
 	SET_JSON_VAL(ShowProgressBars);
+	SET_JSON_VAL(IndexNumbers);
 	SET_JSON_VAL_CSTR_ARRAY(Name);
 	SET_JSON_VAL_CSTR_ARRAY(TitleFormat);
 	SET_JSON_VAL_CSTR_ARRAY(EntryFormat);

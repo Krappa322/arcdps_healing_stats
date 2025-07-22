@@ -57,7 +57,7 @@ void ImGuiEx::SmallUnindent()
 	ImGui::Unindent(ImGui::GetCurrentContext()->FontSize);
 }
 
-float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio)
+float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio, std::optional<size_t> indexNumber)
 {
 	ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(204, 204, 212, 255));
 	ImGui::BeginGroup();
@@ -69,6 +69,7 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 
 	ImVec2 leftTextSize = ImGui::CalcTextSize(pLeftText.data(), pLeftText.data() + pLeftText.size());
 	ImVec2 rightTextSize = ImGui::CalcTextSize(pRightText.data(), pRightText.data() + pRightText.size());
+	ImVec2 indexNumberSize = ImVec2();
 
 	if (pFillRatio.has_value() == true)
 	{
@@ -95,6 +96,15 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 
 	// Add ItemInnerSpacing even if no box is being drawn, that way it looks consistent with and without progress bars
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetStyle().ItemInnerSpacing.x);
+	if (indexNumber.has_value() == true)
+	{
+		char buffer[32];
+		snprintf(buffer, sizeof(buffer), "%zu: ", *indexNumber);
+		indexNumberSize = ImGui::CalcTextSize(buffer);
+
+		ImGui::TextUnformatted(buffer);
+		ImGui::SameLine();
+	}
 	ImGui::TextUnformatted(pLeftText.data(), pLeftText.data() + pLeftText.size());
 
 	ImGui::SameLine();
@@ -104,6 +114,6 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 	ImGui::EndGroup();
 	ImGui::PopStyleColor();
 
-	// window padding - inner spacing - left text - item spacing * 2 - right text - inner spacing - window padding
-	return leftTextSize.x + rightTextSize.x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetStyle().ItemInnerSpacing.x * 2.0f + ImGui::GetCurrentWindowRead()->WindowPadding.x * 2.0f;
+	// index number - window padding - inner spacing - left text - item spacing * 2 - right text - inner spacing - window padding
+	return indexNumberSize.x + leftTextSize.x + rightTextSize.x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetStyle().ItemInnerSpacing.x * 2.0f + ImGui::GetCurrentWindowRead()->WindowPadding.x * 2.0f;
 }
