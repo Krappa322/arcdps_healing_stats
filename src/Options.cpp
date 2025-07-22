@@ -58,7 +58,6 @@ bool ReadIni(HealTableOptions& pOptions)
 		pOptions.Windows[i].ExcludeUnmapped = healtable_ini.GetBoolValue(section, "exclude_unmapped", pOptions.Windows[i].ExcludeUnmapped);
 
 		pOptions.Windows[i].ShowProgressBars = healtable_ini.GetBoolValue(section, "show_progress_bars", pOptions.Windows[i].ShowProgressBars);
-		pOptions.Windows[i].IndexNumbers = healtable_ini.GetBoolValue(section, "index_numbers", pOptions.Windows[i].IndexNumbers);
 
 		val = healtable_ini.GetValue(section, "name", nullptr);
 		if (val != nullptr)
