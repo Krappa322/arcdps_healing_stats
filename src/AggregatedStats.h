@@ -22,7 +22,6 @@ enum class GroupFilter
 
 struct AggregatedStatsEntry
 {
-	// ToDo: remove this and replace with Agent.Id
 	uint64_t Id;
 	HealedAgent Agent;
 	float TimeInCombat;
