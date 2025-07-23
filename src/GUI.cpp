@@ -1,6 +1,7 @@
 #include "GUI.h"
 
 #include "AggregatedStatsCollection.h"
+#include "arcdps_extra.h"
 #include "Exports.h"
 #include "ImGuiEx.h"
 #include "Log.h"
@@ -9,6 +10,8 @@
 #include <ArcdpsExtension/Widgets.h>
 
 #include <array>
+#include <map>
+#include <tuple>
 #include <Windows.h>
 
 static constexpr EnumStringArray<AutoUpdateSettingEnum> AUTO_UPDATE_SETTING_ITEMS{
@@ -28,6 +31,65 @@ static constexpr EnumStringArray<Position, static_cast<size_t>(Position::WindowR
 static constexpr EnumStringArray<CornerPosition, static_cast<size_t>(CornerPosition::BottomRight) + 1> CORNER_POSITION_ITEMS{
 	"top-left", "top-right", "bottom-left", "bottom-right"};
 
+static const std::map<std::pair<Prof, uint32_t>, std::pair<std::string, std::string>> ProfessionEliteMapping{
+	{{Prof::PROF_UNKNOWN,  0xFFFFFFFF}, {"(Unk)", "TBD"}},
+	// Guardian
+	{{Prof::PROF_GUARD, 0}, {"(Gdn)", "TBD"}},
+	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_DRAGONHUNTER}, {"(Dgh)", "TBD"}},
+	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_FIREBRAND}, {"(Fbd)", "TBD"}},
+	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_WILLBENDER}, {"(Wbd)", "TBD"}},
+	// Warrior
+	{{Prof::PROF_WARRIOR, 0}, {"(War)", "TBD"}},
+	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_BERSERKER}, {"(Brs)", "TBD"}},
+	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_SPELLBREAKER}, {"(Spb)", "TBD"}},
+	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_BLADESWORN}, {"(Bds)", "TBD"}},
+	// Engineer
+	{{Prof::PROF_ENGINEER, 0}, {"(Eng)", "TBD"}},
+	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_SCRAPPER}, {"(Scr)", "TBD"}},
+	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_HOLOSMITH}, {"(Hls)", "TBD"}},
+	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_MECHANIST}, {"(Mec)", "TBD"}},
+	// Ranger
+	{{Prof::PROF_RANGER, 0}, {"(Rgr)", "TBD"}},
+	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_DRUID}, {"(Dru)", "TBD"}},
+	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_SOULBEAST}, {"(Slb)", "TBD"}},
+	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_UNTAMED}, {"(Unt)", "TBD"}},
+	// Thief
+	{{Prof::PROF_THIEF, 0}, {"(Thf)", "TBD"}},
+	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_DAREDEVIL}, {"(Dar)", "TBD"}},
+	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_DEADEYE}, {"(Ded)", "TBD"}},
+	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_SPECTER}, {"(Spe)", "TBD"}},
+	// Elementalist
+	{{Prof::PROF_ELE, 0}, {"(Ele)", "TBD"}},
+	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_TEMPEST}, {"(Tmp)", "TBD"}},
+	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_WEAVER}, {"(Wea)", "TBD"}},
+	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_CATALYST}, {"(Cat)", "TBD"}},
+	// Mesmer
+	{{Prof::PROF_MESMER, 0}, {"(Mes)", "TBD"}},
+	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_CHRONOMANCER}, {"(Chr)", "TBD"}},
+	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_MIRAGE}, {"(Mir)", "TBD"}},
+	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_VIRTUOSO}, {"(Vir)", "TBD"}},
+	// Necromancer
+	{{Prof::PROF_NECRO, 0}, {"(Nec)", "TBD"}},
+	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_REAPER}, {"(Rea)", "TBD"}},
+	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_SCOURGE}, {"(Scg)", "TBD"}},
+	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_HARBINGER}, {"(Har)", "TBD"}},
+	// Revenant
+	{{Prof::PROF_RENEGADE, 0}, {"(Rev)", "TBD"}},
+	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_HERALD}, {"(Her)", "TBD"}},
+	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_RENEGADE}, {"(Ren)", "TBD"}},
+	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_VINDICATOR}, {"(Vin)", "TBD"}},
+};
+
+static std::string GetProfessionText(Prof pProfession, uint32_t pElite)
+{
+	auto it = ProfessionEliteMapping.find({ pProfession, pElite });
+	if (it != ProfessionEliteMapping.end())
+	{
+		return it->second.first;
+	}
+	return "(Unk)";
+}
+
 static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowState& pState, DataSource pDataSource)
 {
 	if (pState.IsOpen == false)
@@ -38,7 +100,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	char buffer[1024];
 	// Using "###" means the id of the window is calculated only from the part after the hashes (which
 	// in turn means that the name of the window can change if necessary)
-	snprintf(buffer, sizeof(buffer), "%s###HEALDETAILS.%u.%i.%llu", pState.Name.c_str(), pContext.WindowId, static_cast<int>(pDataSource), pState.Id);
+	snprintf(buffer, sizeof(buffer), "%s###HEALDETAILS.%u.%i.%llu", pState.Agent.Name.c_str(), pContext.WindowId, static_cast<int>(pDataSource), pState.Id);
 	ImGui::SetNextWindowSize(ImVec2(600, 360), ImGuiCond_FirstUseEver);
 	ImGui::Begin(buffer, &pState.IsOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus);
 
@@ -175,14 +237,14 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
 		float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
 
-		std::string_view name = entry.Name;
+		std::string_view name = entry.Agent.Name;
 		if (pContext.MaxNameLength > 0)
 		{
 			name = name.substr(0, pContext.MaxNameLength);
 		}
 		pState.LastFrameRightSideMinWidth = (std::max)(
 			pState.LastFrameRightSideMinWidth,
-			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt, false));
+			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt, std::nullopt, false));
 	}
 	
 	pState.LastFrameRightSideMinWidth += ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
@@ -237,7 +299,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 		float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
 		float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
 
-		std::string_view name = entry.Name;
+		std::string_view name = entry.Agent.Name;
 		if (pContext.MaxNameLength > 0)
 		{
 			name = name.substr(0, pContext.MaxNameLength);
@@ -246,6 +308,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt,
 			pContext.ShowProgressBars == true ? std::optional{barrierGenerationRatio} : std::nullopt,
 			pContext.IndexNumbers == true ? std::optional{i + 1} : std::nullopt,
+			pContext.ProfessionText == true ? std::optional{GetProfessionText(entry.Agent.Profession, entry.Agent.Elite)} : std::nullopt,
 			pContext.SelfUniqueId == entry.Id);
 
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
@@ -295,7 +358,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			}
 			state->IsOpen = !state->IsOpen;
 
-			LOG("Toggled details window for entry %llu %s in window %u", entry.Id, entry.Name.c_str(), pWindowIndex);
+			LOG("Toggled details window for entry %llu %s in window %u", entry.Id, entry.Agent.Name.c_str(), pWindowIndex);
 		}
 	}
 }
@@ -433,6 +496,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 				"that entry is in proportion to the largest entry");
 
 			ImGuiEx::SmallCheckBox("index numbers", &pContext.IndexNumbers);
+			ImGuiEx::SmallCheckBox("profession text", &pContext.ProfessionText);
 
 			ImGui::SetNextItemWidth(260.0f);
 			ImGuiEx::SmallInputText("short name", pContext.Name, sizeof(pContext.Name));

@@ -13,9 +13,9 @@
 constexpr const char* GROUP_FILTER_STRING[] = { "Group", "Squad", "All (Excluding Summons)", "All (Including Summons)" };
 static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
 
-AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration)
+AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, HealedAgent pAgent, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration)
 	: Id{pId}
-	, Name{pName}
+	, Agent{pAgent}
 	, TimeInCombat{pTimeInCombat}
 	, Healing{pHealing}
 	, Hits{pHits}
@@ -36,9 +36,9 @@ AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealWindowOpt
 	assert(myOptions.DataSourceChoice < DataSource::Max);
 }
 
-void AggregatedVector::Add(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration)
+void AggregatedVector::Add(uint64_t pId, HealedAgent pAgent, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration)
 {
-	const AggregatedStatsEntry& newEntry = Entries.emplace_back(pId, std::move(pName), pTimeInCombat, pHealing, pHits, std::move(pCasts), pBarrierGeneration);
+	const AggregatedStatsEntry& newEntry = Entries.emplace_back(pId, std::move(pAgent), pTimeInCombat, pHealing, pHits, std::move(pCasts), pBarrierGeneration);
 	HighestHealing = (std::max)(HighestHealing, newEntry.Healing);
 }
 
@@ -516,7 +516,7 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 			skillName = buffer;
 		}
 
-		entry->Add(skillId, std::string{skillName}, GetCombatTime(), skill.Healing, skill.Ticks, std::nullopt, skill.BarrierGeneration);
+		entry->Add(skillId, HealedAgent{std::move(skillName)}, GetCombatTime(), skill.Healing, skill.Ticks, std::nullopt, skill.BarrierGeneration);
 	}
 
 	// TODO: Can this be separated into indirect healing and barrier generation as separate entries? 
@@ -524,7 +524,7 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 	{
 		std::string skillName("From Damage Dealt");
 
-		entry->Add(IndirectHealingSkillId, std::move(skillName), GetCombatTime(), totalIndirectHealing, totalIndirectTicks, std::nullopt, totalIndirectBarrierGeneration);
+		entry->Add(IndirectHealingSkillId, HealedAgent{std::move(skillName)}, GetCombatTime(), totalIndirectHealing, totalIndirectTicks, std::nullopt, totalIndirectBarrierGeneration);
 	}
 
 	Sort(entry->Entries, myOptions.SortOrderChoice);
@@ -540,7 +540,7 @@ void AggregatedStats::Sort(std::vector<AggregatedStatsEntry>& pVector, SortOrder
 		std::sort(pVector.begin(), pVector.end(),
 			[](const auto& pLeft, const auto& pRight)
 			{
-				return pLeft.Name < pRight.Name;
+				return pLeft.Agent.Name < pRight.Agent.Name;
 			});
 		break;
 
@@ -548,7 +548,7 @@ void AggregatedStats::Sort(std::vector<AggregatedStatsEntry>& pVector, SortOrder
 		std::sort(pVector.begin(), pVector.end(),
 			[](const auto& pLeft, const auto& pRight)
 			{
-				return pLeft.Name > pRight.Name;
+				return pLeft.Agent.Name > pRight.Agent.Name;
 			});
 		break;
 

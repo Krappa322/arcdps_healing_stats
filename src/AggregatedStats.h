@@ -22,8 +22,9 @@ enum class GroupFilter
 
 struct AggregatedStatsEntry
 {
+	// ToDo: remove this and replace with Agent.Id
 	uint64_t Id;
-	std::string Name;
+	HealedAgent Agent;
 	float TimeInCombat;
 
 	uint64_t Healing;
@@ -31,11 +32,11 @@ struct AggregatedStatsEntry
 	std::optional<uint64_t> Casts;
 	uint64_t BarrierGeneration;
 
-	AggregatedStatsEntry(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration);
+	AggregatedStatsEntry(uint64_t pId, HealedAgent pAgent, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration);
 
 	auto GetTie() const
 	{
-		return std::tie(Id, Name, TimeInCombat, Healing, Hits, Casts, BarrierGeneration);
+		return std::tie(Id, Agent, TimeInCombat, Healing, Hits, Casts, BarrierGeneration);
 	}
 };
 
@@ -44,7 +45,7 @@ struct AggregatedVector
 	std::vector<AggregatedStatsEntry> Entries;
 	uint64_t HighestHealing{0};
 
-	void Add(uint64_t pId, std::string&& pName, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration);
+	void Add(uint64_t pId, HealedAgent pAgent, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration);
 };
 
 
