@@ -5,14 +5,14 @@ class AggregatedStatsCollection
 {
 	struct Player
 	{
-		Player(std::string&& pName, HealingStats&& pStats, const HealWindowOptions& pOptions, bool pDebugMode);
+		Player(HealedAgent&& pAgent, HealingStats&& pStats, const HealWindowOptions& pOptions, bool pDebugMode);
 
 		AggregatedStats Stats;
-		std::string Name;
+		HealedAgent Agent;
 	};
 
 public:
-	AggregatedStatsCollection(std::map<uintptr_t, std::pair<std::string, HealingStats>>&& pPeerStates, uintptr_t pLocalUniqueId, const HealWindowOptions& pOptions, bool pDebugMode);
+	AggregatedStatsCollection(std::map<uintptr_t, std::pair<HealedAgent, HealingStats>>&& pPeerStates, uintptr_t pLocalUniqueId, const HealWindowOptions& pOptions, bool pDebugMode);
 
 	const AggregatedStatsEntry& GetTotal(DataSource pDataSource);
 	const AggregatedVector& GetStats(DataSource pDataSource);

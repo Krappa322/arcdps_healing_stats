@@ -108,7 +108,7 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 			// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
 			if (pSourceAgent->name != nullptr)
 			{
-				mAgentTable.AddAgent(pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pSourceAgent->name, pDestinationAgent->team, std::nullopt, isPlayer);
+				mAgentTable.AddAgent(pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pSourceAgent->name, pDestinationAgent->team, std::nullopt, isPlayer, pDestinationAgent->prof, pDestinationAgent->elite);
 			}
 		}
 		else
@@ -198,7 +198,7 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
 		if (pSourceAgent->name != nullptr)
 		{
-			mAgentTable.AddAgent(pSourceAgent->id, pEvent->src_instid, pSourceAgent->name, static_cast<uint16_t>(pEvent->dst_agent), isMinion, isPlayer);
+			mAgentTable.AddAgent(pSourceAgent->id, pEvent->src_instid, pSourceAgent->name, static_cast<uint16_t>(pEvent->dst_agent), isMinion, isPlayer, pDestinationAgent->prof, pDestinationAgent->elite);
 		}
 
 		return;
@@ -262,7 +262,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 			// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
 			if (pSourceAgent->name != nullptr)
 			{
-				mAgentTable.AddAgent(pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pSourceAgent->name, pDestinationAgent->team, std::nullopt, isPlayer);
+				mAgentTable.AddAgent(pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pSourceAgent->name, pDestinationAgent->team, std::nullopt, isPlayer, pDestinationAgent->prof, pDestinationAgent->elite);
 			}
 
 			if (pDestinationAgent->self != 0)
@@ -433,7 +433,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 	// Register agent if it's not already known
 	if (pDestinationAgent->name != nullptr)
 	{
-		mAgentTable.AddAgent(pDestinationAgent->id, pEvent->dst_instid, pDestinationAgent->name, std::nullopt, pEvent->dst_master_instid != 0, std::nullopt);
+		mAgentTable.AddAgent(pDestinationAgent->id, pEvent->dst_instid, pDestinationAgent->name, std::nullopt, pEvent->dst_master_instid != 0, std::nullopt, pDestinationAgent->prof, pDestinationAgent->elite);
 	}
 
 	if (pEvent->is_shields != 0)
@@ -614,9 +614,9 @@ void EventProcessor::PeerCombat(cbtevent* pEvent, uint16_t pPeerInstanceId)
 	}
 }
 
-std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> EventProcessor::GetState(uintptr_t pSelfUniqueId)
+std::pair<uintptr_t, std::map<uintptr_t, std::pair<HealedAgent, HealingStats>>> EventProcessor::GetState(uintptr_t pSelfUniqueId)
 {
-	std::map<uintptr_t, std::pair<std::string, HealingStats>> result;
+	std::map<uintptr_t, std::pair<HealedAgent, HealingStats>> result;
 	uint64_t collectionTime = timeGetTime();
 	if (pSelfUniqueId == 0)
 	{
@@ -632,14 +632,14 @@ std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> 
 	localEntry->second.second.Agents = mAgentTable.GetState();
 	localEntry->second.second.Skills = std::shared_ptr(mSkillTable);
 
-	std::optional<std::string> localName = mAgentTable.GetName(pSelfUniqueId);
-	if (localName.has_value())
+	std::optional<HealedAgent> localAgentData = mAgentTable.GetAgentData(pSelfUniqueId);
+	if (localAgentData.has_value())
 	{
-		localEntry->second.first = std::move(*localName);
+		localEntry->second.first = std::move(*localAgentData);
 	}
 	else
 	{
-		localEntry->second.first = "local (unmapped)";
+		localEntry->second.first = HealedAgent{"local (unmapped)"};
 	}
 
 
@@ -664,17 +664,17 @@ std::pair<uintptr_t, std::map<uintptr_t, std::pair<std::string, HealingStats>>> 
 		entry->second.second.Agents = mAgentTable.GetState();
 		entry->second.second.Skills = std::shared_ptr(mSkillTable);
 		
-		std::optional<std::string> name = mAgentTable.GetName(uniqueId);
-		if (name.has_value())
+		std::optional<HealedAgent> agentData = mAgentTable.GetAgentData(uniqueId);
+		if (agentData.has_value())
 		{
-			entry->second.first = std::move(*name);
+			entry->second.first = std::move(*agentData);
 		}
 		else
 		{
-			entry->second.first = "peer (unmapped)";
+			entry->second.first = HealedAgent{"peer (unmapped)"};
 		}
 
-		DEBUGLOG("peer %llu %s, %zu events", uniqueId, entry->second.first.c_str(), entry->second.second.Events.size());
+		DEBUGLOG("peer %llu %s, %zu events", uniqueId, entry->second.first.Name.c_str(), entry->second.second.Events.size());
 	}
 
 	DEBUGLOG("self %llu, %zu entries", pSelfUniqueId, result.size());

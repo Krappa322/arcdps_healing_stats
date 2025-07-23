@@ -4,13 +4,13 @@
 
 const static AggregatedVector EMPTY_STATS;
 
-AggregatedStatsCollection::Player::Player(std::string&& pName, HealingStats&& pStats, const HealWindowOptions& pOptions, bool pDebugMode)
-	: Name{std::move(pName)}
+AggregatedStatsCollection::Player::Player(HealedAgent&& pAgent, HealingStats&& pStats, const HealWindowOptions& pOptions, bool pDebugMode)
+	: Agent{std::move(pAgent)}
 	, Stats{std::move(pStats), pOptions, pDebugMode}
 {
 }
 
-AggregatedStatsCollection::AggregatedStatsCollection(std::map<uintptr_t, std::pair<std::string, HealingStats>>&& pPeerStates, uintptr_t pLocalUniqueId, const HealWindowOptions& pOptions, bool pDebugMode)
+AggregatedStatsCollection::AggregatedStatsCollection(std::map<uintptr_t, std::pair<HealedAgent, HealingStats>>&& pPeerStates, uintptr_t pLocalUniqueId, const HealWindowOptions& pOptions, bool pDebugMode)
 	: mOptions{pOptions}
 	, mDebugMode{pDebugMode}
 {
@@ -52,7 +52,7 @@ const AggregatedStatsEntry& AggregatedStatsCollection::GetTotal(DataSource pData
 		barrierGeneration += entry.BarrierGeneration;
 	}
 
-	mPeersOutgoingTotal = std::make_unique<AggregatedStatsEntry>(0, "__SUPERTOTAL__", mLocalState->second.Stats.GetCombatTime(), healing, hits, std::nullopt, barrierGeneration);
+	mPeersOutgoingTotal = std::make_unique<AggregatedStatsEntry>(0, HealedAgent{ "__SUPERTOTAL__" }, mLocalState->second.Stats.GetCombatTime(), healing, hits, std::nullopt, barrierGeneration);
 	return *mPeersOutgoingTotal;
 }
 
@@ -73,7 +73,7 @@ const AggregatedVector& AggregatedStatsCollection::GetStats(DataSource pDataSour
 	for (auto& [id, source] : mSourceData)
 	{
 		const AggregatedStatsEntry& entry = source.Stats.GetTotal();
-		mPeersOutgoingStats->Add(id, std::string{source.Name}, source.Stats.GetCombatTime(), entry.Healing, entry.Hits, entry.Casts, entry.BarrierGeneration);
+		mPeersOutgoingStats->Add(id, source.Agent, source.Stats.GetCombatTime(), entry.Healing, entry.Hits, entry.Casts, entry.BarrierGeneration);
 	}
 
 	AggregatedStats::Sort(mPeersOutgoingStats->Entries, mOptions.SortOrderChoice);
