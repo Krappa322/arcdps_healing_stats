@@ -9,5 +9,6 @@ build
 *.log
 *.aps
 *.txt
+*.user
 packages
 vcpkg_installed

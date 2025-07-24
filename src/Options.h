@@ -91,7 +91,7 @@ struct fmt::formatter<HealTableOptions> : SimpleFormatter
 	// Formats the point p using the parsed format specification (presentation)
 	// stored in this formatter.
 	template <typename FormatContext>
-	auto format(const HealTableOptions& pObject, FormatContext& pContext) -> decltype(pContext.out())
+	auto format(const HealTableOptions& pObject, FormatContext& pContext) const
 	{
 		nlohmann::json jsonObject;
 		pObject.ToJson(jsonObject);

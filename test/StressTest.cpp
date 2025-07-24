@@ -48,7 +48,7 @@ TEST(Stress, DISABLED_Stress)
 			size_t sender_num;
 			memcpy(&sender_num, pEvent, sizeof(sender_num));
 			size_t event_num;
-			memcpy(&event_num, reinterpret_cast<const byte*>(pEvent) + sizeof(sender_num), sizeof(event_num));
+			memcpy(&event_num, reinterpret_cast<const char*>(pEvent) + sizeof(sender_num), sizeof(event_num));
 
 			if (sender_num > next_event[i].size())
 			{
@@ -108,7 +108,7 @@ TEST(Stress, DISABLED_Stress)
 				for (uint64_t i = 0; i < pEventCount; i++)
 				{
 					memcpy(&ev, &pSenderNum, sizeof(pSenderNum));
-					memcpy(reinterpret_cast<byte*>(&ev) + sizeof(pSenderNum), &i, sizeof(i));
+					memcpy(reinterpret_cast<char*>(&ev) + sizeof(pSenderNum), &i, sizeof(i));
 
 					pClient.FlushEvents(4999);
 					pClient.ProcessLocalEvent(&ev, nullptr, nullptr, nullptr, 0, 0);

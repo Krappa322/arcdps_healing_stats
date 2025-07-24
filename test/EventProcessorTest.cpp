@@ -11,6 +11,8 @@
 #include "Exports.h"
 #include "Utilities.h"
 
+#include <timeapi.h>
+
 TEST(EventProcessorTest, ImplicitSelfCombatExitOnSelfDeregister)
 {
 	EventProcessor processor;
