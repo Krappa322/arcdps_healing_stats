@@ -73,6 +73,7 @@ TEST(ConfigTest, Serialize_Deserialize)
 		window.ShowProgressBars = rand_t<bool>();
 		window.IndexNumbers = rand_t<bool>();
 		window.ProfessionText = rand_t<bool>();
+		window.ProfessionIcons = rand_t<bool>();
 		rand_string(window.Name);
 		rand_string(window.TitleFormat);
 		rand_string(window.EntryFormat);
@@ -133,6 +134,7 @@ TEST(ConfigTest, Serialize_Deserialize)
 		ASSERT_EQ(windowLeft.ShowProgressBars, windowRight.ShowProgressBars);
 		ASSERT_EQ(windowLeft.IndexNumbers, windowRight.IndexNumbers);
 		ASSERT_EQ(windowLeft.ProfessionText, windowRight.ProfessionText);
+		ASSERT_EQ(windowLeft.ProfessionIcons, windowRight.ProfessionIcons);
 		ASSERT_EQ(strcmp(windowLeft.Name, windowRight.Name), 0);
 		ASSERT_EQ(strcmp(windowLeft.TitleFormat, windowRight.TitleFormat), 0);
 		ASSERT_EQ(strcmp(windowLeft.EntryFormat, windowRight.EntryFormat), 0);

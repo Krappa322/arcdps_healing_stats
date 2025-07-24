@@ -437,6 +437,7 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "ShowProgressBars", ShowProgressBars);
 	GetJsonValue(pJsonObject, "IndexNumbers", IndexNumbers);
 	GetJsonValue(pJsonObject, "ProfessionText", ProfessionText);
+	GetJsonValue(pJsonObject, "ProfessionIcons", ProfessionIcons);
 	GetJsonValue(pJsonObject, "Name", Name);
 	GetJsonValue(pJsonObject, "TitleFormat", TitleFormat);
 	GetJsonValue(pJsonObject, "EntryFormat", EntryFormat);
@@ -494,6 +495,7 @@ do {\
 	SET_JSON_VAL(ShowProgressBars);
 	SET_JSON_VAL(IndexNumbers);
 	SET_JSON_VAL(ProfessionText);
+	SET_JSON_VAL(ProfessionIcons);
 	SET_JSON_VAL_CSTR_ARRAY(Name);
 	SET_JSON_VAL_CSTR_ARRAY(TitleFormat);
 	SET_JSON_VAL_CSTR_ARRAY(EntryFormat);

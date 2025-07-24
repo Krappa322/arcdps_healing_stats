@@ -3,8 +3,11 @@
 #include "AggregatedStatsCollection.h"
 #include "arcdps_extra.h"
 #include "Exports.h"
+#include "IconLoader.h"
 #include "ImGuiEx.h"
 #include "Log.h"
+#include "../resource.h"
+#include "SpecializationData.h"
 #include "Utilities.h"
 
 #include <ArcdpsExtension/Widgets.h>
@@ -31,63 +34,101 @@ static constexpr EnumStringArray<Position, static_cast<size_t>(Position::WindowR
 static constexpr EnumStringArray<CornerPosition, static_cast<size_t>(CornerPosition::BottomRight) + 1> CORNER_POSITION_ITEMS{
 	"top-left", "top-right", "bottom-left", "bottom-right"};
 
-static const std::map<std::pair<Prof, uint32_t>, std::pair<std::string, std::string>> ProfessionEliteMapping{
-	{{Prof::PROF_UNKNOWN,  0xFFFFFFFF}, {"(Unk)", "TBD"}},
+static std::map<std::pair<Prof, uint32_t>, SpecializationData> ProfessionEliteMapping{
+	{{Prof::PROF_UNKNOWN,  0xFFFFFFFF}, {"(Unk)"}},
 	// Guardian
-	{{Prof::PROF_GUARD, 0}, {"(Gdn)", "TBD"}},
-	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_DRAGONHUNTER}, {"(Dgh)", "TBD"}},
-	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_FIREBRAND}, {"(Fbd)", "TBD"}},
-	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_WILLBENDER}, {"(Wbd)", "TBD"}},
+	{{Prof::PROF_GUARD, 0}, {"(Gdn)", IDB_PNG_SPEC_GUARDIAN}},
+	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_DRAGONHUNTER}, {"(Dgh)"}},
+	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_FIREBRAND}, {"(Fbd)"}},
+	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_WILLBENDER}, {"(Wbd)"}},
 	// Warrior
-	{{Prof::PROF_WARRIOR, 0}, {"(War)", "TBD"}},
-	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_BERSERKER}, {"(Brs)", "TBD"}},
-	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_SPELLBREAKER}, {"(Spb)", "TBD"}},
-	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_BLADESWORN}, {"(Bds)", "TBD"}},
+	{{Prof::PROF_WARRIOR, 0}, {"(War)"}},
+	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_BERSERKER}, {"(Brs)"}},
+	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_SPELLBREAKER}, {"(Spb)"}},
+	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_BLADESWORN}, {"(Bds)"}},
 	// Engineer
-	{{Prof::PROF_ENGINEER, 0}, {"(Eng)", "TBD"}},
-	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_SCRAPPER}, {"(Scr)", "TBD"}},
-	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_HOLOSMITH}, {"(Hls)", "TBD"}},
-	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_MECHANIST}, {"(Mec)", "TBD"}},
+	{{Prof::PROF_ENGINEER, 0}, {"(Eng)"}},
+	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_SCRAPPER}, {"(Scr)"}},
+	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_HOLOSMITH}, {"(Hls)"}},
+	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_MECHANIST}, {"(Mec)"}},
 	// Ranger
-	{{Prof::PROF_RANGER, 0}, {"(Rgr)", "TBD"}},
-	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_DRUID}, {"(Dru)", "TBD"}},
-	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_SOULBEAST}, {"(Slb)", "TBD"}},
-	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_UNTAMED}, {"(Unt)", "TBD"}},
+	{{Prof::PROF_RANGER, 0}, {"(Rgr)"}},
+	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_DRUID}, {"(Dru)"}},
+	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_SOULBEAST}, {"(Slb)"}},
+	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_UNTAMED}, {"(Unt)"}},
 	// Thief
-	{{Prof::PROF_THIEF, 0}, {"(Thf)", "TBD"}},
-	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_DAREDEVIL}, {"(Dar)", "TBD"}},
-	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_DEADEYE}, {"(Ded)", "TBD"}},
-	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_SPECTER}, {"(Spe)", "TBD"}},
+	{{Prof::PROF_THIEF, 0}, {"(Thf)"}},
+	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_DAREDEVIL}, {"(Dar)"}},
+	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_DEADEYE}, {"(Ded)"}},
+	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_SPECTER}, {"(Spe)"}},
 	// Elementalist
-	{{Prof::PROF_ELE, 0}, {"(Ele)", "TBD"}},
-	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_TEMPEST}, {"(Tmp)", "TBD"}},
-	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_WEAVER}, {"(Wea)", "TBD"}},
-	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_CATALYST}, {"(Cat)", "TBD"}},
+	{{Prof::PROF_ELE, 0}, {"(Ele)"}},
+	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_TEMPEST}, {"(Tmp)"}},
+	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_WEAVER}, {"(Wea)"}},
+	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_CATALYST}, {"(Cat)"}},
 	// Mesmer
-	{{Prof::PROF_MESMER, 0}, {"(Mes)", "TBD"}},
-	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_CHRONOMANCER}, {"(Chr)", "TBD"}},
-	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_MIRAGE}, {"(Mir)", "TBD"}},
-	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_VIRTUOSO}, {"(Vir)", "TBD"}},
+	{{Prof::PROF_MESMER, 0}, {"(Mes)"}},
+	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_CHRONOMANCER}, {"(Chr)"}},
+	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_MIRAGE}, {"(Mir)"}},
+	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_VIRTUOSO}, {"(Vir)"}},
 	// Necromancer
-	{{Prof::PROF_NECRO, 0}, {"(Nec)", "TBD"}},
-	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_REAPER}, {"(Rea)", "TBD"}},
-	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_SCOURGE}, {"(Scg)", "TBD"}},
-	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_HARBINGER}, {"(Har)", "TBD"}},
+	{{Prof::PROF_NECRO, 0}, {"(Nec)"}},
+	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_REAPER}, {"(Rea)"}},
+	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_SCOURGE}, {"(Scg)"}},
+	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_HARBINGER}, {"(Har)"}},
 	// Revenant
-	{{Prof::PROF_RENEGADE, 0}, {"(Rev)", "TBD"}},
-	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_HERALD}, {"(Her)", "TBD"}},
-	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_RENEGADE}, {"(Ren)", "TBD"}},
-	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_VINDICATOR}, {"(Vin)", "TBD"}},
+	{{Prof::PROF_RENEGADE, 0}, {"(Rev)"}},
+	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_HERALD}, {"(Her)"}},
+	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_RENEGADE}, {"(Ren)"}},
+	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_VINDICATOR}, {"(Vin)"}}
 };
+
+void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pD3DVersion)
+{
+	ID3D11Device* d3d11 = nullptr;
+	if (pD3DVersion == 11)
+	{
+		IDXGISwapChain* d3d11SwapChain = static_cast<IDXGISwapChain*>(pID3DPtr);
+		d3d11SwapChain->GetDevice(__uuidof(d3d11), (void**)&d3d11);
+	}
+
+	auto& iconLoader = IconLoader::instance();
+	iconLoader.Setup(pCurrentModule, nullptr, d3d11);
+
+	for (auto& [key, specializationData] : ProfessionEliteMapping)
+	{
+		specializationData.IconTextureId = iconLoader.LoadTexture(specializationData.IconResourceId);
+		//specializationData.IconResourceData = iconLoader.GetTexture(textureId);
+	}
+}
 
 static std::string GetProfessionText(Prof pProfession, uint32_t pElite)
 {
 	auto it = ProfessionEliteMapping.find({ pProfession, pElite });
 	if (it != ProfessionEliteMapping.end())
 	{
-		return it->second.first;
+		return it->second.Abbreviation;
 	}
 	return "(Unk)";
+}
+
+static void* GetProfessionIcon(Prof pProfession, uint32_t pElite)
+{
+	auto it = ProfessionEliteMapping.find({ pProfession, pElite });
+	if (it != ProfessionEliteMapping.end() && it->second.IconResourceId != 0)
+	{
+		if (it->second.IconTextureData != nullptr)
+		{
+			return it->second.IconTextureData;
+		}
+		else
+		{
+			auto textureData = IconLoader::instance().GetTexture(it->second.IconTextureId);
+			it->second.IconTextureData = textureData;
+			return textureData;
+		}
+	}
+	return nullptr;
 }
 
 static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowState& pState, DataSource pDataSource)
@@ -244,7 +285,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		}
 		pState.LastFrameRightSideMinWidth = (std::max)(
 			pState.LastFrameRightSideMinWidth,
-			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt, std::nullopt, false));
+			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt, std::nullopt, nullptr, false));
 	}
 	
 	pState.LastFrameRightSideMinWidth += ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
@@ -304,11 +345,13 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 		{
 			name = name.substr(0, pContext.MaxNameLength);
 		}
+
 		float minSize = ImGuiEx::StatsEntry(name, buffer,
 			pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt,
 			pContext.ShowProgressBars == true ? std::optional{barrierGenerationRatio} : std::nullopt,
 			pContext.IndexNumbers == true ? std::optional{i + 1} : std::nullopt,
 			pContext.ProfessionText == true ? std::optional{GetProfessionText(entry.Agent.Profession, entry.Agent.Elite)} : std::nullopt,
+			pContext.ProfessionIcons == true ? GetProfessionIcon(entry.Agent.Profession, entry.Agent.Elite) : nullptr,
 			pContext.SelfUniqueId == entry.Id);
 
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
@@ -495,8 +538,19 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
 				"that entry is in proportion to the largest entry");
 
+			//ImGuiEx::SmallCheckBox("use subgroup for bar colour", &pContext.UseSubgroupForBarColour);
 			ImGuiEx::SmallCheckBox("index numbers", &pContext.IndexNumbers);
 			ImGuiEx::SmallCheckBox("profession text", &pContext.ProfessionText);
+			ImGuiEx::SmallCheckBox("profession icons", &pContext.ProfessionIcons);
+			//ImGuiEx::SmallCheckBox("replace player with account name", &pContext.ReplacePlayerWithAccountName);
+			//ImGuiEx::SmallCheckBox("use profession for name colour", &pContext.UseProfessionForNameColour);
+			//ImGuiEx::SmallCheckBox("use subgroup for name colour", &pContext.UseSubgroupForNameColour);
+			//ImGuiEx::SmallCheckBox("use red names for players loarding", &pContext.UseRedNamesForPlayersLoading);
+			//ImGuiEx::SmallCheckBox("self on top", &pContext.SelfOnTop);
+			//ImGuiEx::SmallCheckBox("hide self from list", &pContext.HideSelfFromList);
+			//ImGuiEx::SmallCheckBox("self only", &pContext.SelfOnly);
+			//ImGuiEx::SmallCheckBox("anonymous mode", &pContext.AnonymousMode);
+			//ImGuiEx::SmallCheckBox("stats format padding with spaces", &pContext.StatsFormatPaddingWithSpaces);
 
 			ImGui::SetNextItemWidth(260.0f);
 			ImGuiEx::SmallInputText("short name", pContext.Name, sizeof(pContext.Name));
