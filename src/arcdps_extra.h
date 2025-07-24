@@ -1,4 +1,7 @@
 #pragma once
+
+#include <cstdint>
+
 enum ELITE_SPECIALIZATION : uint32_t {
 	SPEC_DRUID = 5,
 	SPEC_DAREDEVIL = 7,
