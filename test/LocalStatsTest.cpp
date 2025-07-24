@@ -160,7 +160,7 @@ TEST_P(XevtcLogTestFixture, druid_MO)
 	expectedAgents.Add(3151, "Janna Larion", combatTime, 21902, 71, std::nullopt, 0);
 	expectedAgents.Add(3137, "Lady Manyak", combatTime, 20637, 52, std::nullopt, 0);
 	expectedAgents.Add(3146, "Akashi Vi Britannia", combatTime, 20084, 55, std::nullopt, 0);
-	expectedAgents.Add(3147, u8"Moa Fhómhair", combatTime, 8220, 29, std::nullopt, 0);
+	expectedAgents.Add(3147, "Moa Fhómhair", combatTime, 8220, 29, std::nullopt, 0);
 
 	const AggregatedVector& agents = stats.GetStats(DataSource::Agents);
 	ASSERT_EQ(agents.Entries.size(), expectedAgents.Entries.size());

@@ -4,6 +4,8 @@
 #include "ImGuiEx.h"
 #include "Log.h"
 
+#include <shellapi.h>
+
 void UpdateChecker::Log(std::string&& pMessage)
 {
 	LogI("{}", pMessage);

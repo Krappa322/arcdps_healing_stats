@@ -9,6 +9,7 @@
 #include <atomic>
 #include <cassert>
 #include <Windows.h>
+#include <timeapi.h>
 
 using json = nlohmann::json;
 

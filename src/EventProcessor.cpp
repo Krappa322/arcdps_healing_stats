@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <timeapi.h>
 
 [[maybe_unused]]
 static void PrintEvent(cbtevent* pEvent)
