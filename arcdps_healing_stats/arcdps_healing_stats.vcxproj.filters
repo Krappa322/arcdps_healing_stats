@@ -32,4 +32,9 @@
   <ItemGroup>
     <None Include="..\vcpkg_installed\x64-windows-static\x64-windows\share\grpc\roots.pem" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\icons\specs\001.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

@@ -25,6 +25,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 // This triggers the linker to pick up the two exported functions from the static library
 void UnusedFunctionToHelpTheLinker()
 {
-	get_init_addr(nullptr, nullptr, nullptr, NULL, nullptr, nullptr);
+	get_init_addr(nullptr, nullptr, nullptr, NULL, nullptr, nullptr, 0);
 	get_release_addr();
 }

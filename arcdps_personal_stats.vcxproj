@@ -173,6 +173,7 @@
     <ClCompile Include="src\UpdateGUI.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\AgentTable.h" />
     <ClInclude Include="src\AggregatedStats.h" />
     <ClInclude Include="src\AggregatedStatsCollection.h" />
@@ -186,6 +187,7 @@
     <ClInclude Include="src\Options.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\PlayerStats.h" />
+    <ClInclude Include="src\SpecializationData.h" />
     <ClInclude Include="src\Skills.h" />
     <ClInclude Include="src\State.h" />
     <ClInclude Include="src\UpdateGUI.h" />
