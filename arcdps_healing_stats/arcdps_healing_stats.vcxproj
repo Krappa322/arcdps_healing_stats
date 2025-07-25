@@ -169,6 +169,41 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\icons\specs\001.png" />
+    <Image Include="..\icons\specs\002.png" />
+    <Image Include="..\icons\specs\003.png" />
+    <Image Include="..\icons\specs\004.png" />
+    <Image Include="..\icons\specs\005.png" />
+    <Image Include="..\icons\specs\006.png" />
+    <Image Include="..\icons\specs\007.png" />
+    <Image Include="..\icons\specs\008.png" />
+    <Image Include="..\icons\specs\009.png" />
+    <Image Include="..\icons\specs\e101.png" />
+    <Image Include="..\icons\specs\e102.png" />
+    <Image Include="..\icons\specs\e103.png" />
+    <Image Include="..\icons\specs\e201.png" />
+    <Image Include="..\icons\specs\e202.png" />
+    <Image Include="..\icons\specs\e203.png" />
+    <Image Include="..\icons\specs\e301.png" />
+    <Image Include="..\icons\specs\e302.png" />
+    <Image Include="..\icons\specs\e303.png" />
+    <Image Include="..\icons\specs\e401.png" />
+    <Image Include="..\icons\specs\e402.png" />
+    <Image Include="..\icons\specs\e403.png" />
+    <Image Include="..\icons\specs\e501.png" />
+    <Image Include="..\icons\specs\e502.png" />
+    <Image Include="..\icons\specs\e503.png" />
+    <Image Include="..\icons\specs\e601.png" />
+    <Image Include="..\icons\specs\e602.png" />
+    <Image Include="..\icons\specs\e603.png" />
+    <Image Include="..\icons\specs\e701.png" />
+    <Image Include="..\icons\specs\e702.png" />
+    <Image Include="..\icons\specs\e703.png" />
+    <Image Include="..\icons\specs\e801.png" />
+    <Image Include="..\icons\specs\e802.png" />
+    <Image Include="..\icons\specs\e803.png" />
+    <Image Include="..\icons\specs\e901.png" />
+    <Image Include="..\icons\specs\e902.png" />
+    <Image Include="..\icons\specs\e903.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
