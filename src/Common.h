@@ -1,5 +1,6 @@
 #pragma once
-#include "arcdps_structs_slim.h"
+
+#include <ArcdpsExtension/arcdps_structs_slim.h>
 
 enum class EventType
 {

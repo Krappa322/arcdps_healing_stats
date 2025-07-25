@@ -1,5 +1,6 @@
 #pragma once
-#include "arcdps_structs_slim.h"
+
+#include <ArcdpsExtension/arcdps_structs_slim.h>
 
 #ifdef __clang__
 #pragma clang diagnostic push

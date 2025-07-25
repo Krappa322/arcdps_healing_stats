@@ -1,5 +1,6 @@
 #pragma once
-#include "arcdps_structs_slim.h"
+
+#include <ArcdpsExtension/arcdps_structs_slim.h>
 
 #pragma pack(push, 1)
 namespace evtc_rpc

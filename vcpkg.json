@@ -6,27 +6,40 @@
     "cpr",
     "grpc",
     "gtest",
-	"jemalloc",
+    "jemalloc",
     "nlohmann-json",
     "prometheus-cpp",
-    "spdlog"
+    "spdlog",
+    "imgui",
+    "arcdps-mock",
+    {
+      "name": "arcdps-extension",
+      "default-features": false,
+      "features": [
+        "imgui"
+      ]
+    }
   ],
   "overrides": [
-	{
+    {
       "name": "c-ares",
       "version": "1.18.1"
     },
-	{
-		"name": "curl",
-		"version": "8.7.1"
-	},
-	{
-		"name": "cpr",
-		"version": "1.10.5#2"
-	},
-	{
-		"name": "civetweb",
-		"version": "1.15#1"
-	}
+    {
+      "name": "curl",
+      "version": "8.7.1"
+    },
+    {
+      "name": "cpr",
+      "version": "1.10.5#2"
+    },
+    {
+      "name": "civetweb",
+      "version": "1.15#1"
+    },
+    {
+      "name": "imgui",
+      "version": "1.80#1"
+    }
   ]
 }

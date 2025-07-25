@@ -7,11 +7,11 @@
 #pragma warning(pop)
 
 #include "AggregatedStats.h"
-#include "arcdps_mock/CombatMock.h"
 #include "Exports.h"
 #include "Options.h"
 
 #include <utility>
+#include <ArcdpsMock/arcdps_mock/CombatMock.h>
 
 namespace
 {

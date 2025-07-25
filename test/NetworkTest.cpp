@@ -7,13 +7,13 @@
 #pragma warning(pop)
 
 #include "AggregatedStatsCollection.h"
-#include "arcdps_mock/CombatMock.h"
 #include "Exports.h"
 #include "Log.h"
 #include "Options.h"
 #include "../networking/Client.h"
 #include "../networking/Server.h"
 
+#include <ArcdpsMock/arcdps_mock/CombatMock.h>
 #include <utility>
 
 namespace
@@ -243,16 +243,15 @@ namespace
 {
 static EventProcessor* ACTIVE_PROCESSOR = nullptr;
 static evtc_rpc_client* ACTIVE_CLIENT = nullptr;
-uintptr_t network_test_mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
+void network_test_mod_combat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
 	ACTIVE_PROCESSOR->AreaCombat(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
 	ACTIVE_CLIENT->ProcessAreaEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
-	return 0;
 }
 
 /* combat callback -- may be called asynchronously. return ignored */
 /* one participant will be party/squad, or minion of. no spawn statechange events. despawn statechange only on marked boss npcs */
-uintptr_t network_test_mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
+void network_test_mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision)
 {
 	std::optional<cbtevent> modifiedEvent = std::nullopt;
 	ACTIVE_PROCESSOR->LocalCombat(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision, &modifiedEvent);
@@ -262,8 +261,6 @@ uintptr_t network_test_mod_combat_local(cbtevent* pEvent, ag* pSourceAgent, ag* 
 	}
 
 	ACTIVE_CLIENT->ProcessLocalEvent(pEvent, pSourceAgent, pDestinationAgent, pSkillname, pId, pRevision);
-
-	return 0;
 }
 }; // Anonymous namespace
 

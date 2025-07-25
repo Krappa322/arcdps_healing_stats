@@ -5,10 +5,35 @@
 #include "Log.h"
 
 #include <shellapi.h>
+#include <cpr/cpr.h>
 
 void UpdateChecker::Log(std::string&& pMessage)
 {
 	LogI("{}", pMessage);
+}
+
+bool UpdateChecker::HttpDownload(const std::string& pUrl, const std::filesystem::path& pOutputFile)
+{
+	std::ofstream outputStream(pOutputFile);
+	cpr::Response response = cpr::Download(outputStream, cpr::Url{pUrl});
+	if (response.status_code != 200) {
+		Log(std::format("Downloading {} failed - http failure {} {}", pUrl, response.status_code,
+		                response.status_line));
+		return false;
+	}
+
+	return true;
+}
+
+std::optional<std::string> UpdateChecker::HttpGet(const std::string& pUrl)
+{
+	cpr::Response response = cpr::Get(cpr::Url{pUrl});
+	if (response.status_code != 200) {
+		Log(std::format("Getting {} failed - {} {}", pUrl, response.status_code, response.status_line));
+		return std::nullopt;
+	}
+
+	return response.text;
 }
 
 void Display_UpdateWindow()
@@ -66,7 +91,7 @@ void Display_UpdateWindow()
 
 		if (shown != true)
 		{
-			state->UpdateStatus = UpdateCheckerBase::Status::Dismissed;
+			state->UpdateStatus = ArcdpsExtension::UpdateCheckerBase::Status::Dismissed;
 		}
 	}
 }
