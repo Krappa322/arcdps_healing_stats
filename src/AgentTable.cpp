@@ -36,6 +36,15 @@ HealedAgent::HealedAgent(std::string&& pAgentName)
 {
 }
 
+bool HealedAgent::operator==(const HealedAgent& pRight) const
+{
+	return std::tie(InstanceId, Name, Subgroup, IsMinion, IsPlayer, Profession, Elite) == std::tie(pRight.InstanceId, pRight.Name, pRight.Subgroup, pRight.IsMinion, pRight.IsPlayer, pRight.Profession, pRight.Elite);
+}
+
+bool HealedAgent::operator!=(const HealedAgent& pRight) const
+{
+	return (*this == pRight) == false;
+}
 
 void AgentTable::AddAgent(uintptr_t pUniqueId, uint16_t pInstanceId, const char* pAgentName, std::optional<uint16_t> pSubgroup, std::optional<bool> pIsMinion, std::optional<bool> pIsPlayer, Prof pProfession, uint32_t pElite)
 {

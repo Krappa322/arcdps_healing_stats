@@ -19,6 +19,9 @@ struct HealedAgent
 	HealedAgent(const char* pAgentName);
 	HealedAgent(std::string&& pAgentName);
 	HealedAgent(uint16_t pInstanceId, const char* pAgentName, uint16_t pSubgroup, bool pIsMinion, bool pIsPlayer, Prof pProfession, uint32_t pElite);
+
+	bool operator==(const HealedAgent& other) const;
+	bool operator!=(const HealedAgent& pRight) const;
 };
 
 class AgentTable
