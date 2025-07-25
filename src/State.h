@@ -1,8 +1,7 @@
 #pragma once
 
-#include "arcdps_structs.h"
-#include "imgui.h"
-
+#include <imgui/imgui.h>
+#include <ArcdpsExtension/arcdps_structs.h>
 #include <nlohmann/json.hpp>
 
 #include <cstdint>

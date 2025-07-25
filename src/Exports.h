@@ -1,10 +1,11 @@
 #pragma once
-#include "arcdps_structs.h"
+
 #include "EventProcessor.h"
 #include "EventSequencer.h"
 #include "UpdateGUI.h"
 #include "../networking/Client.h"
 
+#include <ArcdpsExtension/arcdps_structs.h>
 #include <memory>
 #include <shared_mutex>
 

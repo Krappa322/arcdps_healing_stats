@@ -95,7 +95,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <AdditionalIncludeDirectories>modules\arcdps_extension;arcdps_mock\imgui;simpleini;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -117,7 +117,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <AdditionalIncludeDirectories>modules\arcdps_extension;arcdps_mock\imgui;simpleini;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -142,7 +142,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <AdditionalIncludeDirectories>modules\arcdps_extension;arcdps_mock\imgui;simpleini;$(SolutionDir)$(Platform)\autogen</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -158,8 +158,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="arcdps_mock\arcdps-extension\Widgets.cpp" />
-    <ClCompile Include="modules\arcdps_extension\UpdateCheckerBase.cpp" />
     <ClCompile Include="src\AgentTable.cpp" />
     <ClCompile Include="src\AggregatedStats.cpp" />
     <ClCompile Include="src\AggregatedStatsCollection.cpp" />
@@ -168,10 +166,6 @@
     <ClCompile Include="src\EventSequencer.cpp" />
     <ClCompile Include="src\GUI.cpp" />
     <ClCompile Include="src\ImGuiEx.cpp" />
-    <ClCompile Include="arcdps_mock\imgui\imgui.cpp" />
-    <ClCompile Include="arcdps_mock\imgui\imgui_draw.cpp" />
-    <ClCompile Include="arcdps_mock\imgui\imgui_tables.cpp" />
-    <ClCompile Include="arcdps_mock\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\Options.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\PlayerStats.cpp" />
@@ -179,8 +173,6 @@
     <ClCompile Include="src\UpdateGUI.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="arcdps_mock\arcdps-extension\Widgets.h" />
-    <ClInclude Include="modules\arcdps_extension\UpdateCheckerBase.h" />
     <ClInclude Include="src\AgentTable.h" />
     <ClInclude Include="src\AggregatedStats.h" />
     <ClInclude Include="src\AggregatedStatsCollection.h" />
@@ -190,9 +182,6 @@
     <ClInclude Include="src\Exports.h" />
     <ClInclude Include="src\GUI.h" />
     <ClInclude Include="src\ImGuiEx.h" />
-    <ClInclude Include="arcdps_mock\imgui\imconfig.h" />
-    <ClInclude Include="arcdps_mock\imgui\imgui.h" />
-    <ClInclude Include="arcdps_mock\imgui\imgui_internal.h" />
     <ClInclude Include="src\Options.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\PlayerStats.h" />

@@ -1,5 +1,6 @@
 #pragma once
-#include "arcdps_structs.h"
+
+#include <ArcdpsExtension/arcdps_structs.h>
 
 #include <atomic>
 #include <shared_mutex>

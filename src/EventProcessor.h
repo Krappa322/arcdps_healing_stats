@@ -1,8 +1,9 @@
 #pragma once
-#include "arcdps_structs.h"
 #include "AgentTable.h"
 #include "PlayerStats.h"
 #include "Skills.h"
+
+#include <ArcdpsExtension/arcdps_structs.h>
 
 #include <optional>
 

@@ -5,7 +5,8 @@
 #include "ImGuiEx.h"
 #include "Log.h"
 #include "Utilities.h"
-#include "Widgets.h"
+
+#include <ArcdpsExtension/Widgets.h>
 
 #include <array>
 #include <Windows.h>
