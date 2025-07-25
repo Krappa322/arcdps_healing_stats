@@ -34,53 +34,57 @@ static constexpr EnumStringArray<Position, static_cast<size_t>(Position::WindowR
 static constexpr EnumStringArray<CornerPosition, static_cast<size_t>(CornerPosition::BottomRight) + 1> CORNER_POSITION_ITEMS{
 	"top-left", "top-right", "bottom-left", "bottom-right"};
 
+/* Table with mapping between profession and elite specialization pair and their abbreviation and icon resource ID.
+*  The resource is loaded at runtime, with the table updated with IconLoader texture unique IDs and a pointer to the texture.
+*  Until then, the texture pointer will be nullptr.
+*/
 static std::map<std::pair<Prof, uint32_t>, SpecializationData> ProfessionEliteMapping{
 	{{Prof::PROF_UNKNOWN,  0xFFFFFFFF}, {"(Unk)"}},
 	// Guardian
 	{{Prof::PROF_GUARD, 0}, {"(Gdn)", IDB_PNG_SPEC_GUARDIAN}},
-	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_DRAGONHUNTER}, {"(Dgh)"}},
-	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_FIREBRAND}, {"(Fbd)"}},
-	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_WILLBENDER}, {"(Wbd)"}},
+	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_DRAGONHUNTER}, {"(Dgh)", IDB_PNG_SPEC_DRAGONHUNTER}},
+	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_FIREBRAND}, {"(Fbd)", IDB_PNG_SPEC_FIREBRAND}},
+	{{Prof::PROF_GUARD, ELITE_SPECIALIZATION::SPEC_WILLBENDER}, {"(Wbd)", IDB_PNG_SPEC_WILLBENDER}},
 	// Warrior
 	{{Prof::PROF_WARRIOR, 0}, {"(War)"}},
-	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_BERSERKER}, {"(Brs)"}},
-	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_SPELLBREAKER}, {"(Spb)"}},
-	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_BLADESWORN}, {"(Bds)"}},
+	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_BERSERKER}, {"(Brs)", IDB_PNG_SPEC_BERSERKER}},
+	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_SPELLBREAKER}, {"(Spb)", IDB_PNG_SPEC_SPELLBREAKER}},
+	{{Prof::PROF_WARRIOR, ELITE_SPECIALIZATION::SPEC_BLADESWORN}, {"(Bds)", IDB_PNG_SPEC_BLADESWORN}},
 	// Engineer
 	{{Prof::PROF_ENGINEER, 0}, {"(Eng)"}},
-	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_SCRAPPER}, {"(Scr)"}},
-	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_HOLOSMITH}, {"(Hls)"}},
-	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_MECHANIST}, {"(Mec)"}},
+	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_SCRAPPER}, {"(Scr)", IDB_PNG_SPEC_SCRAPPER}},
+	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_HOLOSMITH}, {"(Hls)", IDB_PNG_SPEC_HOLOSMITH}},
+	{{Prof::PROF_ENGINEER, ELITE_SPECIALIZATION::SPEC_MECHANIST}, {"(Mec)", IDB_PNG_SPEC_MECHANIST}},
 	// Ranger
 	{{Prof::PROF_RANGER, 0}, {"(Rgr)"}},
-	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_DRUID}, {"(Dru)"}},
-	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_SOULBEAST}, {"(Slb)"}},
-	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_UNTAMED}, {"(Unt)"}},
+	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_DRUID}, {"(Dru)", IDB_PNG_SPEC_DRUID}},
+	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_SOULBEAST}, {"(Slb)", IDB_PNG_SPEC_SOULBEAST}},
+	{{Prof::PROF_RANGER, ELITE_SPECIALIZATION::SPEC_UNTAMED}, {"(Unt)", IDB_PNG_SPEC_UNTAMED}},
 	// Thief
 	{{Prof::PROF_THIEF, 0}, {"(Thf)"}},
-	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_DAREDEVIL}, {"(Dar)"}},
-	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_DEADEYE}, {"(Ded)"}},
-	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_SPECTER}, {"(Spe)"}},
+	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_DAREDEVIL}, {"(Dar)", IDB_PNG_SPEC_DAREDEVIL}},
+	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_DEADEYE}, {"(Ded)", IDB_PNG_SPEC_DEADEYE}},
+	{{Prof::PROF_THIEF, ELITE_SPECIALIZATION::SPEC_SPECTER}, {"(Spe)", IDB_PNG_SPEC_SPECTER}},
 	// Elementalist
 	{{Prof::PROF_ELE, 0}, {"(Ele)"}},
-	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_TEMPEST}, {"(Tmp)"}},
-	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_WEAVER}, {"(Wea)"}},
-	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_CATALYST}, {"(Cat)"}},
+	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_TEMPEST}, {"(Tmp)", IDB_PNG_SPEC_TEMPEST}},
+	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_WEAVER}, {"(Wea)", IDB_PNG_SPEC_WEAVER}},
+	{{Prof::PROF_ELE, ELITE_SPECIALIZATION::SPEC_CATALYST}, {"(Cat)", IDB_PNG_SPEC_CATALYST}},
 	// Mesmer
 	{{Prof::PROF_MESMER, 0}, {"(Mes)"}},
-	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_CHRONOMANCER}, {"(Chr)"}},
-	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_MIRAGE}, {"(Mir)"}},
-	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_VIRTUOSO}, {"(Vir)"}},
+	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_CHRONOMANCER}, {"(Chr)", IDB_PNG_SPEC_CHRONOMANCER}},
+	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_MIRAGE}, {"(Mir)", IDB_PNG_SPEC_MIRAGE}},
+	{{Prof::PROF_MESMER, ELITE_SPECIALIZATION::SPEC_VIRTUOSO}, {"(Vir)", IDB_PNG_SPEC_VIRTUOSO}},
 	// Necromancer
 	{{Prof::PROF_NECRO, 0}, {"(Nec)"}},
-	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_REAPER}, {"(Rea)"}},
-	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_SCOURGE}, {"(Scg)"}},
-	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_HARBINGER}, {"(Har)"}},
+	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_REAPER}, {"(Rea)", IDB_PNG_SPEC_REAPER}},
+	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_SCOURGE}, {"(Scg)", IDB_PNG_SPEC_SCOURGE}},
+	{{Prof::PROF_NECRO, ELITE_SPECIALIZATION::SPEC_HARBINGER}, {"(Har)", IDB_PNG_SPEC_HARBINGER}},
 	// Revenant
 	{{Prof::PROF_RENEGADE, 0}, {"(Rev)"}},
-	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_HERALD}, {"(Her)"}},
-	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_RENEGADE}, {"(Ren)"}},
-	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_VINDICATOR}, {"(Vin)"}}
+	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_HERALD}, {"(Her)", IDB_PNG_SPEC_HERALD}},
+	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_RENEGADE}, {"(Ren)", IDB_PNG_SPEC_RENEGADE}},
+	{{Prof::PROF_RENEGADE, ELITE_SPECIALIZATION::SPEC_VINDICATOR}, {"(Vin)", IDB_PNG_SPEC_VINDICATOR}}
 };
 
 void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pD3DVersion)
@@ -95,10 +99,15 @@ void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pD3DVersion)
 	auto& iconLoader = IconLoader::instance();
 	iconLoader.Setup(pCurrentModule, nullptr, d3d11);
 
+	// This happens only in unit tests
+	if (d3d11 == nullptr)
+	{
+		return;
+	}
+
 	for (auto& [key, specializationData] : ProfessionEliteMapping)
 	{
 		specializationData.IconTextureId = iconLoader.LoadTexture(specializationData.IconResourceId);
-		//specializationData.IconResourceData = iconLoader.GetTexture(textureId);
 	}
 }
 
@@ -112,6 +121,9 @@ static std::string GetProfessionText(Prof pProfession, uint32_t pElite)
 	return "(Unk)";
 }
 
+/* Returns a pointer to the icon texture for the given profession and elite specialization if it exists.
+*  It returns nullptr until IconLoader has finished loading the texture.
+*/
 static void* GetProfessionIcon(Prof pProfession, uint32_t pElite)
 {
 	auto it = ProfessionEliteMapping.find({ pProfession, pElite });

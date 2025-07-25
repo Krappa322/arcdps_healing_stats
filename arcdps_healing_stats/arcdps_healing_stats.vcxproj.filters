@@ -36,5 +36,110 @@
     <Image Include="..\icons\specs\001.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="..\icons\specs\002.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\003.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\004.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\005.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\006.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\007.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\008.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\009.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e101.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e102.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e103.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e201.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e202.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e203.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e301.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e302.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e303.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e401.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e402.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e403.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e501.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e502.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e503.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e601.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e602.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e603.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e701.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e702.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e703.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e801.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e802.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e803.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e901.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e902.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e903.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

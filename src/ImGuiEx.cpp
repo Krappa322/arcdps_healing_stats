@@ -101,14 +101,23 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 	if (pIndexNumber.has_value() == true)
 	{
 		char buffer[32];
-		const char* format = *pIndexNumber < 10 ? "%zu: " : "%zu:";
-		snprintf(buffer, sizeof(buffer), format, *pIndexNumber);
+		int endpos = snprintf(buffer, sizeof(buffer), "%zu:", *pIndexNumber);
+		// Add a space if the index is 1-digit only to align with 2-digit indices
+		if (endpos < 3)
+		{
+			snprintf(&buffer[endpos], sizeof(buffer) - endpos, " ");
+		}
 		indexNumberSize = ImGui::CalcTextSize(buffer) + ImGui::GetStyle().ItemSpacing;
 
 		TextColoredUnformatted(std::optional<ImU32>(IM_COL32(255, 255, 97, 255)), buffer);
 		ImGui::SameLine();
 	}
 
+	/* pProfessionIcon can be nullptr when:
+	* 1 - "profession icons" option is disabled in Display settings
+	* 2 - There is no icon for the profession and elite specialization pair
+	* 3 - IconLoader has not finished loading the icon yet
+	*/
 	if (pProfessionIcon != nullptr)
 	{
 		professionTextSize = ImVec2(ImGui::GetFontSize(), ImGui::GetFontSize()) + ImGui::GetStyle().ItemSpacing;

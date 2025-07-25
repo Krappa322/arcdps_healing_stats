@@ -98,6 +98,76 @@ END
 
 IDB_PNG_SPEC_GUARDIAN   PNG                     "icons\\specs\\001.png"
 
+IDB_PNG_SPEC_WARRIOR    PNG                     "icons\\specs\\002.png"
+
+IDB_PNG_SPEC_ENGINEER   PNG                     "icons\\specs\\003.png"
+
+IDB_PNG_SPEC_RANGER     PNG                     "icons\\specs\\004.png"
+
+IDB_PNG_SPEC_THIEF      PNG                     "icons\\specs\\005.png"
+
+IDB_PNG_SPEC_ELEMENTALIST PNG                     "icons\\specs\\006.png"
+
+IDB_PNG_SPEC_MESMER     PNG                     "icons\\specs\\007.png"
+
+IDB_PNG_SPEC_NECROMANCER PNG                     "icons\\specs\\008.png"
+
+IDB_PNG_SPEC_REVENANT   PNG                     "icons\\specs\\009.png"
+
+IDB_PNG_SPEC_DRAGONHUNTER PNG                     "icons\\specs\\e101.png"
+
+IDB_PNG_SPEC_FIREBRAND  PNG                     "icons\\specs\\e102.png"
+
+IDB_PNG_SPEC_WILLBENDER PNG                     "icons\\specs\\e103.png"
+
+IDB_PNG_SPEC_BERSERKER  PNG                     "icons\\specs\\e201.png"
+
+IDB_PNG_SPEC_SPELLBREAKER PNG                     "icons\\specs\\e202.png"
+
+IDB_PNG_SPEC_BLADESWORN PNG                     "icons\\specs\\e203.png"
+
+IDB_PNG_SPEC_SCRAPPER   PNG                     "icons\\specs\\e301.png"
+
+IDB_PNG_SPEC_HOLOSMITH  PNG                     "icons\\specs\\e302.png"
+
+IDB_PNG_SPEC_MECHANIST  PNG                     "icons\\specs\\e303.png"
+
+IDB_PNG_SPEC_DRUID      PNG                     "icons\\specs\\e401.png"
+
+IDB_PNG_SPEC_SOULBEAST  PNG                     "icons\\specs\\e402.png"
+
+IDB_PNG_SPEC_UNTAMED    PNG                     "icons\\specs\\e403.png"
+
+IDB_PNG_SPEC_DAREDEVIL  PNG                     "icons\\specs\\e501.png"
+
+IDB_PNG_SPEC_DEADEYE    PNG                     "icons\\specs\\e502.png"
+
+IDB_PNG_SPEC_SPECTER    PNG                     "icons\\specs\\e503.png"
+
+IDB_PNG_SPEC_TEMPEST    PNG                     "icons\\specs\\e601.png"
+
+IDB_PNG_SPEC_WEAVER     PNG                     "icons\\specs\\e602.png"
+
+IDB_PNG_SPEC_CATALYST   PNG                     "icons\\specs\\e603.png"
+
+IDB_PNG_SPEC_CHRONOMANCER PNG                     "icons\\specs\\e701.png"
+
+IDB_PNG_SPEC_MIRAGE     PNG                     "icons\\specs\\e702.png"
+
+IDB_PNG_SPEC_VIRTUOSO   PNG                     "icons\\specs\\e703.png"
+
+IDB_PNG_SPEC_REAPER     PNG                     "icons\\specs\\e801.png"
+
+IDB_PNG_SPEC_SCOURGE    PNG                     "icons\\specs\\e802.png"
+
+IDB_PNG_SPEC_HARBINGER  PNG                     "icons\\specs\\e803.png"
+
+IDB_PNG_SPEC_HERALD     PNG                     "icons\\specs\\e901.png"
+
+IDB_PNG_SPEC_RENEGADE   PNG                     "icons\\specs\\e902.png"
+
+IDB_PNG_SPEC_VINDICATOR PNG                     "icons\\specs\\e903.png"
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
