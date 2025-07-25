@@ -270,7 +270,7 @@ class NetworkXevtcTestFixture : public ::testing::TestWithParam<bool>
 protected:
 	void SetUp() override
 	{
-		get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free); // Initialize exports
+		get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free, 0); // Initialize exports
 
 		uint64_t seed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		srand(static_cast<uint32_t>(seed));
@@ -379,7 +379,7 @@ protected:
 		// Add the fake self agent we use below to split stats into local and peer (otherwise we just get local stats since
 		// the instance id matches that of the peer and they both use the same event processor)
 		uintptr_t localFakeSelfUniqueId = 100000;
-		Processor.mAgentTable.AddAgent(localFakeSelfUniqueId, static_cast<uint16_t>(UINT16_MAX - 2), "Local Fake Self", static_cast<uint16_t>(1), false, true);
+		Processor.mAgentTable.AddAgent(localFakeSelfUniqueId, static_cast<uint16_t>(UINT16_MAX - 2), "Local Fake Self", static_cast<uint16_t>(1), false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF);
 
 		// Send the events themselves
 		uint32_t result = Mock.ExecuteFromXevtc(pLogPath, 0, 0);

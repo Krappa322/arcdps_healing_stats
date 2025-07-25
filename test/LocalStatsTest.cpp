@@ -26,7 +26,7 @@ protected:
 	{
 		//PlayerStats::GlobalState.Clear(); // Make sure agents etc. aren't leaked between test runs
 
-		ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
+		ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free, 0);
 
 		{
 			arcdps_exports* temp_exports = mod_init();
@@ -73,7 +73,7 @@ TEST_P(XevtcLogTestFixture, druid_solo)
 	const AggregatedVector& agentStats = stats.GetStats(DataSource::Agents);
 	ASSERT_EQ(agentStats.Entries.size(), 1U);
 	EXPECT_EQ(agentStats.Entries[0].GetTie(),
-		AggregatedStatsEntry(2000, "Zarwae", combatTime, 121095, 204, std::nullopt, 0).GetTie());
+		AggregatedStatsEntry(2000, HealedAgent{"Zarwae"}, combatTime, 121095, 204, std::nullopt, 0).GetTie());
 
 	AggregatedVector expectedSkills;
 	expectedSkills.Add(31796, "Cosmic Ray", combatTime, 25140, 30, std::nullopt, 0);

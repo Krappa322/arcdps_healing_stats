@@ -15,7 +15,7 @@ HealedAgent::HealedAgent(uint16_t pInstanceId, const char* pAgentName, uint16_t 
 }
 
 HealedAgent::HealedAgent(const char* pAgentName)
-	: InstanceId{ 0 }
+	: InstanceId{0}
 	, Name{pAgentName}
 	, Subgroup{0}
 	, IsMinion{false}
@@ -26,13 +26,13 @@ HealedAgent::HealedAgent(const char* pAgentName)
 }
 
 HealedAgent::HealedAgent(std::string&& pAgentName)
-	: InstanceId{ 0 }
+	: InstanceId{0}
 	, Name{std::move(pAgentName)}
-	, Subgroup{ 0 }
-	, IsMinion{ false }
-	, IsPlayer{ false }
-	, Profession{ Prof::PROF_UNKNOWN }
-	, Elite{ 0xFFFFFFFF }
+	, Subgroup{0}
+	, IsMinion{false}
+	, IsPlayer{false}
+	, Profession{Prof::PROF_UNKNOWN}
+	, Elite{0xFFFFFFFF}
 {
 }
 

@@ -13,7 +13,7 @@
 
 TEST(EnvironmentTest, shutdown_race)
 {
-	ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free);
+	ModInitSignature mod_init = get_init_addr("unit_test", nullptr, nullptr, GetModuleHandle(NULL), malloc, free, 0);
 	arcdps_exports exports = *mod_init();
 	ASSERT_NE(exports.sig, 0);
 
