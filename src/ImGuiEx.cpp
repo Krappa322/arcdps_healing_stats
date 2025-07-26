@@ -57,7 +57,7 @@ void ImGuiEx::SmallUnindent()
 	ImGui::Unindent(ImGui::GetCurrentContext()->FontSize);
 }
 
-float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio, std::optional<size_t> pIndexNumber, std::optional<std::string> pProfessionText, void* pProfessionIcon, bool pSelf)
+float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio, std::optional<size_t> pIndexNumber, std::optional<std::string> pProfessionText, void* pProfessionIcon, std::optional<ImVec4> pHealColour, std::optional<ImVec4> pBarrierGenerationColour, bool pSelf)
 {
 	ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(204, 204, 212, 255));
 	ImGui::BeginGroup();
@@ -79,6 +79,9 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 
 		float healingRatio = *pFillRatio;
 
+		ImU32 healingColor = pHealColour.has_value() ? ImGui::ColorConvertFloat4ToU32(*pHealColour) : IM_COL32(102, 178, 102, 128);
+		ImU32 barrierColor = pBarrierGenerationColour.has_value() ? ImGui::ColorConvertFloat4ToU32(*pBarrierGenerationColour) : IM_COL32(255, 225, 0, 128);
+
 		if (pBarrierGenerationRatio.has_value() == true)
 		{
 			float barrierGenerationRatio = *pBarrierGenerationRatio;
@@ -87,13 +90,13 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 			ImVec2 barrierStart = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * healingRatio, pos.y);
 			ImVec2 barrierEnd = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * (healingRatio + barrierGenerationRatio), pos.y + ImGui::GetTextLineHeight());
 
-			ImGui::GetWindowDrawList()->AddRectFilled(barrierStart, barrierEnd, IM_COL32(255, 225, 0, 128));
+			ImGui::GetWindowDrawList()->AddRectFilled(barrierStart, barrierEnd, barrierColor);
 		}
 
 		ImVec2 healingStart = pos;
 		ImVec2 healingEnd = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * healingRatio, pos.y + ImGui::GetTextLineHeight());
 
-		ImGui::GetWindowDrawList()->AddRectFilled(healingStart, healingEnd, IM_COL32(102, 178, 102, 128));
+		ImGui::GetWindowDrawList()->AddRectFilled(healingStart, healingEnd, healingColor);
 	}
 
 	// Add ItemInnerSpacing even if no box is being drawn, that way it looks consistent with and without progress bars
@@ -149,7 +152,7 @@ void ImGuiEx::TextColoredUnformatted(std::optional<ImU32> pColor, const char* pT
 {
 	if (pColor.has_value())
 	{
-		ImGui::PushStyleColor(ImGuiCol_Text, pColor.value());
+		ImGui::PushStyleColor(ImGuiCol_Text, *pColor);
 		ImGui::TextUnformatted(pText, pTextEnd);
 		ImGui::PopStyleColor();
 	}

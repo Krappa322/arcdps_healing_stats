@@ -6,10 +6,13 @@
 #include "../networking/Client.h"
 
 #include <ArcdpsExtension/arcdps_structs.h>
+#include <imgui/imgui.h>
+
 #include <memory>
 #include <shared_mutex>
 
 typedef void (*E3Signature)(const char* pString);
+typedef void (*E5Signature)(ImVec4** pColors);
 typedef uint64_t(*E7Signature)();
 typedef void (*E9Signature)(cbtevent* pEvent, uint32_t pSignature);
 
@@ -20,6 +23,7 @@ public:
 
 	static inline HMODULE SELF_HANDLE = NULL;
 	static inline E3Signature ARC_E3 = nullptr;
+	static inline E5Signature ARC_E5 = nullptr;
 	static inline E7Signature ARC_E7 = nullptr;
 	static inline E9Signature ARC_E9 = nullptr;
 	static inline E9Signature ARC_E10 = nullptr;
@@ -34,6 +38,8 @@ public:
 	static inline std::unique_ptr<UpdateChecker::UpdateState> UPDATE_STATE = nullptr;
 
 	static inline std::string ROOT_CERTIFICATES = "";
+
+	static inline ImVec4* COLORS[5] = {};
 
 	static inline std::shared_mutex SHUTDOWN_LOCK;
 	static inline bool IS_SHUTDOWN = true;

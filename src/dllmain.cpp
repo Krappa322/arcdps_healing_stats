@@ -135,6 +135,8 @@ extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArc
 {
 	GlobalObjects::ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(GlobalObjects::ARC_E3 != nullptr);
+	GlobalObjects::ARC_E5 = reinterpret_cast<E5Signature>(GetProcAddress(pArcModule, "e5"));
+	assert(GlobalObjects::ARC_E5 != nullptr);
 	GlobalObjects::ARC_E7 = reinterpret_cast<E7Signature>(GetProcAddress(pArcModule, "e7"));
 	assert(GlobalObjects::ARC_E7 != nullptr);
 	GlobalObjects::ARC_E9 = reinterpret_cast<E9Signature>(GetProcAddress(pArcModule, "e9"));
@@ -273,6 +275,8 @@ arcdps_exports* mod_init()
 			GlobalObjects::UPDATE_STATE = GlobalObjects::UPDATE_CHECKER->CheckForUpdate(GlobalObjects::SELF_HANDLE, GlobalObjects::VERSION, "Krappa322/arcdps_healing_stats", enablePreReleases);
 		}
 	}
+
+	GlobalObjects::ARC_E5(GlobalObjects::COLORS);
 
 	GlobalObjects::EVTC_RPC_CLIENT_THREAD = std::make_unique<std::thread>(evtc_rpc_client::ThreadStartServe, GlobalObjects::EVTC_RPC_CLIENT.get());
 
