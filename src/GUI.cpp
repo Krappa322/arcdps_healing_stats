@@ -143,6 +143,16 @@ static void* GetProfessionIcon(Prof pProfession, uint32_t pElite)
 	return nullptr;
 }
 
+static ImVec4 GetSubgroupColorBase(uint16_t pSubgroup)
+{
+	return GlobalObjects::COLORS[3][pSubgroup];
+}
+
+static ImVec4 GetSubgroupColorHighlight(uint16_t pSubgroup)
+{
+	return GlobalObjects::COLORS[4][pSubgroup];
+}
+
 static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowState& pState, DataSource pDataSource)
 {
 	if (pState.IsOpen == false)
@@ -297,7 +307,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		}
 		pState.LastFrameRightSideMinWidth = (std::max)(
 			pState.LastFrameRightSideMinWidth,
-			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt, std::nullopt, nullptr, false));
+			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt, std::nullopt, nullptr, std::nullopt, std::nullopt, false));
 	}
 	
 	pState.LastFrameRightSideMinWidth += ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
@@ -364,6 +374,8 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			pContext.IndexNumbers == true ? std::optional{i + 1} : std::nullopt,
 			pContext.ProfessionText == true ? std::optional{GetProfessionText(entry.Agent.Profession, entry.Agent.Elite)} : std::nullopt,
 			pContext.ProfessionIcons == true ? GetProfessionIcon(entry.Agent.Profession, entry.Agent.Elite) : nullptr,
+			pContext.UseSubgroupForBarColour == true ? std::optional{GetSubgroupColorBase(entry.Agent.Subgroup)} : std::nullopt,
+			pContext.UseSubgroupForBarColour == true ? std::optional{GetSubgroupColorHighlight(entry.Agent.Subgroup)} : std::nullopt,
 			pContext.SelfUniqueId == entry.Id);
 
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
@@ -550,7 +562,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
 				"that entry is in proportion to the largest entry");
 
-			//ImGuiEx::SmallCheckBox("use subgroup for bar colour", &pContext.UseSubgroupForBarColour);
+			ImGuiEx::SmallCheckBox("use subgroup for bar colour", &pContext.UseSubgroupForBarColour);
 			ImGuiEx::SmallCheckBox("index numbers", &pContext.IndexNumbers);
 			ImGuiEx::SmallCheckBox("profession text", &pContext.ProfessionText);
 			ImGuiEx::SmallCheckBox("profession icons", &pContext.ProfessionIcons);

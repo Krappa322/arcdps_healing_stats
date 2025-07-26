@@ -61,6 +61,7 @@ struct HealWindowOptions
 	bool ExcludeBarrierGeneration = true;
 
 	bool ShowProgressBars = true;
+	bool UseSubgroupForBarColour = false;
 	bool IndexNumbers = false;
 	bool ProfessionText = false;
 	bool ProfessionIcons = false;
