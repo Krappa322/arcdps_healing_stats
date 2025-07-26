@@ -143,6 +143,24 @@ static void* GetProfessionIcon(Prof pProfession, uint32_t pElite)
 	return nullptr;
 }
 
+static ImVec4 GetProfessionColorBase(Prof pProfession)
+{
+	if (pProfession > Prof::PROF_RENEGADE)
+	{
+		pProfession = Prof::PROF_UNKNOWN;
+	}
+	return GlobalObjects::COLORS[1][pProfession];
+}
+
+static ImVec4 GetProfessionColorHighlight(Prof pProfession)
+{
+	if (pProfession > Prof::PROF_RENEGADE)
+	{
+		pProfession = Prof::PROF_UNKNOWN;
+	}
+	return GlobalObjects::COLORS[2][pProfession];
+}
+
 static ImVec4 GetSubgroupColorBase(uint16_t pSubgroup)
 {
 	return GlobalObjects::COLORS[3][pSubgroup];
@@ -374,8 +392,8 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			pContext.IndexNumbers == true ? std::optional{i + 1} : std::nullopt,
 			pContext.ProfessionText == true ? std::optional{GetProfessionText(entry.Agent.Profession, entry.Agent.Elite)} : std::nullopt,
 			pContext.ProfessionIcons == true ? GetProfessionIcon(entry.Agent.Profession, entry.Agent.Elite) : nullptr,
-			pContext.UseSubgroupForBarColour == true ? std::optional{GetSubgroupColorBase(entry.Agent.Subgroup)} : std::nullopt,
-			pContext.UseSubgroupForBarColour == true ? std::optional{GetSubgroupColorHighlight(entry.Agent.Subgroup)} : std::nullopt,
+			pContext.UseSubgroupForBarColour == true ? std::optional{GetSubgroupColorBase(entry.Agent.Subgroup)} : pContext.UseProfessionForBarColour == true ? std::optional{GetProfessionColorBase(entry.Agent.Profession)} : std::nullopt,
+			pContext.UseSubgroupForBarColour == true ? std::optional{GetSubgroupColorHighlight(entry.Agent.Subgroup)} : pContext.UseProfessionForBarColour == true ? std::optional{GetProfessionColorHighlight(entry.Agent.Profession)} : std::nullopt,
 			pContext.SelfUniqueId == entry.Id);
 
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
@@ -563,6 +581,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 				"that entry is in proportion to the largest entry");
 
 			ImGuiEx::SmallCheckBox("use subgroup for bar colour", &pContext.UseSubgroupForBarColour);
+			ImGuiEx::SmallCheckBox("use profession for bar colour", &pContext.UseProfessionForBarColour);
 			ImGuiEx::SmallCheckBox("index numbers", &pContext.IndexNumbers);
 			ImGuiEx::SmallCheckBox("profession text", &pContext.ProfessionText);
 			ImGuiEx::SmallCheckBox("profession icons", &pContext.ProfessionIcons);
