@@ -381,6 +381,15 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 		float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
 
 		std::string_view name = entry.Agent.Name;
+		if (pContext.ReplacePlayerWithAccountName)
+		{
+			name = entry.Agent.AccountName;
+			// The account name starts with ':', skip it
+			if (name.empty() != true && name[0] == ':')
+			{
+				name = name.substr(1);
+			}
+		}
 		if (pContext.MaxNameLength > 0)
 		{
 			name = name.substr(0, pContext.MaxNameLength);
@@ -585,7 +594,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::SmallCheckBox("index numbers", &pContext.IndexNumbers);
 			ImGuiEx::SmallCheckBox("profession text", &pContext.ProfessionText);
 			ImGuiEx::SmallCheckBox("profession icons", &pContext.ProfessionIcons);
-			//ImGuiEx::SmallCheckBox("replace player with account name", &pContext.ReplacePlayerWithAccountName);
+			ImGuiEx::SmallCheckBox("replace player with account name", &pContext.ReplacePlayerWithAccountName);
 			//ImGuiEx::SmallCheckBox("use profession for name colour", &pContext.UseProfessionForNameColour);
 			//ImGuiEx::SmallCheckBox("use subgroup for name colour", &pContext.UseSubgroupForNameColour);
 			//ImGuiEx::SmallCheckBox("use red names for players loarding", &pContext.UseRedNamesForPlayersLoading);

@@ -379,7 +379,7 @@ protected:
 		// Add the fake self agent we use below to split stats into local and peer (otherwise we just get local stats since
 		// the instance id matches that of the peer and they both use the same event processor)
 		uintptr_t localFakeSelfUniqueId = 100000;
-		Processor.mAgentTable.AddAgent(localFakeSelfUniqueId, static_cast<uint16_t>(UINT16_MAX - 2), "Local Fake Self", static_cast<uint16_t>(1), false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF);
+		Processor.mAgentTable.AddAgent(localFakeSelfUniqueId, static_cast<uint16_t>(UINT16_MAX - 2), "Local Fake Self", nullptr, static_cast<uint16_t>(1), false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF);
 
 		// Send the events themselves
 		uint32_t result = Mock.ExecuteFromXevtc(pLogPath, 0, 0);
@@ -1079,8 +1079,8 @@ TEST_P(NetworkXevtcTestFixture, druid_MO)
 
 	float combatTime = stats.GetCombatTime();
 	AggregatedVector expectedStats;
-	expectedStats.Add(2000, HealedAgent{697, "Zarwae", 2, false, true, Prof::PROF_RANGER, 5}, combatTime, 304967, 727, std::nullopt, 0);
-	expectedStats.Add(100000, HealedAgent{65533, "Local Fake Self", 1, false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF}, combatTime, 304967, 727, std::nullopt, 0);
+	expectedStats.Add(2000, HealedAgent{697, "Zarwae", ":worshipperofnarnia.2689", 2, false, true, Prof::PROF_RANGER, 5}, combatTime, 304967, 727, std::nullopt, 0);
+	expectedStats.Add(100000, HealedAgent{65533, "Local Fake Self", nullptr, 1, false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF}, combatTime, 304967, 727, std::nullopt, 0);
 
 	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
 	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());
@@ -1164,8 +1164,8 @@ TEST_P(NetworkXevtcTestFixture, berserker_solo)
 
 	float combatTime = stats.GetCombatTime();
 	AggregatedVector expectedStats;
-	expectedStats.Add(2000, HealedAgent{23, "Khalagur", 1, false, true, Prof::PROF_WARRIOR, 18}, combatTime, totalHealing, totalHits, std::nullopt, 0);
-	expectedStats.Add(100000, HealedAgent{65533, "Local Fake Self", 1, false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF}, combatTime, totalHealing, totalHits, std::nullopt, 0);
+	expectedStats.Add(2000, HealedAgent{23, "Khalagur", ":worshipperofnarnia.2689", 1, false, true, Prof::PROF_WARRIOR, 18}, combatTime, totalHealing, totalHits, std::nullopt, 0);
+	expectedStats.Add(100000, HealedAgent{65533, "Local Fake Self", nullptr, 1, false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF}, combatTime, totalHealing, totalHits, std::nullopt, 0);
 
 	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
 	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());
@@ -1253,8 +1253,8 @@ TEST_P(NetworkXevtcTestFixture, renegade_solo)
 
 	float combatTime = stats.GetCombatTime();
 	AggregatedVector expectedStats;
-	expectedStats.Add(2000, HealedAgent{23, "Enagyy", 1, false, true, Prof::PROF_RENEGADE, 63}, combatTime, totalHealing, totalHits, std::nullopt, 0);
-	expectedStats.Add(100000, HealedAgent{65533, "Local Fake Self", 1, false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF}, combatTime, totalHealing, totalHits, std::nullopt, 0);
+	expectedStats.Add(2000, HealedAgent{23, "Enagyy", ":worshipperofnarnia.2689", 1, false, true, Prof::PROF_RENEGADE, 63}, combatTime, totalHealing, totalHits, std::nullopt, 0);
+	expectedStats.Add(100000, HealedAgent{65533, "Local Fake Self", nullptr, 1, false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF}, combatTime, totalHealing, totalHits, std::nullopt, 0);
 
 	const AggregatedVector& actualStats = stats.GetStats(DataSource::PeersOutgoing);
 	ASSERT_EQ(actualStats.Entries.size(), expectedStats.Entries.size());

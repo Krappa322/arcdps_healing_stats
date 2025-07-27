@@ -108,7 +108,7 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 			// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
 			if (pSourceAgent->name != nullptr)
 			{
-				mAgentTable.AddAgent(pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pSourceAgent->name, pDestinationAgent->team, std::nullopt, isPlayer, pDestinationAgent->prof, pDestinationAgent->elite);
+				mAgentTable.AddAgent(pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pSourceAgent->name, pDestinationAgent->name, pDestinationAgent->team, std::nullopt, isPlayer, pDestinationAgent->prof, pDestinationAgent->elite);
 			}
 		}
 		else
@@ -198,7 +198,7 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
 		if (pSourceAgent->name != nullptr)
 		{
-			mAgentTable.AddAgent(pSourceAgent->id, pEvent->src_instid, pSourceAgent->name, static_cast<uint16_t>(pEvent->dst_agent), isMinion, isPlayer, pDestinationAgent->prof, pDestinationAgent->elite);
+			mAgentTable.AddAgent(pSourceAgent->id, pEvent->src_instid, pSourceAgent->name, nullptr, static_cast<uint16_t>(pEvent->dst_agent), isMinion, isPlayer, pDestinationAgent->prof, pDestinationAgent->elite);
 		}
 
 		return;
@@ -262,7 +262,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 			// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
 			if (pSourceAgent->name != nullptr)
 			{
-				mAgentTable.AddAgent(pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pSourceAgent->name, pDestinationAgent->team, std::nullopt, isPlayer, pDestinationAgent->prof, pDestinationAgent->elite);
+				mAgentTable.AddAgent(pSourceAgent->id, static_cast<uint16_t>(pDestinationAgent->id), pSourceAgent->name, pDestinationAgent->name, pDestinationAgent->team, std::nullopt, isPlayer, pDestinationAgent->prof, pDestinationAgent->elite);
 			}
 
 			if (pDestinationAgent->self != 0)
@@ -433,7 +433,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 	// Register agent if it's not already known
 	if (pDestinationAgent->name != nullptr)
 	{
-		mAgentTable.AddAgent(pDestinationAgent->id, pEvent->dst_instid, pDestinationAgent->name, std::nullopt, pEvent->dst_master_instid != 0, std::nullopt, pDestinationAgent->prof, pDestinationAgent->elite);
+		mAgentTable.AddAgent(pDestinationAgent->id, pEvent->dst_instid, pDestinationAgent->name, nullptr, std::nullopt, pEvent->dst_master_instid != 0, std::nullopt, pDestinationAgent->prof, pDestinationAgent->elite);
 	}
 
 	if (pEvent->is_shields != 0)
