@@ -1,6 +1,8 @@
 #include "Exports.h"
 #include "Log.h"
 
+#include "imgui.h"
+
 #pragma warning(push, 0)
 #pragma warning(disable : 4005)
 #pragma warning(disable : 4389)
@@ -10,6 +12,7 @@
 #include <grpcpp/grpcpp.h>
 
 extern "C" __declspec(dllexport) void e3(const char* pString);
+extern "C" __declspec(dllexport) void e5(ImVec4** pColors);
 extern "C" __declspec(dllexport) uint64_t e6();
 extern "C" __declspec(dllexport) uint64_t e7();
 extern "C" __declspec(dllexport) void e9(cbtevent* pEvent, uint32_t pSignature);
@@ -29,6 +32,11 @@ struct ArcModifiers
 #pragma pack(pop)
 
 void e3(const char* /*pString*/)
+{
+	return; // Logging, ignored
+}
+
+void e5(ImVec4** /*pColors*/)
 {
 	return; // Logging, ignored
 }
