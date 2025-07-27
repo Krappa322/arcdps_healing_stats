@@ -3,13 +3,13 @@
 #include "AggregatedStatsCollection.h"
 #include "arcdps_extra.h"
 #include "Exports.h"
-#include "IconLoader.h"
 #include "ImGuiEx.h"
 #include "Log.h"
 #include "../resource.h"
 #include "SpecializationData.h"
 #include "Utilities.h"
 
+#include <ArcdpsExtension/IconLoader.h>
 #include <ArcdpsExtension/Widgets.h>
 
 #include <array>
@@ -96,8 +96,8 @@ void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pD3DVersion)
 		d3d11SwapChain->GetDevice(__uuidof(d3d11), (void**)&d3d11);
 	}
 
-	auto& iconLoader = IconLoader::instance();
-	iconLoader.Setup(pCurrentModule, nullptr, d3d11);
+	auto& iconLoader = ArcdpsExtension::IconLoader::instance();
+	iconLoader.Setup(pCurrentModule, d3d11);
 
 	// This happens only in unit tests
 	if (d3d11 == nullptr)
@@ -105,9 +105,12 @@ void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pD3DVersion)
 		return;
 	}
 
+	size_t iconTextureId = 0;
+
 	for (auto& [key, specializationData] : ProfessionEliteMapping)
 	{
-		specializationData.IconTextureId = iconLoader.LoadTexture(specializationData.IconResourceId);
+		specializationData.IconTextureId = ++iconTextureId;
+		iconLoader.RegisterResource(specializationData.IconTextureId, specializationData.IconResourceId);
 	}
 }
 
@@ -135,7 +138,7 @@ static void* GetProfessionIcon(Prof pProfession, uint32_t pElite)
 		}
 		else
 		{
-			auto textureData = IconLoader::instance().GetTexture(it->second.IconTextureId);
+			auto textureData = ArcdpsExtension::IconLoader::instance().Draw(it->second.IconTextureId);
 			it->second.IconTextureData = textureData;
 			return textureData;
 		}
