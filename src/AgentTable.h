@@ -1,9 +1,11 @@
 #pragma once
+
+#include <ArcdpsExtension/arcdps_structs_slim.h>
+
 #include <map>
 #include <mutex>
 #include <optional>
 #include <string>
-#include "arcdps_structs_slim.h"
 
 struct HealedAgent
 {
