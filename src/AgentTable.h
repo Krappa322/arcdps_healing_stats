@@ -9,6 +9,7 @@ struct HealedAgent
 {
 	uint16_t InstanceId;
 	std::string Name; // Agent Name (UTF8)
+	std::string AccountName;
 	uint16_t Subgroup;
 	bool IsMinion;
 	bool IsPlayer;
@@ -18,7 +19,7 @@ struct HealedAgent
 	HealedAgent() = default;
 	HealedAgent(const char* pAgentName);
 	HealedAgent(std::string&& pAgentName);
-	HealedAgent(uint16_t pInstanceId, const char* pAgentName, uint16_t pSubgroup, bool pIsMinion, bool pIsPlayer, Prof pProfession, uint32_t pElite);
+	HealedAgent(uint16_t pInstanceId, const char* pAgentName, const char* pAccountName, uint16_t pSubgroup, bool pIsMinion, bool pIsPlayer, Prof pProfession, uint32_t pElite);
 
 	bool operator==(const HealedAgent& other) const;
 	bool operator!=(const HealedAgent& pRight) const;
@@ -27,7 +28,7 @@ struct HealedAgent
 class AgentTable
 {
 public:
-	void AddAgent(uintptr_t pUniqueId, uint16_t pInstanceId, const char* pAgentName, std::optional<uint16_t> pSubgroup, std::optional<bool> pIsMinion, std::optional<bool> pIsPlayer, Prof pProfession, uint32_t pElite);
+	void AddAgent(uintptr_t pUniqueId, uint16_t pInstanceId, const char* pAgentName, const char* pAccountName, std::optional<uint16_t> pSubgroup, std::optional<bool> pIsMinion, std::optional<bool> pIsPlayer, Prof pProfession, uint32_t pElite);
 
 	std::optional<uintptr_t> GetUniqueId(uint16_t pInstanceId, bool pAllowNonPlayer);
 	std::optional<std::string> GetName(uintptr_t pUniqueId);
