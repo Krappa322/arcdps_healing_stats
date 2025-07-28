@@ -54,12 +54,6 @@
     <ClCompile Include="src\UpdateGUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\arcdps_extension\IconLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="modules\arcdps_extension\Singleton.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Log.h">
@@ -113,13 +107,7 @@
     <ClInclude Include="src\UpdateGUI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\arcdps_extra.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="modules\arcdps_extension\IconLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\SpecializationData.h">
