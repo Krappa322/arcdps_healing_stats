@@ -57,7 +57,7 @@ void ImGuiEx::SmallUnindent()
 	ImGui::Unindent(ImGui::GetCurrentContext()->FontSize);
 }
 
-float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio, std::optional<size_t> pIndexNumber, std::optional<std::string> pProfessionText, void* pProfessionIcon, std::optional<ImVec4> pLeftTextColour, std::optional<ImVec4> pHealColour, std::optional<ImVec4> pBarrierGenerationColour, bool pSelf)
+float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio, std::optional<std::string_view> pIndexNumber, std::optional<std::string> pProfessionText, void* pProfessionIcon, std::optional<ImVec4> pLeftTextColour, std::optional<ImVec4> pHealColour, std::optional<ImVec4> pBarrierGenerationColour, bool pSelf)
 {
 	ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(204, 204, 212, 255));
 	ImGui::BeginGroup();
@@ -103,16 +103,9 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetStyle().ItemInnerSpacing.x);
 	if (pIndexNumber.has_value() == true)
 	{
-		char buffer[32];
-		int endpos = snprintf(buffer, sizeof(buffer), "%zu:", *pIndexNumber);
-		// Add a space if the index is 1-digit only to align with 2-digit indices
-		if (endpos < 3)
-		{
-			snprintf(&buffer[endpos], sizeof(buffer) - endpos, " ");
-		}
-		indexNumberSize = ImGui::CalcTextSize(buffer) + ImGui::GetStyle().ItemSpacing;
+		indexNumberSize = ImGui::CalcTextSize(pIndexNumber->data()) + ImGui::GetStyle().ItemSpacing;
 
-		TextColoredUnformatted(std::optional<ImU32>(IM_COL32(255, 255, 97, 255)), buffer);
+		TextColoredUnformatted(std::optional<ImU32>(IM_COL32(255, 255, 97, 255)), pIndexNumber->data());
 		ImGui::SameLine();
 	}
 

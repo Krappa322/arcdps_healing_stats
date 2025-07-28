@@ -145,13 +145,23 @@ static void* GetProfessionIcon(Prof pProfession, uint32_t pElite)
 	return nullptr;
 }
 
-static ImVec4 GetProfessionColorBase(Prof pProfession)
+static ImVec4 GetProfessionColorBase(Prof pProfession, std::optional<float> pWOverwrite = {})
 {
 	if (pProfession > Prof::PROF_RENEGADE)
 	{
 		pProfession = Prof::PROF_UNKNOWN;
 	}
-	return GlobalObjects::COLORS[1][pProfession];
+
+	if (pWOverwrite.has_value() == true)
+	{
+		ImVec4 color = GlobalObjects::COLORS[1][pProfession];
+		color.w = pWOverwrite.value();
+		return color;
+	}
+	else
+	{
+		return GlobalObjects::COLORS[1][pProfession];
+	}
 }
 
 static ImVec4 GetProfessionColorHighlight(Prof pProfession)
@@ -163,14 +173,44 @@ static ImVec4 GetProfessionColorHighlight(Prof pProfession)
 	return GlobalObjects::COLORS[2][pProfession];
 }
 
-static ImVec4 GetSubgroupColorBase(uint16_t pSubgroup)
+static ImVec4 GetSubgroupColorBase(uint16_t pSubgroup, std::optional<float> pWOverwrite = {})
 {
-	return GlobalObjects::COLORS[3][pSubgroup];
+	if (pWOverwrite.has_value() == true)
+	{
+		ImVec4 color = GlobalObjects::COLORS[3][pSubgroup];
+		color.w = pWOverwrite.value();
+		return color;
+	}
+	else
+	{
+		return GlobalObjects::COLORS[3][pSubgroup];
+	}
 }
 
 static ImVec4 GetSubgroupColorHighlight(uint16_t pSubgroup)
 {
 	return GlobalObjects::COLORS[4][pSubgroup];
+}
+
+static std::string GetIndexNumberText(size_t pIndexNumber, bool pTop, bool pSelfOnly)
+{
+	if (pTop == true)
+	{
+		return "   ";
+	}
+
+	if (pSelfOnly == true)
+	{
+		pIndexNumber = 1;
+	}
+
+	std::string result = std::to_string(pIndexNumber) + ":";
+	if (result.length() < 3)
+	{
+		result += " ";
+	}
+
+	return result;
 }
 
 static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowState& pState, DataSource pDataSource)
@@ -364,6 +404,61 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	const AggregatedStatsEntry& aggregatedTotal = pContext.CurrentAggregatedStats->GetTotal(pDataSource);
 
 	const AggregatedVector& stats = pContext.CurrentAggregatedStats->GetStats(pDataSource);
+
+	// "self on top" is enabled only if there are multiple entries
+	if (pContext.SelfOnTop && stats.Entries.size() > 1)
+	{
+		const auto selfEntry = std::find_if(stats.Entries.cbegin(), stats.Entries.cend(), [pSelfUniqueId = pContext.SelfUniqueId](const auto& pEntry) {
+			return pEntry.Id == pSelfUniqueId;
+		});
+
+		if (selfEntry != stats.Entries.cend())
+		{
+			auto entry = *selfEntry;
+			std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
+				entry.Healing,
+				entry.Hits,
+				entry.Casts,
+				divide_safe(entry.Healing, entry.TimeInCombat),
+				divide_safe(entry.Healing, entry.Hits),
+				entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
+				pContext.DataSourceChoice != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
+			ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
+
+			float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
+			float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
+
+			std::string_view name = entry.Agent.Name;
+			if (pContext.ReplacePlayerWithAccountName)
+			{
+				name = entry.Agent.AccountName;
+				// The account name starts with ':', skip it
+				if (name.empty() != true && name[0] == ':')
+				{
+					name = name.substr(1);
+				}
+			}
+			if (pContext.MaxNameLength > 0)
+			{
+				name = name.substr(0, pContext.MaxNameLength);
+			}
+
+			float minSize = ImGuiEx::StatsEntry(name, buffer,
+				pContext.ShowProgressBars == true ? std::optional{ healingRatio } : std::nullopt,
+				pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt,
+				pContext.IndexNumbers == true ? std::optional{ GetIndexNumberText(0, true, false) } : std::nullopt,
+				pContext.ProfessionText == true ? std::optional{ GetProfessionText(entry.Agent.Profession, entry.Agent.Elite) } : std::nullopt,
+				pContext.ProfessionIcons == true ? GetProfessionIcon(entry.Agent.Profession, entry.Agent.Elite) : nullptr,
+				pContext.UseProfessionForNameColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession, 1.0f) } : pContext.UseSubgroupForNameColour ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup, 1.0f) } : std::nullopt,
+				pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession) } : std::nullopt,
+				pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorHighlight(entry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorHighlight(entry.Agent.Profession) } : std::nullopt,
+				pContext.SelfUniqueId == entry.Id);
+
+			pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
+			pContext.CurrentFrameLineCount += 1;
+		}
+	}
+
 	for (size_t i = 0; i < stats.Entries.size(); i++)
 	{
 		const auto& entry = stats.Entries[i];
@@ -397,15 +492,16 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			name = name.substr(0, pContext.MaxNameLength);
 		}
 
-		if (pContext.HideSelfFromList == false || entry.Id != pContext.SelfUniqueId)
+		if ((pContext.HideSelfFromList == false || entry.Id != pContext.SelfUniqueId || stats.Entries.size() == 1)
+			&& (pContext.SelfOnly == false || entry.Id == pContext.SelfUniqueId))
 		{
 			float minSize = ImGuiEx::StatsEntry(name, buffer,
 				pContext.ShowProgressBars == true ? std::optional{ healingRatio } : std::nullopt,
 				pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt,
-				pContext.IndexNumbers == true ? std::optional{ i + 1 } : std::nullopt,
+				pContext.IndexNumbers == true ? std::optional{ GetIndexNumberText(i + 1, false, pContext.SelfOnly) } : std::nullopt,
 				pContext.ProfessionText == true ? std::optional{ GetProfessionText(entry.Agent.Profession, entry.Agent.Elite) } : std::nullopt,
 				pContext.ProfessionIcons == true ? GetProfessionIcon(entry.Agent.Profession, entry.Agent.Elite) : nullptr,
-				pContext.UseProfessionForNameColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession) } : pContext.UseSubgroupForNameColour ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup) } : std::nullopt,
+				pContext.UseProfessionForNameColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession, 1.0f) } : pContext.UseSubgroupForNameColour ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup, 1.0f) } : std::nullopt,
 				pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession) } : std::nullopt,
 				pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorHighlight(entry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorHighlight(entry.Agent.Profession) } : std::nullopt,
 				pContext.SelfUniqueId == entry.Id);
@@ -595,12 +691,12 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
 				"that entry is in proportion to the largest entry");
 
-			if (ImGuiEx::SmallCheckBox("use subgroup for bar colour", &pContext.UseSubgroupForBarColour) == true)
+			if (ImGuiEx::SmallCheckBox("use subgroup for bar colour", &pContext.UseSubgroupForBarColour) == true && pContext.UseSubgroupForBarColour == true)
 			{
 				// Mutually exclusive with "use profession for bar colour"
 				pContext.UseProfessionForBarColour = false;
 			}
-			if (ImGuiEx::SmallCheckBox("use profession for bar colour", &pContext.UseProfessionForBarColour) == true)
+			if (ImGuiEx::SmallCheckBox("use profession for bar colour", &pContext.UseProfessionForBarColour) == true && pContext.UseProfessionForBarColour == true)
 			{
 				// Mutually exclusive with "use subgroup for bar colour"
 				pContext.UseSubgroupForBarColour = false;
@@ -609,20 +705,35 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::SmallCheckBox("profession text", &pContext.ProfessionText);
 			ImGuiEx::SmallCheckBox("profession icons", &pContext.ProfessionIcons);
 			ImGuiEx::SmallCheckBox("replace player with account name", &pContext.ReplacePlayerWithAccountName);
-			if(ImGuiEx::SmallCheckBox("use profession for name colour", &pContext.UseProfessionForNameColour) == true)
+			if(ImGuiEx::SmallCheckBox("use profession for name colour", &pContext.UseProfessionForNameColour) == true && pContext.UseProfessionForNameColour == true)
 			{
 				// Mutually exclusive with "use subgroup for name colour"
 				pContext.UseSubgroupForNameColour = false;
 			}
-			if (ImGuiEx::SmallCheckBox("use subgroup for name colour", &pContext.UseSubgroupForNameColour) == true)
+			if (ImGuiEx::SmallCheckBox("use subgroup for name colour", &pContext.UseSubgroupForNameColour) == true && pContext.UseSubgroupForNameColour == true)
 			{
 				// Mutually exclusive with "use profession for name colour"
 				pContext.UseProfessionForNameColour = false;
 			}
 			//ImGuiEx::SmallCheckBox("use red names for players loarding", &pContext.UseRedNamesForPlayersLoading);
-			//ImGuiEx::SmallCheckBox("self on top", &pContext.SelfOnTop);
-			ImGuiEx::SmallCheckBox("hide self from list", &pContext.HideSelfFromList);
-			//ImGuiEx::SmallCheckBox("self only", &pContext.SelfOnly);
+			if (ImGuiEx::SmallCheckBox("self on top", &pContext.SelfOnTop) == true && pContext.SelfOnTop == true)
+			{
+				// Mutually exclusive with "self only"
+				pContext.SelfOnly = false;
+				// Reset "hide self from list" every time "self on top" is enabled
+				pContext.HideSelfFromList = false;
+			}
+			if (pContext.SelfOnTop == true)
+			{
+				// Show "hide self from list" only when "self on top" is enabled
+				ImGuiEx::SmallCheckBox("hide self from list", &pContext.HideSelfFromList);
+			}
+			if (ImGuiEx::SmallCheckBox("self only", &pContext.SelfOnly) == true && pContext.SelfOnly == true)
+			{
+				// Mutually exclusive with "self on top" and "hide self from list"
+				pContext.SelfOnTop = false;
+				pContext.HideSelfFromList = false;
+			}
 			//ImGuiEx::SmallCheckBox("anonymous mode", &pContext.AnonymousMode);
 			//ImGuiEx::SmallCheckBox("stats format padding with spaces", &pContext.StatsFormatPaddingWithSpaces);
 
