@@ -327,7 +327,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		}
 		pState.LastFrameRightSideMinWidth = (std::max)(
 			pState.LastFrameRightSideMinWidth,
-			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt, std::nullopt, nullptr, std::nullopt, std::nullopt, false));
+			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt, std::nullopt, nullptr, std::nullopt, std::nullopt, std::nullopt, false));
 	}
 	
 	pState.LastFrameRightSideMinWidth += ImGui::GetCurrentWindowRead()->ScrollbarSizes.x;
@@ -403,6 +403,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			pContext.IndexNumbers == true ? std::optional{i + 1} : std::nullopt,
 			pContext.ProfessionText == true ? std::optional{GetProfessionText(entry.Agent.Profession, entry.Agent.Elite)} : std::nullopt,
 			pContext.ProfessionIcons == true ? GetProfessionIcon(entry.Agent.Profession, entry.Agent.Elite) : nullptr,
+			pContext.UseProfessionForNameColour == true ? std::optional{GetProfessionColorBase(entry.Agent.Profession)} : pContext.UseSubgroupForNameColour ? std::optional{GetSubgroupColorBase(entry.Agent.Subgroup)} : std::nullopt,
 			pContext.UseSubgroupForBarColour == true ? std::optional{GetSubgroupColorBase(entry.Agent.Subgroup)} : pContext.UseProfessionForBarColour == true ? std::optional{GetProfessionColorBase(entry.Agent.Profession)} : std::nullopt,
 			pContext.UseSubgroupForBarColour == true ? std::optional{GetSubgroupColorHighlight(entry.Agent.Subgroup)} : pContext.UseProfessionForBarColour == true ? std::optional{GetProfessionColorHighlight(entry.Agent.Profession)} : std::nullopt,
 			pContext.SelfUniqueId == entry.Id);
@@ -605,8 +606,16 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::SmallCheckBox("profession text", &pContext.ProfessionText);
 			ImGuiEx::SmallCheckBox("profession icons", &pContext.ProfessionIcons);
 			ImGuiEx::SmallCheckBox("replace player with account name", &pContext.ReplacePlayerWithAccountName);
-			//ImGuiEx::SmallCheckBox("use profession for name colour", &pContext.UseProfessionForNameColour);
-			//ImGuiEx::SmallCheckBox("use subgroup for name colour", &pContext.UseSubgroupForNameColour);
+			if(ImGuiEx::SmallCheckBox("use profession for name colour", &pContext.UseProfessionForNameColour) == true)
+			{
+				// Mutually exclusive with "use subgroup for name colour"
+				pContext.UseSubgroupForNameColour = false;
+			}
+			if (ImGuiEx::SmallCheckBox("use subgroup for name colour", &pContext.UseSubgroupForNameColour) == true)
+			{
+				// Mutually exclusive with "use profession for name colour"
+				pContext.UseProfessionForNameColour = false;
+			}
 			//ImGuiEx::SmallCheckBox("use red names for players loarding", &pContext.UseRedNamesForPlayersLoading);
 			//ImGuiEx::SmallCheckBox("self on top", &pContext.SelfOnTop);
 			//ImGuiEx::SmallCheckBox("hide self from list", &pContext.HideSelfFromList);

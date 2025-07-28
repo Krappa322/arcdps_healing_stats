@@ -57,7 +57,7 @@ void ImGuiEx::SmallUnindent()
 	ImGui::Unindent(ImGui::GetCurrentContext()->FontSize);
 }
 
-float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio, std::optional<size_t> pIndexNumber, std::optional<std::string> pProfessionText, void* pProfessionIcon, std::optional<ImVec4> pHealColour, std::optional<ImVec4> pBarrierGenerationColour, bool pSelf)
+float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightText, std::optional<float> pFillRatio, std::optional<float> pBarrierGenerationRatio, std::optional<size_t> pIndexNumber, std::optional<std::string> pProfessionText, void* pProfessionIcon, std::optional<ImVec4> pLeftTextColour, std::optional<ImVec4> pHealColour, std::optional<ImVec4> pBarrierGenerationColour, bool pSelf)
 {
 	ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(204, 204, 212, 255));
 	ImGui::BeginGroup();
@@ -135,7 +135,8 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 		ImGui::SameLine();
 	}
 
-	TextColoredUnformatted(pSelf ? std::optional<ImU32>(IM_COL32(255, 255, 97, 255)) : std::nullopt, pLeftText.data(), pLeftText.data() + pLeftText.size());
+	auto leftTextColour = pLeftTextColour.has_value() ? ImGui::ColorConvertFloat4ToU32(*pLeftTextColour) : pSelf ? std::optional<ImU32>(IM_COL32(255, 255, 97, 255)) : std::nullopt;
+	TextColoredUnformatted(leftTextColour, pLeftText.data(), pLeftText.data() + pLeftText.size());
 
 	ImGui::SameLine();
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - rightTextSize.x - ImGui::GetStyle().ItemInnerSpacing.x); // Sending x in SameLine messes with alignment when inside of a group

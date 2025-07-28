@@ -76,6 +76,8 @@ TEST(ConfigTest, Serialize_Deserialize)
 		window.ProfessionText = rand_t<bool>();
 		window.ProfessionIcons = rand_t<bool>();
 		window.ReplacePlayerWithAccountName = rand_t<bool>();
+		window.UseProfessionForNameColour = rand_t<bool>();
+		window.UseSubgroupForNameColour = rand_t<bool>();
 		rand_string(window.Name);
 		rand_string(window.TitleFormat);
 		rand_string(window.EntryFormat);
@@ -139,6 +141,8 @@ TEST(ConfigTest, Serialize_Deserialize)
 		ASSERT_EQ(windowLeft.ProfessionText, windowRight.ProfessionText);
 		ASSERT_EQ(windowLeft.ProfessionIcons, windowRight.ProfessionIcons);
 		ASSERT_EQ(windowLeft.ReplacePlayerWithAccountName, windowRight.ReplacePlayerWithAccountName);
+		ASSERT_EQ(windowLeft.UseProfessionForNameColour, windowRight.UseProfessionForNameColour);
+		ASSERT_EQ(windowLeft.UseSubgroupForNameColour, windowRight.UseSubgroupForNameColour);
 		ASSERT_EQ(strcmp(windowLeft.Name, windowRight.Name), 0);
 		ASSERT_EQ(strcmp(windowLeft.TitleFormat, windowRight.TitleFormat), 0);
 		ASSERT_EQ(strcmp(windowLeft.EntryFormat, windowRight.EntryFormat), 0);
