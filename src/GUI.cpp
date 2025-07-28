@@ -397,19 +397,22 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			name = name.substr(0, pContext.MaxNameLength);
 		}
 
-		float minSize = ImGuiEx::StatsEntry(name, buffer,
-			pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt,
-			pContext.ShowProgressBars == true ? std::optional{barrierGenerationRatio} : std::nullopt,
-			pContext.IndexNumbers == true ? std::optional{i + 1} : std::nullopt,
-			pContext.ProfessionText == true ? std::optional{GetProfessionText(entry.Agent.Profession, entry.Agent.Elite)} : std::nullopt,
-			pContext.ProfessionIcons == true ? GetProfessionIcon(entry.Agent.Profession, entry.Agent.Elite) : nullptr,
-			pContext.UseProfessionForNameColour == true ? std::optional{GetProfessionColorBase(entry.Agent.Profession)} : pContext.UseSubgroupForNameColour ? std::optional{GetSubgroupColorBase(entry.Agent.Subgroup)} : std::nullopt,
-			pContext.UseSubgroupForBarColour == true ? std::optional{GetSubgroupColorBase(entry.Agent.Subgroup)} : pContext.UseProfessionForBarColour == true ? std::optional{GetProfessionColorBase(entry.Agent.Profession)} : std::nullopt,
-			pContext.UseSubgroupForBarColour == true ? std::optional{GetSubgroupColorHighlight(entry.Agent.Subgroup)} : pContext.UseProfessionForBarColour == true ? std::optional{GetProfessionColorHighlight(entry.Agent.Profession)} : std::nullopt,
-			pContext.SelfUniqueId == entry.Id);
+		if (pContext.HideSelfFromList == false || entry.Id != pContext.SelfUniqueId)
+		{
+			float minSize = ImGuiEx::StatsEntry(name, buffer,
+				pContext.ShowProgressBars == true ? std::optional{ healingRatio } : std::nullopt,
+				pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt,
+				pContext.IndexNumbers == true ? std::optional{ i + 1 } : std::nullopt,
+				pContext.ProfessionText == true ? std::optional{ GetProfessionText(entry.Agent.Profession, entry.Agent.Elite) } : std::nullopt,
+				pContext.ProfessionIcons == true ? GetProfessionIcon(entry.Agent.Profession, entry.Agent.Elite) : nullptr,
+				pContext.UseProfessionForNameColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession) } : pContext.UseSubgroupForNameColour ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup) } : std::nullopt,
+				pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession) } : std::nullopt,
+				pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorHighlight(entry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorHighlight(entry.Agent.Profession) } : std::nullopt,
+				pContext.SelfUniqueId == entry.Id);
 
-		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
-		pContext.CurrentFrameLineCount += 1;
+			pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
+			pContext.CurrentFrameLineCount += 1;
+		}
 
 		DetailsWindowState* state = nullptr;
 		std::vector<DetailsWindowState>* vec;
@@ -618,7 +621,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			}
 			//ImGuiEx::SmallCheckBox("use red names for players loarding", &pContext.UseRedNamesForPlayersLoading);
 			//ImGuiEx::SmallCheckBox("self on top", &pContext.SelfOnTop);
-			//ImGuiEx::SmallCheckBox("hide self from list", &pContext.HideSelfFromList);
+			ImGuiEx::SmallCheckBox("hide self from list", &pContext.HideSelfFromList);
 			//ImGuiEx::SmallCheckBox("self only", &pContext.SelfOnly);
 			//ImGuiEx::SmallCheckBox("anonymous mode", &pContext.AnonymousMode);
 			//ImGuiEx::SmallCheckBox("stats format padding with spaces", &pContext.StatsFormatPaddingWithSpaces);

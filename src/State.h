@@ -69,6 +69,7 @@ struct HealWindowOptions
 	bool ReplacePlayerWithAccountName = false;
 	bool UseProfessionForNameColour = false;
 	bool UseSubgroupForNameColour = false;
+	bool HideSelfFromList = false;
 	char Name[MAX_HEAL_WINDOW_NAME + 1] = {};
 	char TitleFormat[MAX_HEAL_WINDOW_TITLE + 1] = "{1} ({4}/s, {7}s in combat)";
 	char EntryFormat[MAX_HEAL_WINDOW_ENTRY + 1] = "{1} ({4}/s, {7}%)";

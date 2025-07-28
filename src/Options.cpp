@@ -443,6 +443,7 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "ReplacePlayerWithAccountName", ReplacePlayerWithAccountName);
 	GetJsonValue(pJsonObject, "UseProfessionForNameColour", UseProfessionForNameColour);
 	GetJsonValue(pJsonObject, "UseSubgroupForNameColour", UseSubgroupForNameColour);
+	GetJsonValue(pJsonObject, "HideSelfFromList", HideSelfFromList);
 	GetJsonValue(pJsonObject, "Name", Name);
 	GetJsonValue(pJsonObject, "TitleFormat", TitleFormat);
 	GetJsonValue(pJsonObject, "EntryFormat", EntryFormat);
@@ -506,6 +507,7 @@ do {\
 	SET_JSON_VAL(ReplacePlayerWithAccountName);
 	SET_JSON_VAL(UseProfessionForNameColour);
 	SET_JSON_VAL(UseSubgroupForNameColour);
+	SET_JSON_VAL(HideSelfFromList);
 	SET_JSON_VAL_CSTR_ARRAY(Name);
 	SET_JSON_VAL_CSTR_ARRAY(TitleFormat);
 	SET_JSON_VAL_CSTR_ARRAY(EntryFormat);
