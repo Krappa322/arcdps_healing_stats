@@ -378,6 +378,55 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImGui::End();
 }
 
+static void Display_ContentSingleRow(HealWindowContext& pContext, const AggregatedStatsEntry& pEntry, const AggregatedStatsEntry& pAggregatedTotal, const AggregatedVector& pStats, size_t pIndexNumber, bool pTop, char* pBuffer, size_t pBufferLength)
+{
+	std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
+			pEntry.Healing,
+			pEntry.Hits,
+			pEntry.Casts,
+			divide_safe(pEntry.Healing, pEntry.TimeInCombat),
+			divide_safe(pEntry.Healing, pEntry.Hits),
+			pEntry.Casts.has_value() == true ? std::optional{divide_safe(pEntry.Healing, *pEntry.Casts)} : std::nullopt,
+			pContext.DataSourceChoice != DataSource::Totals ? std::optional{divide_safe(pEntry.Healing * 100, pAggregatedTotal.Healing)} : std::nullopt };
+	ReplaceFormatted(pBuffer, pBufferLength, pContext.EntryFormat, entryValues);
+
+	float healingRatio = static_cast<float>(divide_safe(pEntry.Healing, pStats.HighestHealing));
+	float barrierGenerationRatio = static_cast<float>(divide_safe(pEntry.BarrierGeneration, pStats.HighestHealing));
+
+	std::string_view name = pEntry.Agent.Name;
+	if (pContext.ReplacePlayerWithAccountName)
+	{
+		name = pEntry.Agent.AccountName;
+		// The account name starts with ':', skip it
+		if (name.empty() != true && name[0] == ':')
+		{
+			name = name.substr(1);
+		}
+	}
+	if (pContext.MaxNameLength > 0)
+	{
+		name = name.substr(0, pContext.MaxNameLength);
+	}
+
+	if ((pContext.HideSelfFromList == false || pEntry.Id != pContext.SelfUniqueId || pStats.Entries.size() == 1)
+		&& (pContext.SelfOnly == false || pEntry.Id == pContext.SelfUniqueId))
+	{
+		float minSize = ImGuiEx::StatsEntry(name, pBuffer,
+			pContext.ShowProgressBars == true ? std::optional{ healingRatio } : std::nullopt,
+			pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt,
+			pContext.IndexNumbers == true ? std::optional{ GetIndexNumberText(pIndexNumber, pTop, pContext.SelfOnly) } : std::nullopt,
+			pContext.ProfessionText == true ? std::optional{ GetProfessionText(pEntry.Agent.Profession, pEntry.Agent.Elite) } : std::nullopt,
+			pContext.ProfessionIcons == true ? GetProfessionIcon(pEntry.Agent.Profession, pEntry.Agent.Elite) : nullptr,
+			pContext.UseProfessionForNameColour == true ? std::optional{ GetProfessionColorBase(pEntry.Agent.Profession, 1.0f) } : pContext.UseSubgroupForNameColour ? std::optional{ GetSubgroupColorBase(pEntry.Agent.Subgroup, 1.0f) } : std::nullopt,
+			pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorBase(pEntry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorBase(pEntry.Agent.Profession) } : std::nullopt,
+			pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorHighlight(pEntry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorHighlight(pEntry.Agent.Profession) } : std::nullopt,
+			pContext.SelfUniqueId == pEntry.Id);
+
+		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
+		pContext.CurrentFrameLineCount += 1;
+	}
+}
+
 static void Display_Content(HealWindowContext& pContext, DataSource pDataSource, uint32_t pWindowIndex, bool pEvtcRpcEnabled)
 {
 	UNREFERENCED_PARAMETER(pWindowIndex);
@@ -414,48 +463,8 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 
 		if (selfEntry != stats.Entries.cend())
 		{
-			auto entry = *selfEntry;
-			std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
-				entry.Healing,
-				entry.Hits,
-				entry.Casts,
-				divide_safe(entry.Healing, entry.TimeInCombat),
-				divide_safe(entry.Healing, entry.Hits),
-				entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
-				pContext.DataSourceChoice != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
-			ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
-
-			float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
-			float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
-
-			std::string_view name = entry.Agent.Name;
-			if (pContext.ReplacePlayerWithAccountName)
-			{
-				name = entry.Agent.AccountName;
-				// The account name starts with ':', skip it
-				if (name.empty() != true && name[0] == ':')
-				{
-					name = name.substr(1);
-				}
-			}
-			if (pContext.MaxNameLength > 0)
-			{
-				name = name.substr(0, pContext.MaxNameLength);
-			}
-
-			float minSize = ImGuiEx::StatsEntry(name, buffer,
-				pContext.ShowProgressBars == true ? std::optional{ healingRatio } : std::nullopt,
-				pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt,
-				pContext.IndexNumbers == true ? std::optional{ GetIndexNumberText(0, true, false) } : std::nullopt,
-				pContext.ProfessionText == true ? std::optional{ GetProfessionText(entry.Agent.Profession, entry.Agent.Elite) } : std::nullopt,
-				pContext.ProfessionIcons == true ? GetProfessionIcon(entry.Agent.Profession, entry.Agent.Elite) : nullptr,
-				pContext.UseProfessionForNameColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession, 1.0f) } : pContext.UseSubgroupForNameColour ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup, 1.0f) } : std::nullopt,
-				pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession) } : std::nullopt,
-				pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorHighlight(entry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorHighlight(entry.Agent.Profession) } : std::nullopt,
-				pContext.SelfUniqueId == entry.Id);
-
-			pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
-			pContext.CurrentFrameLineCount += 1;
+			Display_ContentSingleRow(pContext, *selfEntry, aggregatedTotal, stats, 0, true, buffer, sizeof(buffer));
+			//ImGui::Separator();
 		}
 	}
 
@@ -463,52 +472,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	{
 		const auto& entry = stats.Entries[i];
 
-		// TODO: Add barrier generation here?
-		std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
-			entry.Healing,
-			entry.Hits,
-			entry.Casts,
-			divide_safe(entry.Healing, entry.TimeInCombat),
-			divide_safe(entry.Healing, entry.Hits),
-			entry.Casts.has_value() == true ? std::optional{divide_safe(entry.Healing, *entry.Casts)} : std::nullopt,
-			pContext.DataSourceChoice != DataSource::Totals ? std::optional{divide_safe(entry.Healing * 100, aggregatedTotal.Healing)} : std::nullopt };
-		ReplaceFormatted(buffer, sizeof(buffer), pContext.EntryFormat, entryValues);
-
-		float healingRatio = static_cast<float>(divide_safe(entry.Healing, stats.HighestHealing));
-		float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
-
-		std::string_view name = entry.Agent.Name;
-		if (pContext.ReplacePlayerWithAccountName)
-		{
-			name = entry.Agent.AccountName;
-			// The account name starts with ':', skip it
-			if (name.empty() != true && name[0] == ':')
-			{
-				name = name.substr(1);
-			}
-		}
-		if (pContext.MaxNameLength > 0)
-		{
-			name = name.substr(0, pContext.MaxNameLength);
-		}
-
-		if ((pContext.HideSelfFromList == false || entry.Id != pContext.SelfUniqueId || stats.Entries.size() == 1)
-			&& (pContext.SelfOnly == false || entry.Id == pContext.SelfUniqueId))
-		{
-			float minSize = ImGuiEx::StatsEntry(name, buffer,
-				pContext.ShowProgressBars == true ? std::optional{ healingRatio } : std::nullopt,
-				pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt,
-				pContext.IndexNumbers == true ? std::optional{ GetIndexNumberText(i + 1, false, pContext.SelfOnly) } : std::nullopt,
-				pContext.ProfessionText == true ? std::optional{ GetProfessionText(entry.Agent.Profession, entry.Agent.Elite) } : std::nullopt,
-				pContext.ProfessionIcons == true ? GetProfessionIcon(entry.Agent.Profession, entry.Agent.Elite) : nullptr,
-				pContext.UseProfessionForNameColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession, 1.0f) } : pContext.UseSubgroupForNameColour ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup, 1.0f) } : std::nullopt,
-				pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorBase(entry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorBase(entry.Agent.Profession) } : std::nullopt,
-				pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorHighlight(entry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorHighlight(entry.Agent.Profession) } : std::nullopt,
-				pContext.SelfUniqueId == entry.Id);
-
-			pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
-			pContext.CurrentFrameLineCount += 1;
-		}
+		Display_ContentSingleRow(pContext, entry, aggregatedTotal, stats, i + 1, false, buffer, sizeof(buffer));
 
 		DetailsWindowState* state = nullptr;
 		std::vector<DetailsWindowState>* vec;
