@@ -591,8 +591,16 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::AddTooltipToLastItem("Show a colored bar under each entry signifying what the value of\n"
 				"that entry is in proportion to the largest entry");
 
-			ImGuiEx::SmallCheckBox("use subgroup for bar colour", &pContext.UseSubgroupForBarColour);
-			ImGuiEx::SmallCheckBox("use profession for bar colour", &pContext.UseProfessionForBarColour);
+			if (ImGuiEx::SmallCheckBox("use subgroup for bar colour", &pContext.UseSubgroupForBarColour) == true)
+			{
+				// Mutually exclusive with "use profession for bar colour"
+				pContext.UseProfessionForBarColour = false;
+			}
+			if (ImGuiEx::SmallCheckBox("use profession for bar colour", &pContext.UseProfessionForBarColour) == true)
+			{
+				// Mutually exclusive with "use subgroup for bar colour"
+				pContext.UseSubgroupForBarColour = false;
+			}
 			ImGuiEx::SmallCheckBox("index numbers", &pContext.IndexNumbers);
 			ImGuiEx::SmallCheckBox("profession text", &pContext.ProfessionText);
 			ImGuiEx::SmallCheckBox("profession icons", &pContext.ProfessionIcons);
