@@ -382,7 +382,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImGui::End();
 }
 
-static void Display_ContentSingleRow(HealWindowContext& pContext, const AggregatedStatsEntry& pEntry, const AggregatedStatsEntry& pAggregatedTotal, const AggregatedVector& pStats, size_t pIndexNumber, bool pTop, bool pAnonymousMode, char* pBuffer, size_t pBufferLength)
+static void Display_ContentSingleRow(HealWindowContext& pContext, DataSource pDataSource, uint32_t pWindowIndex, const AggregatedStatsEntry& pEntry, const AggregatedStatsEntry& pAggregatedTotal, const AggregatedVector& pStats, size_t pIndexNumber, bool pTop, bool pAnonymousMode, char* pBuffer, size_t pBufferLength)
 {
 	std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			pEntry.Healing,
@@ -440,6 +440,54 @@ static void Display_ContentSingleRow(HealWindowContext& pContext, const Aggregat
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
 		pContext.CurrentFrameLineCount += 1;
 	}
+
+	DetailsWindowState* state = nullptr;
+	std::vector<DetailsWindowState>* vec;
+	switch (pDataSource)
+	{
+	case DataSource::Agents:
+		vec = &pContext.OpenAgentWindows;
+		break;
+	case DataSource::Skills:
+		vec = &pContext.OpenSkillWindows;
+		break;
+	case DataSource::PeersOutgoing:
+		vec = &pContext.OpenPeersOutgoingWindows;
+		break;
+	default:
+		vec = nullptr;
+		break;
+	}
+
+	if (vec != nullptr)
+	{
+		for (auto& iter : *vec)
+		{
+			if (iter.Id == pEntry.Id)
+			{
+				state = &(iter);
+				break;
+			}
+		}
+	}
+
+	// If it was opened in a previous frame, we need the update the statistics stored so they are up to date
+	if (state != nullptr)
+	{
+		*static_cast<AggregatedStatsEntry*>(state) = pEntry;
+	}
+
+	// Allow to toggle the details window only if "anonymous mode" is disabled or the entry is the self entry
+	if (vec != nullptr && ImGui::IsItemClicked() == true && (pContext.AnonymousMode == false || pEntry.Id == pContext.SelfUniqueId))
+	{
+		if (state == nullptr)
+		{
+			state = &vec->emplace_back(pEntry);
+		}
+		state->IsOpen = !state->IsOpen;
+
+		LOG("Toggled details window for entry %llu %s in window %u", pEntry.Id, pEntry.Agent.Name.c_str(), pWindowIndex);
+	}
 }
 
 static void Display_Content(HealWindowContext& pContext, DataSource pDataSource, uint32_t pWindowIndex, bool pEvtcRpcEnabled)
@@ -478,7 +526,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 
 		if (selfEntry != stats.Entries.cend())
 		{
-			Display_ContentSingleRow(pContext, *selfEntry, aggregatedTotal, stats, 0, true, false, buffer, sizeof(buffer));
+			Display_ContentSingleRow(pContext, pDataSource, pWindowIndex , *selfEntry, aggregatedTotal, stats, 0, true, false, buffer, sizeof(buffer));
 			//ImGui::Separator();
 		}
 	}
@@ -487,55 +535,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	{
 		const auto& entry = stats.Entries[i];
 
-		Display_ContentSingleRow(pContext, entry, aggregatedTotal, stats, i + 1, false, pContext.AnonymousMode, buffer, sizeof(buffer));
-
-		DetailsWindowState* state = nullptr;
-		std::vector<DetailsWindowState>* vec;
-		switch (pDataSource)
-		{
-		case DataSource::Agents:
-			vec = &pContext.OpenAgentWindows;
-			break;
-		case DataSource::Skills:
-			vec = &pContext.OpenSkillWindows;
-			break;
-		case DataSource::PeersOutgoing:
-			vec = &pContext.OpenPeersOutgoingWindows;
-			break;
-		default:
-			vec = nullptr;
-			break;
-		}
-
-		if (vec != nullptr)
-		{
-			for (auto& iter : *vec)
-			{
-				if (iter.Id == entry.Id)
-				{
-					state = &(iter);
-					break;
-				}
-			}
-		}
-
-		// If it was opened in a previous frame, we need the update the statistics stored so they are up to date
-		if (state != nullptr)
-		{
-			*static_cast<AggregatedStatsEntry*>(state) = entry;
-		}
-
-		// Allow to toggle the details window only if "anonymous mode" is disabled or the entry is the self entry
-		if (vec != nullptr && ImGui::IsItemClicked() == true && (pContext.AnonymousMode == false || entry.Id == pContext.SelfUniqueId))
-		{
-			if (state == nullptr)
-			{
-				state = &vec->emplace_back(entry);
-			}
-			state->IsOpen = !state->IsOpen;
-
-			LOG("Toggled details window for entry %llu %s in window %u", entry.Id, entry.Agent.Name.c_str(), pWindowIndex);
-		}
+		Display_ContentSingleRow(pContext, pDataSource, pWindowIndex, entry, aggregatedTotal, stats, i + 1, false, pContext.AnonymousMode, buffer, sizeof(buffer));
 	}
 }
 
