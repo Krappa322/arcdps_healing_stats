@@ -168,6 +168,7 @@
     <None Include="..\vcpkg_installed\x64-windows-static\x64-windows\share\grpc\roots.pem" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\icons\specs\000.png" />
     <Image Include="..\icons\specs\001.png" />
     <Image Include="..\icons\specs\002.png" />
     <Image Include="..\icons\specs\003.png" />
