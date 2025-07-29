@@ -32,7 +32,7 @@ namespace ImGuiEx
 		}
 	};
 
-	float CalcWindowHeight(size_t pLineCount, ImGuiWindow* pWindow = nullptr);
+	float CalcWindowHeight(size_t pLineCount, float pExtraHeight, ImGuiWindow* pWindow = nullptr);
 
 	bool SmallCheckBox(const char* pLabel, bool* pIsPressed);
 	bool SmallInputFloat(const char* pLabel, float* pFloat);

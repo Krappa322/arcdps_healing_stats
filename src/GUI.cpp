@@ -527,7 +527,8 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 		if (selfEntry != stats.Entries.cend())
 		{
 			Display_ContentSingleRow(pContext, pDataSource, pWindowIndex , *selfEntry, aggregatedTotal, stats, 0, true, false, buffer, sizeof(buffer));
-			//ImGui::Separator();
+			ImGui::Separator();
+			pContext.CurrentFrameExtraHeight += 1.0f + ImGui::GetStyle().ItemSpacing.y;
 		}
 	}
 
@@ -933,6 +934,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 
 		curWindow.LastFrameMinWidth = 0;
 		curWindow.CurrentFrameLineCount = 0;
+		curWindow.CurrentFrameExtraHeight = 0.0f;
 
 		curWindow.WindowId = ImGui::GetCurrentWindow()->ID;
 
@@ -1005,7 +1007,7 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			size_t lineCount = (std::max)(curWindow.CurrentFrameLineCount, curWindow.MinLinesDisplayed);
 			lineCount = (std::min)(lineCount, curWindow.MaxLinesDisplayed);
 			
-			size.y = ImGuiEx::CalcWindowHeight(lineCount);
+			size.y = ImGuiEx::CalcWindowHeight(lineCount, curWindow.CurrentFrameExtraHeight);
 
 			LogT("lineCount={} CurrentFrameLineCount={} MinLinesDisplayed={} MaxLinesDisplayed={} y={}",
 				lineCount, curWindow.CurrentFrameLineCount, curWindow.MinLinesDisplayed, curWindow.MaxLinesDisplayed, size.y);
