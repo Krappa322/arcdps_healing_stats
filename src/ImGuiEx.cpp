@@ -1,6 +1,6 @@
 #include "ImGuiEx.h"
 
-float ImGuiEx::CalcWindowHeight(size_t pLineCount, ImGuiWindow* pWindow)
+float ImGuiEx::CalcWindowHeight(size_t pLineCount, float pExtraHeight, ImGuiWindow* pWindow)
 {
 	if (pWindow == nullptr)
 	{
@@ -16,7 +16,7 @@ float ImGuiEx::CalcWindowHeight(size_t pLineCount, ImGuiWindow* pWindow)
 	{
 		contentSize = pLineCount * ImGui::GetTextLineHeight() + (pLineCount - 1) * ImGui::GetStyle().ItemSpacing.y;
 	}
-	return decorationsSize + padding + contentSize;
+	return decorationsSize + padding + contentSize + pExtraHeight;
 }
 
 bool ImGuiEx::SmallCheckBox(const char* pLabel, bool* pIsPressed)
