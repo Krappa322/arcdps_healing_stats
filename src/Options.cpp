@@ -446,6 +446,7 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "SelfOnTop", SelfOnTop);
 	GetJsonValue(pJsonObject, "HideSelfFromList", HideSelfFromList);
 	GetJsonValue(pJsonObject, "SelfOnly", SelfOnly);
+	GetJsonValue(pJsonObject, "AnonymousMode", AnonymousMode);
 	GetJsonValue(pJsonObject, "Name", Name);
 	GetJsonValue(pJsonObject, "TitleFormat", TitleFormat);
 	GetJsonValue(pJsonObject, "EntryFormat", EntryFormat);
@@ -512,6 +513,7 @@ do {\
 	SET_JSON_VAL(SelfOnTop);
 	SET_JSON_VAL(HideSelfFromList);
 	SET_JSON_VAL(SelfOnly);
+	SET_JSON_VAL(AnonymousMode);
 	SET_JSON_VAL_CSTR_ARRAY(Name);
 	SET_JSON_VAL_CSTR_ARRAY(TitleFormat);
 	SET_JSON_VAL_CSTR_ARRAY(EntryFormat);

@@ -38,7 +38,7 @@ static constexpr EnumStringArray<CornerPosition, static_cast<size_t>(CornerPosit
 *  Until then, the texture pointer will be nullptr.
 */
 static std::map<std::pair<Prof, SpecializationId>, SpecializationData> ProfessionEliteMapping{
-	{{Prof::PROF_UNKNOWN,  static_cast<SpecializationId>(0xFFFFFFFF)}, {"(Unk)"}},
+	{{Prof::PROF_UNKNOWN, static_cast<SpecializationId>(0xFFFFFFFF)}, {"(???)", IDB_PNG_SPEC_NONE}},
 	// Guardian
 	{{Prof::PROF_GUARD, SpecializationId::None}, {"(Gdn)", IDB_PNG_SPEC_GUARDIAN}},
 	{{Prof::PROF_GUARD, SpecializationId::Guardian_Dragonhunter}, {"(Dgh)", IDB_PNG_SPEC_DRAGONHUNTER}},
@@ -86,6 +86,10 @@ static std::map<std::pair<Prof, SpecializationId>, SpecializationData> Professio
 	{{Prof::PROF_RENEGADE, SpecializationId::Revenant_Vindicator}, {"(Vin)", IDB_PNG_SPEC_VINDICATOR}}
 };
 
+static const HealedAgent AnonymousAgent{
+	0, "", "", 0, false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF
+};
+
 void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pD3DVersion)
 {
 	ID3D11Device* d3d11 = nullptr;
@@ -120,7 +124,7 @@ static std::string GetProfessionText(Prof pProfession, uint32_t pElite)
 	{
 		return it->second.Abbreviation;
 	}
-	return "(Unk)";
+	return "(???)";
 }
 
 /* Returns a pointer to the icon texture for the given profession and elite specialization if it exists.
@@ -378,7 +382,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 	ImGui::End();
 }
 
-static void Display_ContentSingleRow(HealWindowContext& pContext, const AggregatedStatsEntry& pEntry, const AggregatedStatsEntry& pAggregatedTotal, const AggregatedVector& pStats, size_t pIndexNumber, bool pTop, char* pBuffer, size_t pBufferLength)
+static void Display_ContentSingleRow(HealWindowContext& pContext, const AggregatedStatsEntry& pEntry, const AggregatedStatsEntry& pAggregatedTotal, const AggregatedVector& pStats, size_t pIndexNumber, bool pTop, bool pAnonymousMode, char* pBuffer, size_t pBufferLength)
 {
 	std::array<std::optional<std::variant<uint64_t, double>>, 7> entryValues{
 			pEntry.Healing,
@@ -393,10 +397,12 @@ static void Display_ContentSingleRow(HealWindowContext& pContext, const Aggregat
 	float healingRatio = static_cast<float>(divide_safe(pEntry.Healing, pStats.HighestHealing));
 	float barrierGenerationRatio = static_cast<float>(divide_safe(pEntry.BarrierGeneration, pStats.HighestHealing));
 
-	std::string_view name = pEntry.Agent.Name;
+	// Anonymous mode is enabled only if the entry is not the self entry
+	const HealedAgent& agent = pAnonymousMode == true && pEntry.Id != pContext.SelfUniqueId ? AnonymousAgent : pEntry.Agent;
+	std::string_view name = agent.Name;
 	if (pContext.ReplacePlayerWithAccountName)
 	{
-		name = pEntry.Agent.AccountName;
+		name = agent.AccountName;
 		// The account name starts with ':', skip it
 		if (name.empty() != true && name[0] == ':')
 		{
@@ -424,11 +430,11 @@ static void Display_ContentSingleRow(HealWindowContext& pContext, const Aggregat
 			pContext.ShowProgressBars == true ? std::optional{ healingRatio } : std::nullopt,
 			pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt,
 			pContext.IndexNumbers == true ? std::optional{ GetIndexNumberText(pIndexNumber, pTop, pContext.SelfOnly) } : std::nullopt,
-			pContext.ProfessionText == true ? std::optional{ GetProfessionText(pEntry.Agent.Profession, pEntry.Agent.Elite) } : std::nullopt,
-			pContext.ProfessionIcons == true ? GetProfessionIcon(pEntry.Agent.Profession, pEntry.Agent.Elite) : nullptr,
-			pContext.UseProfessionForNameColour == true ? std::optional{ GetProfessionColorBase(pEntry.Agent.Profession, 1.0f) } : pContext.UseSubgroupForNameColour ? std::optional{ GetSubgroupColorBase(pEntry.Agent.Subgroup, 1.0f) } : std::nullopt,
-			pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorBase(pEntry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorBase(pEntry.Agent.Profession) } : std::nullopt,
-			pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorHighlight(pEntry.Agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorHighlight(pEntry.Agent.Profession) } : std::nullopt,
+			pContext.ProfessionText == true ? std::optional{ GetProfessionText(agent.Profession, agent.Elite) } : std::nullopt,
+			pContext.ProfessionIcons == true ? GetProfessionIcon(agent.Profession, agent.Elite) : nullptr,
+			pContext.UseProfessionForNameColour == true ? std::optional{ GetProfessionColorBase(agent.Profession, 1.0f) } : pContext.UseSubgroupForNameColour ? std::optional{ GetSubgroupColorBase(agent.Subgroup, 1.0f) } : std::nullopt,
+			pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorBase(agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorBase(agent.Profession) } : std::nullopt,
+			pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorHighlight(agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorHighlight(agent.Profession) } : std::nullopt,
 			pContext.SelfUniqueId == pEntry.Id);
 
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
@@ -472,7 +478,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 
 		if (selfEntry != stats.Entries.cend())
 		{
-			Display_ContentSingleRow(pContext, *selfEntry, aggregatedTotal, stats, 0, true, buffer, sizeof(buffer));
+			Display_ContentSingleRow(pContext, *selfEntry, aggregatedTotal, stats, 0, true, false, buffer, sizeof(buffer));
 			//ImGui::Separator();
 		}
 	}
@@ -481,7 +487,7 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 	{
 		const auto& entry = stats.Entries[i];
 
-		Display_ContentSingleRow(pContext, entry, aggregatedTotal, stats, i + 1, false, buffer, sizeof(buffer));
+		Display_ContentSingleRow(pContext, entry, aggregatedTotal, stats, i + 1, false, pContext.AnonymousMode, buffer, sizeof(buffer));
 
 		DetailsWindowState* state = nullptr;
 		std::vector<DetailsWindowState>* vec;
@@ -519,7 +525,8 @@ static void Display_Content(HealWindowContext& pContext, DataSource pDataSource,
 			*static_cast<AggregatedStatsEntry*>(state) = entry;
 		}
 
-		if (vec != nullptr && ImGui::IsItemClicked() == true)
+		// Allow to toggle the details window only if "anonymous mode" is disabled or the entry is the self entry
+		if (vec != nullptr && ImGui::IsItemClicked() == true && (pContext.AnonymousMode == false || entry.Id == pContext.SelfUniqueId))
 		{
 			if (state == nullptr)
 			{
@@ -707,7 +714,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 				pContext.SelfOnTop = false;
 				pContext.HideSelfFromList = false;
 			}
-			//ImGuiEx::SmallCheckBox("anonymous mode", &pContext.AnonymousMode);
+			ImGuiEx::SmallCheckBox("anonymous mode", &pContext.AnonymousMode);
 			//ImGuiEx::SmallCheckBox("stats format padding with spaces", &pContext.StatsFormatPaddingWithSpaces);
 
 			ImGui::SetNextItemWidth(260.0f);

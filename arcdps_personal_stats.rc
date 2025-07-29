@@ -168,6 +168,8 @@ IDB_PNG_SPEC_RENEGADE   PNG                     "icons\\specs\\e902.png"
 
 IDB_PNG_SPEC_VINDICATOR PNG                     "icons\\specs\\e903.png"
 
+IDB_PNG_SPEC_NONE       PNG                     "icons\\specs\\000.png"
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
