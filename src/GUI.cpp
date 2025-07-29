@@ -408,7 +408,16 @@ static void Display_ContentSingleRow(HealWindowContext& pContext, const Aggregat
 		name = name.substr(0, pContext.MaxNameLength);
 	}
 
-	if ((pContext.HideSelfFromList == false || pEntry.Id != pContext.SelfUniqueId || pStats.Entries.size() == 1)
+	/* Conditions to show the row:
+	* - OR: pTop is set to true. This is used by "self on top" and called only with SelfUniqueId as entry
+	* - OR: "hide self from list" is false, in which case we don't need to filter out the self entry
+	* - OR: "hide self from list" is true but the entry is not the self entry
+	* - OR: There's only one entry, in which case it's most likely the self entry which is always shown
+	* AND: at least one of the conditions above must be true AND one of the conditions below must be true
+	* - OR: "self only" is false so we show all entries
+	* - OR: "self only" is true but the entry is the self entry
+	*/
+	if ((pTop || pContext.HideSelfFromList == false || pEntry.Id != pContext.SelfUniqueId || pStats.Entries.size() == 1)
 		&& (pContext.SelfOnly == false || pEntry.Id == pContext.SelfUniqueId))
 	{
 		float minSize = ImGuiEx::StatsEntry(name, pBuffer,
