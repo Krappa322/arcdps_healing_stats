@@ -707,7 +707,6 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 				// Mutually exclusive with "use profession for name colour"
 				pContext.UseProfessionForNameColour = false;
 			}
-			//ImGuiEx::SmallCheckBox("use red names for players loarding", &pContext.UseRedNamesForPlayersLoading);
 			if (ImGuiEx::SmallCheckBox("self on top", &pContext.SelfOnTop) == true && pContext.SelfOnTop == true)
 			{
 				// Mutually exclusive with "self only"
@@ -727,7 +726,6 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 				pContext.HideSelfFromList = false;
 			}
 			ImGuiEx::SmallCheckBox("anonymous mode", &pContext.AnonymousMode);
-			//ImGuiEx::SmallCheckBox("stats format padding with spaces", &pContext.StatsFormatPaddingWithSpaces);
 
 			ImGui::SetNextItemWidth(260.0f);
 			ImGuiEx::SmallInputText("short name", pContext.Name, sizeof(pContext.Name));
