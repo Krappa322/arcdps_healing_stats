@@ -12,6 +12,7 @@
 #include <ArcdpsExtension/Widgets.h>
 
 #include <array>
+#include <filesystem>
 #include <map>
 #include <tuple>
 #include <Windows.h>
@@ -40,50 +41,50 @@ static constexpr EnumStringArray<CornerPosition, static_cast<size_t>(CornerPosit
 static std::map<std::pair<Prof, SpecializationId>, SpecializationData> ProfessionEliteMapping{
 	{{Prof::PROF_UNKNOWN, static_cast<SpecializationId>(0xFFFFFFFF)}, {"(???)", IDB_PNG_SPEC_NONE}},
 	// Guardian
-	{{Prof::PROF_GUARD, SpecializationId::None}, {"(Gdn)", IDB_PNG_SPEC_GUARDIAN}},
-	{{Prof::PROF_GUARD, SpecializationId::Guardian_Dragonhunter}, {"(Dgh)", IDB_PNG_SPEC_DRAGONHUNTER}},
-	{{Prof::PROF_GUARD, SpecializationId::Guardian_Firebrand}, {"(Fbd)", IDB_PNG_SPEC_FIREBRAND}},
-	{{Prof::PROF_GUARD, SpecializationId::Guardian_Willbender}, {"(Wbd)", IDB_PNG_SPEC_WILLBENDER}},
+	{{Prof::PROF_GUARD, SpecializationId::None}, {"(Gdn)", IDB_PNG_SPEC_GUARDIAN, "001.png"}},
+	{{Prof::PROF_GUARD, SpecializationId::Guardian_Dragonhunter}, {"(Dgh)", IDB_PNG_SPEC_DRAGONHUNTER, "e101.png"}},
+	{{Prof::PROF_GUARD, SpecializationId::Guardian_Firebrand}, {"(Fbd)", IDB_PNG_SPEC_FIREBRAND, "e102.png"}},
+	{{Prof::PROF_GUARD, SpecializationId::Guardian_Willbender}, {"(Wbd)", IDB_PNG_SPEC_WILLBENDER, "e103.png"}},
 	// Warrior
-	{{Prof::PROF_WARRIOR, SpecializationId::None}, {"(War)", IDB_PNG_SPEC_WARRIOR}},
-	{{Prof::PROF_WARRIOR, SpecializationId::Warrior_Berserker}, {"(Brs)", IDB_PNG_SPEC_BERSERKER}},
-	{{Prof::PROF_WARRIOR, SpecializationId::Warrior_Spellbreaker}, {"(Spb)", IDB_PNG_SPEC_SPELLBREAKER}},
-	{{Prof::PROF_WARRIOR, SpecializationId::Warrior_Bladesworn}, {"(Bds)", IDB_PNG_SPEC_BLADESWORN}},
+	{{Prof::PROF_WARRIOR, SpecializationId::None}, {"(War)", IDB_PNG_SPEC_WARRIOR, "002.png"}},
+	{{Prof::PROF_WARRIOR, SpecializationId::Warrior_Berserker}, {"(Brs)", IDB_PNG_SPEC_BERSERKER, "e201.png"}},
+	{{Prof::PROF_WARRIOR, SpecializationId::Warrior_Spellbreaker}, {"(Spb)", IDB_PNG_SPEC_SPELLBREAKER, "e202.png"}},
+	{{Prof::PROF_WARRIOR, SpecializationId::Warrior_Bladesworn}, {"(Bds)", IDB_PNG_SPEC_BLADESWORN, "e203.png"}},
 	// Engineer
-	{{Prof::PROF_ENGINEER, SpecializationId::None}, {"(Eng)", IDB_PNG_SPEC_ENGINEER}},
-	{{Prof::PROF_ENGINEER, SpecializationId::Engineer_Scrapper}, {"(Scr)", IDB_PNG_SPEC_SCRAPPER}},
-	{{Prof::PROF_ENGINEER, SpecializationId::Engineer_Holosmith}, {"(Hls)", IDB_PNG_SPEC_HOLOSMITH}},
-	{{Prof::PROF_ENGINEER, SpecializationId::Engineer_Mechanist}, {"(Mec)", IDB_PNG_SPEC_MECHANIST}},
+	{{Prof::PROF_ENGINEER, SpecializationId::None}, {"(Eng)", IDB_PNG_SPEC_ENGINEER, "003.png"}},
+	{{Prof::PROF_ENGINEER, SpecializationId::Engineer_Scrapper}, {"(Scr)", IDB_PNG_SPEC_SCRAPPER, "e301.png"}},
+	{{Prof::PROF_ENGINEER, SpecializationId::Engineer_Holosmith}, {"(Hls)", IDB_PNG_SPEC_HOLOSMITH, "e302.png"}},
+	{{Prof::PROF_ENGINEER, SpecializationId::Engineer_Mechanist}, {"(Mec)", IDB_PNG_SPEC_MECHANIST, "e303.png"}},
 	// Ranger
-	{{Prof::PROF_RANGER, SpecializationId::None}, {"(Rgr)", IDB_PNG_SPEC_RANGER}},
-	{{Prof::PROF_RANGER, SpecializationId::Ranger_Druid}, {"(Dru)", IDB_PNG_SPEC_DRUID}},
-	{{Prof::PROF_RANGER, SpecializationId::Ranger_Soulbeast}, {"(Slb)", IDB_PNG_SPEC_SOULBEAST}},
-	{{Prof::PROF_RANGER, SpecializationId::Ranger_Untamed}, {"(Unt)", IDB_PNG_SPEC_UNTAMED}},
+	{{Prof::PROF_RANGER, SpecializationId::None}, {"(Rgr)", IDB_PNG_SPEC_RANGER, "004.png"}},
+	{{Prof::PROF_RANGER, SpecializationId::Ranger_Druid}, {"(Dru)", IDB_PNG_SPEC_DRUID, "e401.png"}},
+	{{Prof::PROF_RANGER, SpecializationId::Ranger_Soulbeast}, {"(Slb)", IDB_PNG_SPEC_SOULBEAST, "e402.png"}},
+	{{Prof::PROF_RANGER, SpecializationId::Ranger_Untamed}, {"(Unt)", IDB_PNG_SPEC_UNTAMED, "e403.png"}},
 	// Thief
-	{{Prof::PROF_THIEF, SpecializationId::None}, {"(Thf)", IDB_PNG_SPEC_THIEF}},
-	{{Prof::PROF_THIEF, SpecializationId::Thief_Daredevil}, {"(Dar)", IDB_PNG_SPEC_DAREDEVIL}},
-	{{Prof::PROF_THIEF, SpecializationId::Thief_Deadeye}, {"(Ded)", IDB_PNG_SPEC_DEADEYE}},
-	{{Prof::PROF_THIEF, SpecializationId::Thief_Specter}, {"(Spe)", IDB_PNG_SPEC_SPECTER}},
+	{{Prof::PROF_THIEF, SpecializationId::None}, {"(Thf)", IDB_PNG_SPEC_THIEF, "005.png"}},
+	{{Prof::PROF_THIEF, SpecializationId::Thief_Daredevil}, {"(Dar)", IDB_PNG_SPEC_DAREDEVIL, "e501.png"}},
+	{{Prof::PROF_THIEF, SpecializationId::Thief_Deadeye}, {"(Ded)", IDB_PNG_SPEC_DEADEYE, "e502.png"}},
+	{{Prof::PROF_THIEF, SpecializationId::Thief_Specter}, {"(Spe)", IDB_PNG_SPEC_SPECTER, "e503.png"}},
 	// Elementalist
-	{{Prof::PROF_ELE, SpecializationId::None}, {"(Ele)", IDB_PNG_SPEC_ELEMENTALIST}},
-	{{Prof::PROF_ELE, SpecializationId::Elementalist_Tempest}, {"(Tmp)", IDB_PNG_SPEC_TEMPEST}},
-	{{Prof::PROF_ELE, SpecializationId::Elementalist_Weaver}, {"(Wea)", IDB_PNG_SPEC_WEAVER}},
-	{{Prof::PROF_ELE, SpecializationId::Elementalist_Catalyst}, {"(Cat)", IDB_PNG_SPEC_CATALYST}},
+	{{Prof::PROF_ELE, SpecializationId::None}, {"(Ele)", IDB_PNG_SPEC_ELEMENTALIST, "006.png"}},
+	{{Prof::PROF_ELE, SpecializationId::Elementalist_Tempest}, {"(Tmp)", IDB_PNG_SPEC_TEMPEST, "e601.png"}},
+	{{Prof::PROF_ELE, SpecializationId::Elementalist_Weaver}, {"(Wea)", IDB_PNG_SPEC_WEAVER, "e602.png"}},
+	{{Prof::PROF_ELE, SpecializationId::Elementalist_Catalyst}, {"(Cat)", IDB_PNG_SPEC_CATALYST, "e603.png"}},
 	// Mesmer
-	{{Prof::PROF_MESMER, SpecializationId::None}, {"(Mes)", IDB_PNG_SPEC_MESMER}},
-	{{Prof::PROF_MESMER, SpecializationId::Mesmer_Chronomancer}, {"(Chr)", IDB_PNG_SPEC_CHRONOMANCER}},
-	{{Prof::PROF_MESMER, SpecializationId::Mesmer_Mirage}, {"(Mir)", IDB_PNG_SPEC_MIRAGE}},
-	{{Prof::PROF_MESMER, SpecializationId::Mesmer_Virtuoso}, {"(Vir)", IDB_PNG_SPEC_VIRTUOSO}},
+	{{Prof::PROF_MESMER, SpecializationId::None}, {"(Mes)", IDB_PNG_SPEC_MESMER, "007.png"}},
+	{{Prof::PROF_MESMER, SpecializationId::Mesmer_Chronomancer}, {"(Chr)", IDB_PNG_SPEC_CHRONOMANCER, "e701.png"}},
+	{{Prof::PROF_MESMER, SpecializationId::Mesmer_Mirage}, {"(Mir)", IDB_PNG_SPEC_MIRAGE, "e702.png"}},
+	{{Prof::PROF_MESMER, SpecializationId::Mesmer_Virtuoso}, {"(Vir)", IDB_PNG_SPEC_VIRTUOSO, "e703.png"}},
 	// Necromancer
-	{{Prof::PROF_NECRO, SpecializationId::None}, {"(Nec)", IDB_PNG_SPEC_NECROMANCER}},
-	{{Prof::PROF_NECRO, SpecializationId::Necromancer_Reaper}, {"(Rea)", IDB_PNG_SPEC_REAPER}},
-	{{Prof::PROF_NECRO, SpecializationId::Necromancer_Scourge}, {"(Scg)", IDB_PNG_SPEC_SCOURGE}},
-	{{Prof::PROF_NECRO, SpecializationId::Necromancer_Harbinger}, {"(Har)", IDB_PNG_SPEC_HARBINGER}},
+	{{Prof::PROF_NECRO, SpecializationId::None}, {"(Nec)", IDB_PNG_SPEC_NECROMANCER, "008.png"}},
+	{{Prof::PROF_NECRO, SpecializationId::Necromancer_Reaper}, {"(Rea)", IDB_PNG_SPEC_REAPER, "e801.png"}},
+	{{Prof::PROF_NECRO, SpecializationId::Necromancer_Scourge}, {"(Scg)", IDB_PNG_SPEC_SCOURGE, "e802.png"}},
+	{{Prof::PROF_NECRO, SpecializationId::Necromancer_Harbinger}, {"(Har)", IDB_PNG_SPEC_HARBINGER, "e803.png"}},
 	// Revenant
-	{{Prof::PROF_RENEGADE, SpecializationId::None}, {"(Rev)", IDB_PNG_SPEC_REVENANT}},
-	{{Prof::PROF_RENEGADE, SpecializationId::Revenant_Herald}, {"(Her)", IDB_PNG_SPEC_HERALD}},
-	{{Prof::PROF_RENEGADE, SpecializationId::Revenant_Renegade}, {"(Ren)", IDB_PNG_SPEC_RENEGADE}},
-	{{Prof::PROF_RENEGADE, SpecializationId::Revenant_Vindicator}, {"(Vin)", IDB_PNG_SPEC_VINDICATOR}}
+	{{Prof::PROF_RENEGADE, SpecializationId::None}, {"(Rev)", IDB_PNG_SPEC_REVENANT, "009.png"}},
+	{{Prof::PROF_RENEGADE, SpecializationId::Revenant_Herald}, {"(Her)", IDB_PNG_SPEC_HERALD, "e901.png"}},
+	{{Prof::PROF_RENEGADE, SpecializationId::Revenant_Renegade}, {"(Ren)", IDB_PNG_SPEC_RENEGADE, "e902.png"}},
+	{{Prof::PROF_RENEGADE, SpecializationId::Revenant_Vindicator}, {"(Vin)", IDB_PNG_SPEC_VINDICATOR, "e903.png"}}
 };
 
 static const HealedAgent AnonymousAgent{
@@ -113,7 +114,17 @@ void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pD3DVersion)
 	for (auto& [key, specializationData] : ProfessionEliteMapping)
 	{
 		specializationData.IconTextureId = ++iconTextureId;
-		iconLoader.RegisterResource(specializationData.IconTextureId, specializationData.IconResourceId);
+
+		// Try to load the icon locally from "addons\arcdps\icons\" if the user provided them, otherwise fallback to the default ones
+		std::string iconPath = "addons\\arcdps\\icons\\" + specializationData.IconName;
+		if (specializationData.IconName.empty() == false && std::filesystem::exists(iconPath))
+		{
+			iconLoader.RegisterFile(specializationData.IconTextureId, iconPath.c_str());
+		}
+		else
+		{
+			iconLoader.RegisterResource(specializationData.IconTextureId, specializationData.IconResourceId);
+		}
 	}
 }
 

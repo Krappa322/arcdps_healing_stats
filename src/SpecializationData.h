@@ -8,6 +8,7 @@ struct SpecializationData
 {
 	std::string Abbreviation;
 	UINT IconResourceId;
+	std::string IconName;
 	size_t IconTextureId;
 	void* IconTextureData;
 };
