@@ -136,11 +136,11 @@ std::optional<HealedAgent> AgentTable::GetAgentData(uintptr_t pUniqueId)
 	auto iter = mAgents.find(pUniqueId);
 	if (iter == mAgents.end())
 	{
-		LOG("Couldn't find unique id %llu", pUniqueId);
+		LogD("Couldn't find unique id {}", pUniqueId);
 		return std::nullopt;
 	}
 
-	DEBUGLOG("Mapping %llu to %s", pUniqueId, iter->second.Name.c_str());
+	LogT("Mapping {} to {}", pUniqueId, iter->second.Name.c_str());
 	return iter->second;
 }
 
