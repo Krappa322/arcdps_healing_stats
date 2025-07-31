@@ -34,9 +34,11 @@ static constexpr EnumStringArray<Position, static_cast<size_t>(Position::WindowR
 static constexpr EnumStringArray<CornerPosition, static_cast<size_t>(CornerPosition::BottomRight) + 1> CORNER_POSITION_ITEMS{
 	"top-left", "top-right", "bottom-left", "bottom-right"};
 
-/* Table with mapping between profession and elite specialization pair and their abbreviation and icon resource ID.
+/* Table with mapping between profession and elite specialization pair and their abbreviation and icon resource ID/icon override name.
 *  The resource is loaded at runtime, with the table updated with IconLoader texture unique IDs and a pointer to the texture.
+*  Users can override the icon with pngs in the addons\arcdps\icons\ folder, same as arcdps, otherwise the default ones are used.
 *  Until then, the texture pointer will be nullptr.
+*  The table is supposed to be accessed only at startup and during a frame, so only single threaded context.
 */
 static std::map<std::pair<Prof, SpecializationId>, SpecializationData> ProfessionEliteMapping{
 	{{Prof::PROF_UNKNOWN, static_cast<SpecializationId>(0xFFFFFFFF)}, {"(???)", IDB_PNG_SPEC_NONE}},
