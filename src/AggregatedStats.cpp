@@ -13,9 +13,9 @@
 constexpr const char* GROUP_FILTER_STRING[] = { "Group", "Squad", "All (Excluding Summons)", "All (Including Summons)" };
 static_assert((sizeof(GROUP_FILTER_STRING) / sizeof(GROUP_FILTER_STRING[0])) == static_cast<size_t>(GroupFilter::Max), "Added group filter option without updating gui?");
 
-AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, HealedAgent pAgent, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration)
+AggregatedStatsEntry::AggregatedStatsEntry(uint64_t pId, HealedAgent&& pAgent, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration)
 	: Id{pId}
-	, Agent{pAgent}
+	, Agent{std::move(pAgent)}
 	, TimeInCombat{pTimeInCombat}
 	, Healing{pHealing}
 	, Hits{pHits}
@@ -36,7 +36,7 @@ AggregatedStats::AggregatedStats(HealingStats&& pSourceData, const HealWindowOpt
 	assert(myOptions.DataSourceChoice < DataSource::Max);
 }
 
-void AggregatedVector::Add(uint64_t pId, HealedAgent pAgent, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration)
+void AggregatedVector::Add(uint64_t pId, HealedAgent&& pAgent, float pTimeInCombat, uint64_t pHealing, uint64_t pHits, std::optional<uint64_t> pCasts, uint64_t pBarrierGeneration)
 {
 	const AggregatedStatsEntry& newEntry = Entries.emplace_back(pId, std::move(pAgent), pTimeInCombat, pHealing, pHits, std::move(pCasts), pBarrierGeneration);
 	HighestHealing = (std::max)(HighestHealing, newEntry.Healing);
