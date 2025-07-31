@@ -198,7 +198,8 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		// name == nullptr here shouldn't be able to happen through arcdps, but it makes unit testing easier :)
 		if (pSourceAgent->name != nullptr)
 		{
-			mAgentTable.AddAgent(pSourceAgent->id, pEvent->src_instid, pSourceAgent->name, nullptr, static_cast<uint16_t>(pEvent->dst_agent), isMinion, isPlayer, pDestinationAgent->prof, pDestinationAgent->elite);
+			// pDestinationAgent doesn't store any information about the source agent so we can't get the account name
+			mAgentTable.AddAgent(pSourceAgent->id, pEvent->src_instid, pSourceAgent->name, nullptr, static_cast<uint16_t>(pEvent->dst_agent), isMinion, isPlayer, pSourceAgent->prof, pSourceAgent->elite);
 		}
 
 		return;
@@ -433,6 +434,7 @@ void EventProcessor::LocalCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestin
 	// Register agent if it's not already known
 	if (pDestinationAgent->name != nullptr)
 	{
+		// As pDestinationAgent->name contains the character name, there's no source for the account name, so we pass nullptr. pSourceAgent->name also has the character name
 		mAgentTable.AddAgent(pDestinationAgent->id, pEvent->dst_instid, pDestinationAgent->name, nullptr, std::nullopt, pEvent->dst_master_instid != 0, std::nullopt, pDestinationAgent->prof, pDestinationAgent->elite);
 	}
 
