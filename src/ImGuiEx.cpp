@@ -103,9 +103,9 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetStyle().ItemInnerSpacing.x);
 	if (pIndexNumber.has_value() == true)
 	{
-		indexNumberSize = ImGui::CalcTextSize(pIndexNumber->data()) + ImGui::GetStyle().ItemSpacing;
+		indexNumberSize = ImGui::CalcTextSize(pIndexNumber->data(), pIndexNumber->data() + pIndexNumber->size()) + ImGui::GetStyle().ItemSpacing;
 
-		TextColoredUnformatted(std::optional<ImU32>(IM_COL32(255, 255, 97, 255)), pIndexNumber->data());
+		TextColoredUnformatted(std::optional<ImU32>(IM_COL32(255, 255, 97, 255)), *pIndexNumber);
 		ImGui::SameLine();
 	}
 
@@ -129,7 +129,7 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 	}
 
 	auto leftTextColour = pLeftTextColour.has_value() ? ImGui::ColorConvertFloat4ToU32(*pLeftTextColour) : pSelf ? std::optional<ImU32>(IM_COL32(255, 255, 97, 255)) : std::nullopt;
-	TextColoredUnformatted(leftTextColour, pLeftText.data(), pLeftText.data() + pLeftText.size());
+	TextColoredUnformatted(leftTextColour, pLeftText);
 
 	ImGui::SameLine();
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - rightTextSize.x - ImGui::GetStyle().ItemInnerSpacing.x); // Sending x in SameLine messes with alignment when inside of a group
@@ -142,16 +142,16 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 	return indexNumberSize.x + leftTextSize.x + rightTextSize.x + professionTextSize.x + professionIconSize.x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetStyle().ItemInnerSpacing.x * 2.0f + ImGui::GetCurrentWindowRead()->WindowPadding.x * 2.0f;
 }
 
-void ImGuiEx::TextColoredUnformatted(std::optional<ImU32> pColor, const char* pText, const char* pTextEnd)
+void ImGuiEx::TextColoredUnformatted(std::optional<ImU32> pColor, std::string_view pText)
 {
 	if (pColor.has_value())
 	{
 		ImGui::PushStyleColor(ImGuiCol_Text, *pColor);
-		ImGui::TextUnformatted(pText, pTextEnd);
+		ImGui::TextUnformatted(pText.data(), pText.data() + pText.size());
 		ImGui::PopStyleColor();
 	}
 	else
 	{
-		ImGui::TextUnformatted(pText, pTextEnd);
+		ImGui::TextUnformatted(pText.data(), pText.data() + pText.size());
 	}
 }
