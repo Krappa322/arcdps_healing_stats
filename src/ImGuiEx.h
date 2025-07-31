@@ -107,7 +107,7 @@ namespace ImGuiEx
 		ImGui::TextColored(pColor, "%s", buffer);
 	}
 
-	void TextColoredUnformatted(std::optional<ImU32> pColor, const char* pText, const char* pTextEnd = nullptr);
+	void TextColoredUnformatted(std::optional<ImU32> pColor, std::string_view pText);
 
 	template <typename... Args>
 	void BottomText(const char* pFormatString, Args... pArgs)
