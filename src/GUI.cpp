@@ -190,6 +190,12 @@ static ImVec4 GetProfessionColorHighlight(Prof pProfession)
 
 static ImVec4 GetSubgroupColorBase(uint16_t pSubgroup, std::optional<float> pWOverwrite = {})
 {
+	// Clamp subgroup to the maximum value of 15 as it's a GW2 limit
+	if (pSubgroup > 15)
+	{
+		pSubgroup = 15;
+	}
+
 	if (pWOverwrite.has_value() == true)
 	{
 		ImVec4 color = GlobalObjects::COLORS[3][pSubgroup];
@@ -204,6 +210,12 @@ static ImVec4 GetSubgroupColorBase(uint16_t pSubgroup, std::optional<float> pWOv
 
 static ImVec4 GetSubgroupColorHighlight(uint16_t pSubgroup)
 {
+	// Clamp subgroup to the maximum value of 15 as it's a GW2 limit
+	if (pSubgroup > 15)
+	{
+		pSubgroup = 15;
+	}
+
 	return GlobalObjects::COLORS[4][pSubgroup];
 }
 
@@ -697,7 +709,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::SmallCheckBox("profession text", &pContext.ProfessionText);
 			ImGuiEx::SmallCheckBox("profession icons", &pContext.ProfessionIcons);
 			ImGuiEx::SmallCheckBox("replace player with account name", &pContext.ReplacePlayerWithAccountName);
-			if(ImGuiEx::SmallCheckBox("use profession for name colour", &pContext.UseProfessionForNameColour) == true && pContext.UseProfessionForNameColour == true)
+			if (ImGuiEx::SmallCheckBox("use profession for name colour", &pContext.UseProfessionForNameColour) == true && pContext.UseProfessionForNameColour == true)
 			{
 				// Mutually exclusive with "use subgroup for name colour"
 				pContext.UseSubgroupForNameColour = false;
