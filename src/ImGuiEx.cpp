@@ -138,7 +138,7 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 	ImGui::EndGroup();
 	ImGui::PopStyleColor();
 
-	// index number - window padding - inner spacing - left text - item spacing * 3 - right text - inner spacing - window padding
+	// one window padding and inner spacing on each edge of the window, two item spacings between left and right text. The other item spacings are accounted for into their respective size calculations already.
 	return indexNumberSize.x + leftTextSize.x + rightTextSize.x + professionTextSize.x + professionIconSize.x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetStyle().ItemInnerSpacing.x * 2.0f + ImGui::GetCurrentWindowRead()->WindowPadding.x * 2.0f;
 }
 
