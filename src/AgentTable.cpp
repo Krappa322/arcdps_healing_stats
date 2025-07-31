@@ -65,8 +65,8 @@ void AgentTable::AddAgent(uintptr_t pUniqueId, uint16_t pInstanceId, const char*
 			|| (pSubgroup.has_value() && agent->second.Subgroup != *pSubgroup)
 			|| (pIsMinion.has_value() && agent->second.IsMinion != *pIsMinion)
 			|| (pIsPlayer.has_value() && agent->second.IsPlayer != *pIsPlayer)
-			|| (pElite != 0xFFFFFFFF && agent->second.Profession != pProfession)
-			|| (pElite != 0xFFFFFFFF && agent->second.Elite != pElite))
+			|| (agent->second.Profession != pProfession)
+			|| (agent->second.Elite != pElite))
 		{
 			LOG("Unique id %llu already exists - replacing existing entry %hu %s %hu %s %s",
 				pUniqueId, agent->second.InstanceId, agent->second.Name.c_str(), agent->second.Subgroup, BOOL_STR(agent->second.IsMinion), BOOL_STR(agent->second.IsPlayer));
@@ -78,8 +78,8 @@ void AgentTable::AddAgent(uintptr_t pUniqueId, uint16_t pInstanceId, const char*
 				pSubgroup.value_or(agent->second.Subgroup),
 				pIsMinion.value_or(agent->second.IsMinion),
 				pIsPlayer.value_or(agent->second.IsPlayer),
-				pElite != 0xFFFFFFFF ? pProfession : agent->second.Profession,
-				pElite != 0xFFFFFFFF ? pElite : agent->second.Elite };
+				pProfession,
+				pElite};
 		}
 	}
 
