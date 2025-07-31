@@ -73,7 +73,7 @@ const AggregatedVector& AggregatedStatsCollection::GetStats(DataSource pDataSour
 	for (auto& [id, source] : mSourceData)
 	{
 		const AggregatedStatsEntry& entry = source.Stats.GetTotal();
-		mPeersOutgoingStats->Add(id, source.Agent, source.Stats.GetCombatTime(), entry.Healing, entry.Hits, entry.Casts, entry.BarrierGeneration);
+		mPeersOutgoingStats->Add(id, HealedAgent{source.Agent}, source.Stats.GetCombatTime(), entry.Healing, entry.Hits, entry.Casts, entry.BarrierGeneration);
 	}
 
 	AggregatedStats::Sort(mPeersOutgoingStats->Entries, mOptions.SortOrderChoice);
