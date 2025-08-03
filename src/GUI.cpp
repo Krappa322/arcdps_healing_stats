@@ -459,7 +459,7 @@ static void Display_ContentSingleRow(HealWindowContext& pContext, DataSource pDa
 			pContext.ProfessionIcons == true ? GetProfessionIcon(agent.Profession, agent.Elite) : nullptr,
 			pContext.UseProfessionForNameColour == true ? std::optional{ GetProfessionColorBase(agent.Profession, 1.0f) } : pContext.UseSubgroupForNameColour ? std::optional{ GetSubgroupColorBase(agent.Subgroup, 1.0f) } : std::nullopt,
 			pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorBase(agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorBase(agent.Profession) } : std::nullopt,
-			pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorHighlight(agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorHighlight(agent.Profession) } : std::nullopt,
+			pContext.KeepOriginalBarrierBarColour == true ? std::nullopt : pContext.UseSubgroupForBarColour == true ? std::optional{ GetSubgroupColorHighlight(agent.Subgroup) } : pContext.UseProfessionForBarColour == true ? std::optional{ GetProfessionColorHighlight(agent.Profession) } : std::nullopt,
 			pContext.SelfUniqueId == pEntry.Id);
 
 		pContext.LastFrameMinWidth = (std::max)(pContext.LastFrameMinWidth, minSize);
@@ -707,6 +707,16 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 				// Mutually exclusive with "use subgroup for bar colour"
 				pContext.UseSubgroupForBarColour = false;
 			}
+
+			if (pContext.UseProfessionForBarColour == true || pContext.UseSubgroupForBarColour == true)
+			{
+				ImGuiEx::SmallCheckBox("keep original barrier bar colour", &pContext.KeepOriginalBarrierBarColour);
+			}
+			else
+			{
+				pContext.KeepOriginalBarrierBarColour = false;
+			}
+
 			ImGuiEx::SmallCheckBox("index numbers", &pContext.IndexNumbers);
 			ImGuiEx::SmallCheckBox("profession text", &pContext.ProfessionText);
 			ImGuiEx::SmallCheckBox("profession icons", &pContext.ProfessionIcons);

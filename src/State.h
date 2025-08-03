@@ -63,6 +63,7 @@ struct HealWindowOptions
 	bool ShowProgressBars = true;
 	bool UseSubgroupForBarColour = false;
 	bool UseProfessionForBarColour = false;
+	bool KeepOriginalBarrierBarColour = false;
 	bool IndexNumbers = false;
 	bool ProfessionText = false;
 	bool ProfessionIcons = false;
