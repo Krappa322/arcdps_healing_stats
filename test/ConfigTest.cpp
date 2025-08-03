@@ -72,6 +72,8 @@ TEST(ConfigTest, Serialize_Deserialize)
 
 		window.ShowProgressBars = rand_t<bool>();
 		window.UseSubgroupForBarColour = rand_t<bool>();
+		window.UseProfessionForBarColour = rand_t<bool>();
+		window.KeepOriginalBarrierBarColour = rand_t<bool>();
 		window.IndexNumbers = rand_t<bool>();
 		window.ProfessionText = rand_t<bool>();
 		window.ProfessionIcons = rand_t<bool>();
@@ -141,6 +143,8 @@ TEST(ConfigTest, Serialize_Deserialize)
 
 		ASSERT_EQ(windowLeft.ShowProgressBars, windowRight.ShowProgressBars);
 		ASSERT_EQ(windowLeft.UseSubgroupForBarColour, windowRight.UseSubgroupForBarColour);
+		ASSERT_EQ(windowLeft.UseProfessionForBarColour, windowRight.UseProfessionForBarColour);
+		ASSERT_EQ(windowLeft.KeepOriginalBarrierBarColour, windowRight.KeepOriginalBarrierBarColour);
 		ASSERT_EQ(windowLeft.IndexNumbers, windowRight.IndexNumbers);
 		ASSERT_EQ(windowLeft.ProfessionText, windowRight.ProfessionText);
 		ASSERT_EQ(windowLeft.ProfessionIcons, windowRight.ProfessionIcons);
