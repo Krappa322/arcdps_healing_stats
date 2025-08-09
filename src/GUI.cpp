@@ -392,7 +392,7 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		std::string_view name = entry.Agent.Name;
 		if (pContext.MaxNameLength > 0)
 		{
-			name = name.substr(0, pContext.MaxNameLength);
+			name = utf8_substr(name, pContext.MaxNameLength);
 		}
 		pState.LastFrameRightSideMinWidth = (std::max)(
 			pState.LastFrameRightSideMinWidth,
@@ -436,7 +436,7 @@ static void Display_ContentSingleRow(HealWindowContext& pContext, DataSource pDa
 	}
 	if (pContext.MaxNameLength > 0)
 	{
-		name = name.substr(0, pContext.MaxNameLength);
+		name = utf8_substr(name, pContext.MaxNameLength);
 	}
 
 	/* Conditions to show the row:

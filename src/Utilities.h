@@ -8,10 +8,11 @@
 
 #include <algorithm>
 #include <array>
-#include <array>
 #include <string>
 #include <optional>
 #include <variant>
+
+#include <icu.h>
 
 template<typename EnumType, size_t Size = static_cast<size_t>(EnumType::Max)>
 class EnumStringArray : public std::array<const char*, Size>
@@ -223,4 +224,13 @@ static inline size_t ReplaceFormatted(char* pResultBuffer, size_t pResultBufferL
 	*pResultBuffer = '\0';
 
 	return pResultBuffer - startBuffer;
+}
+
+static inline std::string_view utf8_substr(std::string_view pStr, size_t pCharacterCount)
+{
+	int32_t bytesToSkip = 0;
+	int32_t length = pStr.size();
+	U8_FWD_N(pStr.data(), bytesToSkip, length, static_cast<int>(pCharacterCount));
+
+	return pStr.substr(0, bytesToSkip);
 }
