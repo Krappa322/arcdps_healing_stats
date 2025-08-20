@@ -170,6 +170,24 @@ IDB_PNG_SPEC_VINDICATOR PNG                     "icons\\specs\\e903.png"
 
 IDB_PNG_SPEC_NONE       PNG                     "icons\\specs\\000.png"
 
+IDB_PNG_SPEC_LUMINARY   PNG                     "icons\\specs\\e104.png"
+
+IDB_PNG_SPEC_PARAGON    PNG                     "icons\\specs\\e204.png"
+
+IDB_PNG_SPEC_AMALGAM    PNG                     "icons\\specs\\e304.png"
+
+IDB_PNG_SPEC_GALESHOT   PNG                     "icons\\specs\\e404.png"
+
+IDB_PNG_SPEC_ANTIQUARY  PNG                     "icons\\specs\\e504.png"
+
+IDB_PNG_SPEC_EVOKER     PNG                     "icons\\specs\\e604.png"
+
+IDB_PNG_SPEC_TROUBADOUR PNG                     "icons\\specs\\e704.png"
+
+IDB_PNG_SPEC_RITUALIST  PNG                     "icons\\specs\\e804.png"
+
+IDB_PNG_SPEC_CONDUIT    PNG                     "icons\\specs\\e904.png"
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
