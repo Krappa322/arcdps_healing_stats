@@ -144,5 +144,32 @@
     <Image Include="..\icons\specs\000.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="..\icons\specs\e104.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e204.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e304.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e404.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e504.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e604.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e704.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e804.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\icons\specs\e904.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

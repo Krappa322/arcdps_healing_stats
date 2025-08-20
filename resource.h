@@ -40,12 +40,21 @@
 #define IDB_PNG_SPEC_RENEGADE           136
 #define IDB_PNG_SPEC_VINDICATOR         137
 #define IDB_PNG_SPEC_NONE               138
+#define IDB_PNG_SPEC_LUMINARY           139
+#define IDB_PNG_SPEC_PARAGON            140
+#define IDB_PNG_SPEC_AMALGAM            141
+#define IDB_PNG_SPEC_GALESHOT           142
+#define IDB_PNG_SPEC_ANTIQUARY          143
+#define IDB_PNG_SPEC_EVOKER             144
+#define IDB_PNG_SPEC_TROUBADOUR         145
+#define IDB_PNG_SPEC_RITUALIST          146
+#define IDB_PNG_SPEC_CONDUIT            147
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        139
+#define _APS_NEXT_RESOURCE_VALUE        148
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101
