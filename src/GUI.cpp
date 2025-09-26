@@ -451,6 +451,10 @@ static void Display_ContentSingleRow(HealWindowContext& pContext, DataSource pDa
 	{
 		name = utf8_substr(name, pContext.MaxNameLength);
 	}
+	else if (pContext.MaxNameLength < 0)
+	{
+		name = "";
+	}
 
 	/* Conditions to show the row:
 	* - OR: pTop is set to true. This is used by "self on top" and called only with SelfUniqueId as entry
@@ -761,7 +765,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGui::SetNextItemWidth(39.0f);
 			ImGuiEx::SmallInputInt("max name length", &pContext.MaxNameLength);
 			ImGuiEx::AddTooltipToLastItem(
-				"Truncate displayed names to this many characters. Set to 0 to disable.");
+				"Truncate displayed names to this many characters. Set to 0 to disable, -1 to hide");
 
 			ImGui::SetNextItemWidth(39.0f);
 			ImGuiEx::SmallInputInt("min displayed", &pContext.MinLinesDisplayed);
