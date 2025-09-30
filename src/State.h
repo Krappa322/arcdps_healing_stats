@@ -91,7 +91,7 @@ struct HealWindowOptions
 	ImGuiID AnchorWindowId = 0;
 
 	bool AutoResize = false;
-	size_t MaxNameLength = 0;
+	int64_t MaxNameLength = 0;
 	size_t MinLinesDisplayed = 0;
 	size_t MaxLinesDisplayed = 10;
 	size_t FixedWindowWidth = 400;
