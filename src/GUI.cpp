@@ -682,23 +682,29 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 		ImGuiEx::ComboMenu("data source", pContext.DataSourceChoice, DATA_SOURCE_ITEMS);
 		ImGuiEx::AddTooltipToLastItem("Decides what data is shown in the window");
 
-		if (pContext.DataSourceChoice != DataSource::Totals)
 		{
+			ImGuiEx::ScopedUninteractable uninteractableScope{pContext.DataSourceChoice == DataSource::Totals};
+
 			ImGuiEx::ComboMenu("sort order", pContext.SortOrderChoice, SORT_ORDER_ITEMS);
 			ImGuiEx::AddTooltipToLastItem("Decides how targets and skills are sorted in the 'Targets' and 'Skills' sections.");
+		}
 
-			if (ImGui::BeginMenu("stats exclude") == true)
+		if (ImGui::BeginMenu("stats exclude") == true)
+		{
 			{
+				ImGuiEx::ScopedUninteractable uninteractableScope{pContext.DataSourceChoice == DataSource::Totals};
+
 				ImGuiEx::SmallCheckBox("group", &pContext.ExcludeGroup);
 				ImGuiEx::SmallCheckBox("off-group", &pContext.ExcludeOffGroup);
 				ImGuiEx::SmallCheckBox("off-squad", &pContext.ExcludeOffSquad);
 				ImGuiEx::SmallCheckBox("summons", &pContext.ExcludeMinions);
 				ImGuiEx::SmallCheckBox("unmapped", &pContext.ExcludeUnmapped);
-				ImGuiEx::SmallCheckBox("healing", &pContext.ExcludeHealing);
-				ImGuiEx::SmallCheckBox("barrier generation", &pContext.ExcludeBarrierGeneration);
-
-				ImGui::EndMenu();
 			}
+
+			ImGuiEx::SmallCheckBox("healing", &pContext.ExcludeHealing);
+			ImGuiEx::SmallCheckBox("barrier generation", &pContext.ExcludeBarrierGeneration);
+
+			ImGui::EndMenu();
 		}
 
 		ImGuiEx::ComboMenu("combat end", pContext.CombatEndConditionChoice, COMBAT_END_CONDITION_ITEMS);
@@ -832,23 +838,16 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGui::Separator();
 
 			ImGuiEx::SmallCheckBox("auto resize window", &pContext.AutoResize);
-			if (pContext.AutoResize == false)
-			{
-				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(128, 128, 128, 255));
-			}
-			ImGuiEx::SmallIndent();
 
-			ImGui::SetNextItemWidth(65.0f);
-			ImGuiEx::SmallInputInt("window width", &pContext.FixedWindowWidth);
-			ImGuiEx::AddTooltipToLastItem(
-				"Set to 0 for dynamic resizing of width");
-
-			ImGuiEx::SmallUnindent();
-			if (pContext.AutoResize == false)
 			{
-				ImGui::PopItemFlag();
-				ImGui::PopStyleColor();
+				ImGuiEx::ScopedUninteractable uninteractableScope{pContext.AutoResize == false};
+
+				ImGuiEx::SmallIndent();
+				ImGui::SetNextItemWidth(65.0f);
+				ImGuiEx::SmallInputInt("window width", &pContext.FixedWindowWidth);
+				ImGuiEx::AddTooltipToLastItem(
+					"Set to 0 for dynamic resizing of width");
+				ImGuiEx::SmallUnindent();
 			}
 
 			ImGui::EndMenu();
@@ -1144,42 +1143,35 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 		"does not."
 		, DATA_SOURCE_ITEMS[DataSource::PeersOutgoing]);
 
-	if (pHealingOptions.EvtcRpcEnabled == false)
 	{
-		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-		ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(128, 128, 128, 255));
-	}
-	if (ImGuiEx::SmallCheckBox("live stats sharing - budget mode", &pHealingOptions.EvtcRpcBudgetMode) == true)
-	{
-		GlobalObjects::EVTC_RPC_CLIENT->SetBudgetMode(pHealingOptions.EvtcRpcBudgetMode);
-	}
-	ImGuiEx::AddTooltipToLastItem(
-		"Only send a minimal subset of events to peers. This reduces\n"
-		"the amount of upload bandwidth used by the addon. Healing\n"
-		"statistics shown will still be fully accurate, however combat\n"
-		"times as viewed by other players may be slightly inaccurate\n"
-		"while still in combat. If those players are running a version\n"
-		"of the addon released before budget mode support was\n"
-		"introduced, the combat times may be highly inaccurate, even\n"
-		"when out of combat. This option has no effect on download\n"
-		"bandwidth usage, only upload. Expected connection usage with\n"
-		"this option enabled should go down to <1kiB/s up.");
+		ImGuiEx::ScopedUninteractable uninteractableScope{pHealingOptions.EvtcRpcEnabled == false};
 
-	if (ImGuiEx::SmallCheckBox("live stats sharing - disable encryption", &pHealingOptions.EvtcRpcDisableEncryption) == true)
-	{
-		GlobalObjects::EVTC_RPC_CLIENT->SetDisableEncryption(pHealingOptions.EvtcRpcDisableEncryption);
-	}
-	ImGuiEx::AddTooltipToLastItem(
-		"By default, all messages sent to and from the live stats\n"
-		"sharing server are encrypted using TLS. This option disables\n"
-		"the encryption, which can be useful to work around certain\n"
-		"security applications, as well as to reduce the CPU usage of\n"
-		"live stats sharing");
+		if (ImGuiEx::SmallCheckBox("live stats sharing - budget mode", &pHealingOptions.EvtcRpcBudgetMode) == true)
+		{
+			GlobalObjects::EVTC_RPC_CLIENT->SetBudgetMode(pHealingOptions.EvtcRpcBudgetMode);
+		}
+		ImGuiEx::AddTooltipToLastItem(
+			"Only send a minimal subset of events to peers. This reduces\n"
+			"the amount of upload bandwidth used by the addon. Healing\n"
+			"statistics shown will still be fully accurate, however combat\n"
+			"times as viewed by other players may be slightly inaccurate\n"
+			"while still in combat. If those players are running a version\n"
+			"of the addon released before budget mode support was\n"
+			"introduced, the combat times may be highly inaccurate, even\n"
+			"when out of combat. This option has no effect on download\n"
+			"bandwidth usage, only upload. Expected connection usage with\n"
+			"this option enabled should go down to <1kiB/s up.");
 
-	if (pHealingOptions.EvtcRpcEnabled == false)
-	{
-		ImGui::PopItemFlag();
-		ImGui::PopStyleColor();
+		if (ImGuiEx::SmallCheckBox("live stats sharing - disable encryption", &pHealingOptions.EvtcRpcDisableEncryption) == true)
+		{
+			GlobalObjects::EVTC_RPC_CLIENT->SetDisableEncryption(pHealingOptions.EvtcRpcDisableEncryption);
+		}
+		ImGuiEx::AddTooltipToLastItem(
+			"By default, all messages sent to and from the live stats\n"
+			"sharing server are encrypted using TLS. This option disables\n"
+			"the encryption, which can be useful to work around certain\n"
+			"security applications, as well as to reduce the CPU usage of\n"
+			"live stats sharing");
 	}
 
 	float oldPosY = ImGui::GetCursorPosY();

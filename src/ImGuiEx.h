@@ -32,6 +32,33 @@ namespace ImGuiEx
 		}
 	};
 
+	class ScopedUninteractable
+	{
+	public:
+		ScopedUninteractable(bool pIf)
+			: mEnabled(pIf)
+		{
+			if (mEnabled == true)
+			{
+				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(128, 128, 128, 255));
+			}
+		}
+		
+		~ScopedUninteractable()
+		{
+			if (mEnabled == true)
+			{
+				ImGui::PopItemFlag();
+				ImGui::PopStyleColor();
+			}
+		}
+
+	private:
+		const bool mEnabled;
+	};
+	
+
 	float CalcWindowHeight(size_t pLineCount, float pExtraHeight, ImGuiWindow* pWindow = nullptr);
 
 	bool SmallCheckBox(const char* pLabel, bool* pIsPressed);
