@@ -94,6 +94,7 @@
       <LanguageStandard>stdcpp23</LanguageStandard>
       <PrecompiledHeaderFile />
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>Level2</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <AdditionalDependencies>arcdps_personal_stats_lib.lib;Iphlpapi.lib;Version.lib;networking.lib;winmm.lib;ws2_32.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -116,6 +117,7 @@
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <ExternalWarningLevel>Level2</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
