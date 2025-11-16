@@ -31,7 +31,12 @@ static inline EventType GetEventType(const cbtevent* pEvent, bool pIsLocal)
 			return EventType::SemiDamaging; // Breakbar / misc.
 		}
 
-		if ((pIsLocal && pEvent->value <= 0) || (!pIsLocal && pEvent->value >= 0))
+		if (pEvent->value == 0)
+		{
+			return EventType::SemiDamaging;
+		}
+
+		if ((pIsLocal && pEvent->value < 0) || (!pIsLocal && pEvent->value > 0))
 		{
 			return EventType::Damage; // Direct damage
 		}
@@ -46,7 +51,7 @@ static inline EventType GetEventType(const cbtevent* pEvent, bool pIsLocal)
 		{
 			return EventType::SemiDamaging; // Buff apply
 		}
-		else if ((pIsLocal && pEvent->buff_dmg <= 0) || (!pIsLocal && pEvent->buff_dmg >= 0))
+		else if ((pIsLocal && pEvent->buff_dmg < 0) || (!pIsLocal && pEvent->buff_dmg > 0))
 		{
 			return EventType::Damage; // Buff damage
 		}
