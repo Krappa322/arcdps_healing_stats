@@ -42,6 +42,7 @@ SkillTable::SkillTable()
 	ENTRY(10643); // Gathering Plague (Transfusion)
 	ENTRY(12424); // Blood Frenzy
 	ENTRY(13684); // Lesser Symbol of Protection (Writ of Persistence)
+	ENTRY(14419); // Battle Standard
 	ENTRY(15259); // Nourishment (Omnomberry Ghost)
 	ENTRY(21656); // Arcane Brilliance
 	ENTRY(24800); // Nourishment (Prickly Pear Pie AND Bowl of Cactus Fruit Salad)
@@ -100,16 +101,20 @@ SkillTable::SkillTable()
 	ENTRY(71892); // FriendlyFire
 	ENTRY(71897); // Journey
 	ENTRY(71901); // LineBreakerHeal
-	ENTRY(71950); // PathToVictory
+	ENTRY(71922); // Path To Victory (Warrior)
+	ENTRY(71932); // Path To Victory (Berserker)
+	ENTRY(71950); // Path To Victory (Spellbreaker)
 	ENTRY(71970); // FriendlyFireIllu
 	ENTRY(71986); // EnervationBlade
 	ENTRY(71999); // Flourish
 	ENTRY(72002); // ValiantLeap
 	ENTRY(72005); // InspiringImagery
 	ENTRY(72028); // FrigidFlurry
+	ENTRY(72029); // Path To Victory (Bladesworn)
 	ENTRY(72033); // SoothingSplash
 	ENTRY(72051); // DeathlyEnervation
 	ENTRY(72062); // EchoingErosion
+	ENTRY(72089); // Path To Victory (Paragon)
 #undef ENTRY
 
 	std::lock_guard lock(mLock);
