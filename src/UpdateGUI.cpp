@@ -14,7 +14,7 @@ void UpdateChecker::Log(std::string&& pMessage)
 
 bool UpdateChecker::HttpDownload(const std::string& pUrl, const std::filesystem::path& pOutputFile)
 {
-	std::ofstream outputStream(pOutputFile);
+	std::ofstream outputStream(pOutputFile, std::ios_base::out | std::ios_base::binary);
 	cpr::Response response = cpr::Download(outputStream, cpr::Url{pUrl});
 	if (response.status_code != 200) {
 		Log(std::format("Downloading {} failed - http failure {} {}", pUrl, response.status_code,
