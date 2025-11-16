@@ -229,7 +229,7 @@ static inline size_t ReplaceFormatted(char* pResultBuffer, size_t pResultBufferL
 static inline std::string_view utf8_substr(std::string_view pStr, size_t pCharacterCount)
 {
 	int32_t bytesToSkip = 0;
-	int32_t length = pStr.size();
+	int32_t length = static_cast<int32_t>(pStr.size());
 	U8_FWD_N(pStr.data(), bytesToSkip, length, static_cast<int>(pCharacterCount));
 
 	return pStr.substr(0, bytesToSkip);
