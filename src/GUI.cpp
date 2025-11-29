@@ -403,10 +403,6 @@ static void Display_DetailsWindow(HealWindowContext& pContext, DetailsWindowStat
 		float barrierGenerationRatio = static_cast<float>(divide_safe(entry.BarrierGeneration, stats.HighestHealing));
 
 		std::string_view name = entry.Agent.Name;
-		if (pContext.MaxNameLength > 0)
-		{
-			name = utf8_substr(name, pContext.MaxNameLength);
-		}
 		pState.LastFrameRightSideMinWidth = (std::max)(
 			pState.LastFrameRightSideMinWidth,
 			ImGuiEx::StatsEntry(name, buffer, pContext.ShowProgressBars == true ? std::optional{healingRatio} : std::nullopt, pContext.ShowProgressBars == true ? std::optional{ barrierGenerationRatio } : std::nullopt, std::nullopt, std::nullopt, nullptr, std::nullopt, std::nullopt, std::nullopt, false));
