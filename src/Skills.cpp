@@ -115,6 +115,7 @@ SkillTable::SkillTable()
 	ENTRY(72051); // DeathlyEnervation
 	ENTRY(72062); // EchoingErosion
 	ENTRY(72089); // Path To Victory (Paragon)
+	ENTRY(79489); // Relic Of The Nautical Beast
 #undef ENTRY
 
 	std::lock_guard lock(mLock);
