@@ -115,6 +115,8 @@ SkillTable::SkillTable()
 	ENTRY(72051); // DeathlyEnervation
 	ENTRY(72062); // EchoingErosion
 	ENTRY(72089); // Path To Victory (Paragon)
+	ENTRY(76923); // Nightmare Weapon
+	ENTRY(77164); // Sovereign of Light
 	ENTRY(79489); // Relic Of The Nautical Beast
 #undef ENTRY
 
