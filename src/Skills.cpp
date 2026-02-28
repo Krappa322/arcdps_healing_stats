@@ -23,7 +23,7 @@ SkillTable::SkillTable()
 	ENTRY(9111);  // Symbol of Faith (Writ of Persistence)
 	ENTRY(9140);  // Faithful Strike
 	ENTRY(9143);  // Symbol of Swiftness (Writ of Persistence)
-	ENTRY(9146);  // Symbol of Wrath (Writ of Persistence)
+	ENTRY(9146);  // Symbol of Resolution (Writ of Persistence)
 	ENTRY(9161);  // Symbol of Protection (Writ of Persistence)
 	ENTRY(9192);  // Symbol of Spears (Writ of Persistence)
 	ENTRY(9208);  // Symbol of Light (Writ of Persistence)
@@ -41,6 +41,7 @@ SkillTable::SkillTable()
 	ENTRY(10619); // Deadly Feast
 	ENTRY(10643); // Gathering Plague (Transfusion)
 	ENTRY(12424); // Blood Frenzy
+	ENTRY(13677); // Lesser Symbol of Resolution (Writ of Persistence)
 	ENTRY(13684); // Lesser Symbol of Protection (Writ of Persistence)
 	ENTRY(14419); // Battle Standard
 	ENTRY(15259); // Nourishment (Omnomberry Ghost)
@@ -106,18 +107,26 @@ SkillTable::SkillTable()
 	ENTRY(71950); // Path To Victory (Spellbreaker)
 	ENTRY(71970); // FriendlyFireIllu
 	ENTRY(71986); // EnervationBlade
+	ENTRY(71987); // Symbol of Ignition (Writ of Persistence)
 	ENTRY(71999); // Flourish
 	ENTRY(72002); // ValiantLeap
 	ENTRY(72005); // InspiringImagery
 	ENTRY(72028); // FrigidFlurry
 	ENTRY(72029); // Path To Victory (Bladesworn)
 	ENTRY(72033); // SoothingSplash
+	ENTRY(72049); // Inspiring Whirl
 	ENTRY(72051); // DeathlyEnervation
 	ENTRY(72062); // EchoingErosion
 	ENTRY(72089); // Path To Victory (Paragon)
+	ENTRY(72923); // Daybreaking Slash (second attack in the auto attack chain, it alternates between this and 73055)
+	ENTRY(72940); // Helio Rush
+	ENTRY(73055); // Daybreaking Slash
+	ENTRY(73132); // Symbol of Luminance (Writ of Persistence)
+	ENTRY(76708); // Luminous Staff (Writ of Persistence)
 	ENTRY(76923); // Nightmare Weapon
 	ENTRY(77164); // Sovereign of Light
 	ENTRY(79489); // Relic Of The Nautical Beast
+	ENTRY(79336); // Lesser Symbol of Blades (Writ of Persistence)
 #undef ENTRY
 
 	std::lock_guard lock(mLock);
