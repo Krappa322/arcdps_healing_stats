@@ -446,8 +446,6 @@ UINT mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdd
 
 	ImGui_ProcessKeyEvent(pWindowHandle, pMessage, pAdditionalW, pAdditionalL);
 
-	const ImGuiIO& io = ImGui::GetIO();
-
 	if (pMessage == WM_KEYDOWN || pMessage == WM_SYSKEYDOWN)
 	{
 		int virtualKey = static_cast<int>(pAdditionalW);
@@ -456,8 +454,8 @@ UINT mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdd
 		ArcModifiers modifiers;
 		memcpy(&modifiers, &e7_rawResult, sizeof(modifiers));
 
-		if ((modifiers._1 == 0 || io.KeysDown[modifiers._1] == true) &&
-			(modifiers._2 == 0 || io.KeysDown[modifiers._2] == true))
+		if ((modifiers._1 == 0 || ImGui::IsKeyDown((ImGuiKey)modifiers._1) == true) &&
+			(modifiers._2 == 0 || ImGui::IsKeyDown((ImGuiKey)modifiers._2) == true))
 		{
 			std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 
@@ -465,10 +463,10 @@ UINT mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdd
 			for (uint32_t i = 0; i < HEAL_WINDOW_COUNT; i++)
 			{
 				if (HEAL_TABLE_OPTIONS.Windows[i].Hotkey > 0 &&
-					static_cast<size_t>(HEAL_TABLE_OPTIONS.Windows[i].Hotkey) < sizeof(io.KeysDown) &&
+					static_cast<size_t>(HEAL_TABLE_OPTIONS.Windows[i].Hotkey) < sizeof(ImGuiKey_NamedKey_BEGIN) &&
 					virtualKey == HEAL_TABLE_OPTIONS.Windows[i].Hotkey)
 				{
-					assert(io.KeysDown[HEAL_TABLE_OPTIONS.Windows[i].Hotkey] == true);
+					assert(ImGui::IsKeyDown((ImGuiKey)HEAL_TABLE_OPTIONS.Windows[i].Hotkey) == true);
 
 					HEAL_TABLE_OPTIONS.Windows[i].Shown = !HEAL_TABLE_OPTIONS.Windows[i].Shown;
 					triggeredKey = true;
@@ -477,7 +475,7 @@ UINT mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdd
 				}
 			}
 			if (HEAL_TABLE_OPTIONS.EvtcRpcEnabledHotkey > 0 &&
-				static_cast<size_t>(HEAL_TABLE_OPTIONS.EvtcRpcEnabledHotkey) < sizeof(io.KeysDown) &&
+				static_cast<size_t>(HEAL_TABLE_OPTIONS.EvtcRpcEnabledHotkey) < sizeof(ImGuiKey_NamedKey_BEGIN) &&
 				virtualKey == HEAL_TABLE_OPTIONS.EvtcRpcEnabledHotkey)
 			{
 				HEAL_TABLE_OPTIONS.EvtcRpcEnabled = !HEAL_TABLE_OPTIONS.EvtcRpcEnabled;

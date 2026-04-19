@@ -111,8 +111,7 @@ void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pD3DVersion)
 		d3d11SwapChain->GetDevice(__uuidof(d3d11), (void**)&d3d11);
 	}
 
-	auto& iconLoader = ArcdpsExtension::IconLoader::instance();
-	iconLoader.Setup(pCurrentModule, d3d11);
+	auto& iconLoader = ArcdpsExtension::IconLoader::init(pCurrentModule, d3d11);
 
 	// This happens only in unit tests
 	if (d3d11 == nullptr)
@@ -1338,12 +1337,12 @@ void ImGui_ProcessKeyEvent(HWND /*pWindowHandle*/, UINT pMessage, WPARAM pAdditi
 	{
 	case WM_KEYUP:
 	case WM_SYSKEYUP: // WM_SYSKEYUP is called when a key is pressed with the ALT held down
-		io.KeysDown[static_cast<int>(pAdditionalW)] = false;
+		io.AddKeyEvent(static_cast<ImGuiKey>(pAdditionalW), false);
 		break;
 
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN: // WM_SYSKEYDOWN is called when a key is pressed with the ALT held down
-		io.KeysDown[static_cast<int>(pAdditionalW)] = true;
+		io.AddKeyEvent(static_cast<ImGuiKey>(pAdditionalW), true);
 		break;
 
 	default:
