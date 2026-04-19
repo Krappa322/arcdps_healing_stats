@@ -226,6 +226,8 @@ namespace ImGuiEx
 			*pSavedLocation = static_cast<EnumType>(*pSavedLocation ^ pStyleFlag);
 		}
 	}
+
+	ImGuiKey ImGui_ImplWin32_KeyEventToImGuiKey(WPARAM wParam, LPARAM lParam);
 }
 
 namespace DrawListEx

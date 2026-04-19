@@ -1,6 +1,7 @@
 #include "AddonVersion.h"
 #include "Exports.h"
 #include "GUI.h"
+#include "ImGuiEx.h"
 #include "Log.h"
 #include "PlayerStats.h"
 #include "Utilities.h"
@@ -454,8 +455,8 @@ UINT mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdd
 		ArcModifiers modifiers;
 		memcpy(&modifiers, &e7_rawResult, sizeof(modifiers));
 
-		if ((modifiers._1 == 0 || ImGui::IsKeyDown((ImGuiKey)modifiers._1) == true) &&
-			(modifiers._2 == 0 || ImGui::IsKeyDown((ImGuiKey)modifiers._2) == true))
+		if ((modifiers._1 == 0 || ImGui::IsKeyDown(ImGuiEx::ImGui_ImplWin32_KeyEventToImGuiKey(modifiers._1, pAdditionalL)) == true) &&
+			(modifiers._2 == 0 || ImGui::IsKeyDown(ImGuiEx::ImGui_ImplWin32_KeyEventToImGuiKey(modifiers._2, pAdditionalL)) == true))
 		{
 			std::lock_guard lock(HEAL_TABLE_OPTIONS_MUTEX);
 
@@ -466,7 +467,7 @@ UINT mod_wnd(HWND pWindowHandle, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdd
 					static_cast<size_t>(HEAL_TABLE_OPTIONS.Windows[i].Hotkey) < sizeof(ImGuiKey_NamedKey_BEGIN) &&
 					virtualKey == HEAL_TABLE_OPTIONS.Windows[i].Hotkey)
 				{
-					assert(ImGui::IsKeyDown((ImGuiKey)HEAL_TABLE_OPTIONS.Windows[i].Hotkey) == true);
+					assert(ImGui::IsKeyDown(ImGuiEx::ImGui_ImplWin32_KeyEventToImGuiKey(HEAL_TABLE_OPTIONS.Windows[i].Hotkey, pAdditionalL)) == true);
 
 					HEAL_TABLE_OPTIONS.Windows[i].Shown = !HEAL_TABLE_OPTIONS.Windows[i].Shown;
 					triggeredKey = true;
