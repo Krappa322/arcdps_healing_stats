@@ -941,6 +941,15 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			window_flags |= ImGuiWindowFlags_NoMove;
 		}
 
+		if (curWindow.AutoResize == true)
+		{
+			window_flags |= ImGuiWindowFlags_NoResize;
+		}
+		else
+		{
+			window_flags &= ~ImGuiWindowFlags_NoResize;
+		}
+
 		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
 		ImGui::Begin(buffer, &curWindow.Shown, window_flags);
 
