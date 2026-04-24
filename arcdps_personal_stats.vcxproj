@@ -185,6 +185,7 @@
     <ClInclude Include="src\Exports.h" />
     <ClInclude Include="src\GUI.h" />
     <ClInclude Include="src\ImGuiEx.h" />
+    <ClInclude Include="src\KeysDown.h" />
     <ClInclude Include="src\Options.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\PlayerStats.h" />

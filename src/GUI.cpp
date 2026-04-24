@@ -2,6 +2,7 @@
 
 #include "AggregatedStatsCollection.h"
 #include "Exports.h"
+#include "KeysDown.h"
 #include "ImGuiEx.h"
 #include "Log.h"
 #include "../resource.h"
@@ -1329,20 +1330,18 @@ void Display_PreEndFrame(ImGuiContext* pImguiContext, HealTableOptions& pHealing
 	//RepositionWindows(pHealingOptions);
 }
 
-void ImGui_ProcessKeyEvent(HWND /*pWindowHandle*/, UINT pMessage, WPARAM pAdditionalW, LPARAM pAdditionalL)
+void ImGui_ProcessKeyEvent(HWND /*pWindowHandle*/, UINT pMessage, WPARAM pAdditionalW, LPARAM /*pAdditionalL*/)
 {
-	ImGuiIO& io = ImGui::GetIO();
-
 	switch (pMessage)
 	{
 	case WM_KEYUP:
 	case WM_SYSKEYUP: // WM_SYSKEYUP is called when a key is pressed with the ALT held down
-		io.AddKeyEvent(ImGuiEx::ImGui_ImplWin32_KeyEventToImGuiKey(pAdditionalW, pAdditionalL), false);
+		KeysDown::SetKeyDown(static_cast<int>(pAdditionalW), false);
 		break;
 
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN: // WM_SYSKEYDOWN is called when a key is pressed with the ALT held down
-		io.AddKeyEvent(ImGuiEx::ImGui_ImplWin32_KeyEventToImGuiKey(pAdditionalW, pAdditionalL), true);
+		KeysDown::SetKeyDown(static_cast<int>(pAdditionalW), true);
 		break;
 
 	default:
