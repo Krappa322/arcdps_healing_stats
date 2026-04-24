@@ -1,7 +1,6 @@
 #include "AddonVersion.h"
 #include "Exports.h"
 #include "GUI.h"
-#include "ImGuiEx.h"
 #include "KeysDown.h"
 #include "Log.h"
 #include "PlayerStats.h"
