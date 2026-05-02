@@ -9,7 +9,7 @@ float ImGuiEx::CalcWindowHeight(size_t pLineCount, float pExtraHeight, ImGuiWind
 
 	//return pWindow->TitleBarHeight() + ImGui::GetStyle().WindowPadding.y * 2 + pLineCount * ImGui::GetTextLineHeightWithSpacing() - ImGui::GetStyle().ItemSpacing.y;
 
-	float decorationsSize = pWindow->TitleBarHeight() + pWindow->MenuBarHeight();
+	float decorationsSize = pWindow->TitleBarHeight + pWindow->MenuBarHeight;
 	float padding = pWindow->WindowPadding.y * 2.0f;
 	float contentSize = 0;
 	if (pLineCount > 0)
@@ -87,14 +87,14 @@ float ImGuiEx::StatsEntry(std::string_view pLeftText, std::string_view pRightTex
 			float barrierGenerationRatio = *pBarrierGenerationRatio;
 			healingRatio -= barrierGenerationRatio;
 
-			ImVec2 barrierStart = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * healingRatio, pos.y);
-			ImVec2 barrierEnd = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * (healingRatio + barrierGenerationRatio), pos.y + ImGui::GetTextLineHeight());
+			ImVec2 barrierStart = ImVec2(pos.x + ImGui::GetContentRegionAvail().x * healingRatio, pos.y);
+			ImVec2 barrierEnd = ImVec2(pos.x + ImGui::GetContentRegionAvail().x * (healingRatio + barrierGenerationRatio), pos.y + ImGui::GetTextLineHeight());
 
 			ImGui::GetWindowDrawList()->AddRectFilled(barrierStart, barrierEnd, barrierColor);
 		}
 
 		ImVec2 healingStart = pos;
-		ImVec2 healingEnd = ImVec2(pos.x + ImGui::GetContentRegionAvailWidth() * healingRatio, pos.y + ImGui::GetTextLineHeight());
+		ImVec2 healingEnd = ImVec2(pos.x + ImGui::GetContentRegionAvail().x * healingRatio, pos.y + ImGui::GetTextLineHeight());
 
 		ImGui::GetWindowDrawList()->AddRectFilled(healingStart, healingEnd, healingColor);
 	}

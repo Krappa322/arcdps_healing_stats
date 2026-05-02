@@ -2,6 +2,7 @@
 
 #include "AggregatedStatsCollection.h"
 #include "Exports.h"
+#include "KeysDown.h"
 #include "ImGuiEx.h"
 #include "Log.h"
 #include "../resource.h"
@@ -111,8 +112,7 @@ void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pD3DVersion)
 		d3d11SwapChain->GetDevice(__uuidof(d3d11), (void**)&d3d11);
 	}
 
-	auto& iconLoader = ArcdpsExtension::IconLoader::instance();
-	iconLoader.Setup(pCurrentModule, d3d11);
+	auto& iconLoader = ArcdpsExtension::IconLoader::init(pCurrentModule, d3d11);
 
 	// This happens only in unit tests
 	if (d3d11 == nullptr)
@@ -941,6 +941,15 @@ void Display_GUI(HealTableOptions& pHealingOptions)
 			window_flags |= ImGuiWindowFlags_NoMove;
 		}
 
+		if (curWindow.AutoResize == true)
+		{
+			window_flags |= ImGuiWindowFlags_NoResize;
+		}
+		else
+		{
+			window_flags &= ~ImGuiWindowFlags_NoResize;
+		}
+
 		ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
 		ImGui::Begin(buffer, &curWindow.Shown, window_flags);
 
@@ -1332,18 +1341,16 @@ void Display_PreEndFrame(ImGuiContext* pImguiContext, HealTableOptions& pHealing
 
 void ImGui_ProcessKeyEvent(HWND /*pWindowHandle*/, UINT pMessage, WPARAM pAdditionalW, LPARAM /*pAdditionalL*/)
 {
-	ImGuiIO& io = ImGui::GetIO();
-
 	switch (pMessage)
 	{
 	case WM_KEYUP:
 	case WM_SYSKEYUP: // WM_SYSKEYUP is called when a key is pressed with the ALT held down
-		io.KeysDown[static_cast<int>(pAdditionalW)] = false;
+		KeysDown::SetKeyDown(static_cast<int>(pAdditionalW), false);
 		break;
 
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN: // WM_SYSKEYDOWN is called when a key is pressed with the ALT held down
-		io.KeysDown[static_cast<int>(pAdditionalW)] = true;
+		KeysDown::SetKeyDown(static_cast<int>(pAdditionalW), true);
 		break;
 
 	default:
