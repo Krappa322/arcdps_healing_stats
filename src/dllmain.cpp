@@ -132,7 +132,7 @@ static void FreeWrapper(void* pPointer, void* /*pUserData*/)
 }
 
 /* export -- arcdps looks for this exported function and calls the address it returns on client load */
-extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, void* pID3DPtr, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree, uint32_t pD3DVersion)
+extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArcdpsVersionString, void* pImguiContext, void* pID3DPtr, HMODULE pArcModule , MallocSignature pArcdpsMalloc, FreeSignature pArcdpsFree, uint32_t pImGuiVersion)
 {
 	GlobalObjects::ARC_E3 = reinterpret_cast<E3Signature>(GetProcAddress(pArcModule, "e3"));
 	assert(GlobalObjects::ARC_E3 != nullptr);
@@ -164,7 +164,7 @@ extern "C" __declspec(dllexport) ModInitSignature get_init_addr(const char* pArc
 		ImGui::AddContextHook(reinterpret_cast<ImGuiContext*>(pImguiContext), &contextHook);
 	}
 
-	LoadIcons(GlobalObjects::SELF_HANDLE, pID3DPtr, pD3DVersion);
+	LoadIcons(GlobalObjects::SELF_HANDLE, pID3DPtr, pImGuiVersion);
 
 	return mod_init;
 }
