@@ -159,4 +159,4 @@ def Do_Test():
 	Progress("Do_Test done")
 
 #Do_Test()
-Do_Release("v2.17.rc3")
+Do_Release("v2.18.rc1")
