@@ -103,10 +103,10 @@ static const HealedAgent AnonymousAgent{
 	0, "", "", 0, false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF
 };
 
-void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pD3DVersion)
+void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pImGuiVersion)
 {
 	ID3D11Device* d3d11 = nullptr;
-	if (pD3DVersion == 11)
+	if (pImGuiVersion != 0)
 	{
 		IDXGISwapChain* d3d11SwapChain = static_cast<IDXGISwapChain*>(pID3DPtr);
 		d3d11SwapChain->GetDevice(__uuidof(d3d11), (void**)&d3d11);

@@ -6,7 +6,7 @@
 
 void SetContext(void* pImGuiContext);
 void FindAndResolveCyclicDependencies(HealTableOptions& pHealingOptions, size_t pStartIndex);
-void LoadIcons(HMODULE pArcModule, void* pID3DPtr, uint32_t pD3DVersion);
+void LoadIcons(HMODULE pArcModule, void* pID3DPtr, uint32_t pImGuiVersion);
 
 void Display_GUI(HealTableOptions& pHealingOptions);
 void Display_AddonOptions(HealTableOptions& pHealingOptions);
