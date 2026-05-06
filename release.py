@@ -7,7 +7,7 @@ import string
 import subprocess
 from typing import List
 
-MSBUILD_PATH = r"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\msbuild.exe"
+MSBUILD_PATH = r"C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\msbuild.exe"
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 RELEASES_PATH = os.path.join(SCRIPT_PATH, "..", "arcdps_personal_stats_releases")
 BUILD_PATH = os.path.join(SCRIPT_PATH, "x64") # Gets cleaned automatically, be careful what path you put in
