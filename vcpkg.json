@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "arcdps-personal-stats",
   "version-string": "2.2rc2",
   "dependencies": [
@@ -21,6 +21,14 @@
     }
   ],
   "overrides": [
+    {
+      "name": "arcdps-extension",
+      "version": "2.2.0"
+    },
+    {
+      "name": "arcdps-mock",
+      "version": "0.2.1"
+    },
     {
       "name": "c-ares",
       "version": "1.18.1"

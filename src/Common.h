@@ -21,11 +21,11 @@ static inline EventType GetEventType(const cbtevent* pEvent, bool pIsLocal)
 	{
 		switch (pEvent->result)
 		{
-		case CBTR_NORMAL:
-		case CBTR_CRIT:
-		case CBTR_GLANCE:
+		case CBTR_STRIKE_DAMAGENORMAL:
+		case CBTR_STRIKE_DAMAGECRIT:
+		case CBTR_STRIKE_DAMAGEGLANCE:
 			break;
-		case CBTR_ACTIVATION:
+		case CBTR_SKILLCAST:
 			return EventType::Other;
 		default:
 			return EventType::SemiDamaging; // Breakbar / misc.
