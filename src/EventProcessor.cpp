@@ -134,9 +134,9 @@ void EventProcessor::AreaCombat(cbtevent* pEvent, ag* pSourceAgent, ag* pDestina
 		return;
 	}
 
-	if (pEvent->is_statechange == CBTS_LOGSTART)
+	if (pEvent->is_statechange == CBTS_SQCOMBATSTART)
 	{
-		LogI("CBTS_LOGSTART - server_timestamp={} local_timestamp={}, species_id={}", pEvent->value, pEvent->buff_dmg, pEvent->src_agent);
+		LogI("CBTS_SQCOMBATSTART - server_timestamp={} local_timestamp={}, species_id={}", pEvent->value, pEvent->buff_dmg, pEvent->src_agent);
 
 		cbtevent logEvent = {};
 
