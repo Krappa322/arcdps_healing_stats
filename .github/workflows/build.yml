@@ -1,0 +1,42 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2025-vs2026
+
+    steps:
+      - name: Move vcpkg to D drive
+        shell: pwsh
+        run: |
+          if ((Test-Path 'D:\') -and (Test-Path 'C:\vcpkg')) {
+            Copy-Item -Path 'C:\vcpkg' -Destination 'D:\vcpkg' -Recurse -Force
+            Add-Content -Path $env:GITHUB_PATH -Value 'D:\vcpkg'
+            Add-Content -Path $env:GITHUB_ENV -Value "VCPKG_ROOT=D:/vcpkg"
+          }
+
+      - uses: actions/checkout@v6
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Integrate vcpkg with MSBuild
+        run: vcpkg integrate install
+
+      - name: Build solution
+        shell: pwsh
+        run: |
+          $sln = (Get-ChildItem -Path .\* -File -Include *.sln, *.slnx | Select-Object -First 1).Name
+          if (![string]::IsNullOrEmpty($sln)) {
+            Write-Host "Building $sln with MSBuild"
+            msbuild $sln
+          } elseif (Test-Path "CMakeLists.txt") {
+            Write-Host "Building CMake project with CMake + vcpkg toolchain"
+            cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+            cmake --build build --config Release
+          } else {
+            Write-Error "No solution or CMakeLists.txt found to build."
+            exit 1
+          }
