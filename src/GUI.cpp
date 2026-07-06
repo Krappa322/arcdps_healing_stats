@@ -103,13 +103,38 @@ static const HealedAgent AnonymousAgent{
 	0, "", "", 0, false, true, Prof::PROF_UNKNOWN, 0xFFFFFFFF
 };
 
+ID3D11Device* GetD3DDevice(void* pID3DPtr)
+{
+	auto swapChain = static_cast<IDXGISwapChain*>(pID3DPtr);
+	ID3D11Device* id3d11d = nullptr;
+	if (FAILED(swapChain->GetDevice(__uuidof(id3d11d), reinterpret_cast<void**>(&id3d11d)))) {
+		GlobalObjects::ARC_E3("Healing Stats: Failed to get D3D device");
+		id3d11d = nullptr;
+	}
+
+	ID3D11Texture2D* backBuffer = nullptr;
+	if (FAILED(swapChain->GetBuffer(0, __uuidof(backBuffer), reinterpret_cast<void**>(&backBuffer)))) {
+		GlobalObjects::ARC_E3("Healing Stats: Failed to get backbuffer");
+		return nullptr;
+	}
+
+	ID3D11Device* bbid3d11d = nullptr;
+	backBuffer->GetDevice(&bbid3d11d);
+
+	if (bbid3d11d && id3d11d != bbid3d11d) {
+		GlobalObjects::ARC_E3("Healing Stats: SmoothMotion workaround");
+		id3d11d = bbid3d11d;
+	}
+
+	return id3d11d;
+}
+
 void LoadIcons(HMODULE pCurrentModule, void* pID3DPtr, uint32_t pImGuiVersion)
 {
 	ID3D11Device* d3d11 = nullptr;
 	if (pImGuiVersion != 0)
 	{
-		IDXGISwapChain* d3d11SwapChain = static_cast<IDXGISwapChain*>(pID3DPtr);
-		d3d11SwapChain->GetDevice(__uuidof(d3d11), (void**)&d3d11);
+		d3d11 = GetD3DDevice(pID3DPtr);
 	}
 
 	auto& iconLoader = ArcdpsExtension::IconLoader::init(pCurrentModule, d3d11);
