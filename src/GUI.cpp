@@ -126,6 +126,8 @@ ID3D11Device* GetD3DDevice(void* pID3DPtr)
 		id3d11d = bbid3d11d;
 	}
 
+	backBuffer->Release();
+
 	return id3d11d;
 }
 
