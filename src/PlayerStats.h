@@ -16,8 +16,9 @@ struct HealEvent
 	const uintptr_t AgentId = 0;
 	const uint32_t SkillId = 0;
 	const bool IsBarrierGeneration = false;
+	const bool IsAgainstDowned = false;
 
-	HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId, bool pIsBarrierGeneration);
+	HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId, bool pIsBarrierGeneration, bool pIsAgainstDowned);
 
 	bool operator==(const HealEvent& pRight) const;
 	bool operator!=(const HealEvent& pRight) const;

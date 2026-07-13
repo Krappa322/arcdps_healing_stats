@@ -69,6 +69,7 @@ TEST(ConfigTest, Serialize_Deserialize)
 		window.ExcludeUnmapped = rand_t<bool>();
 		window.ExcludeHealing = rand_t<bool>();
 		window.ExcludeBarrierGeneration = rand_t<bool>();
+		window.ExcludeAgainstDowned = rand_t<bool>();
 
 		window.ShowProgressBars = rand_t<bool>();
 		window.UseSubgroupForBarColour = rand_t<bool>();
@@ -138,6 +139,7 @@ TEST(ConfigTest, Serialize_Deserialize)
 		ASSERT_EQ(windowLeft.ExcludeUnmapped, windowRight.ExcludeUnmapped);
 		ASSERT_EQ(windowLeft.ExcludeHealing, windowRight.ExcludeHealing);
 		ASSERT_EQ(windowLeft.ExcludeBarrierGeneration, windowRight.ExcludeBarrierGeneration);
+		ASSERT_EQ(windowLeft.ExcludeAgainstDowned, windowRight.ExcludeAgainstDowned);
 
 		ASSERT_EQ(windowLeft.ShowProgressBars, windowRight.ShowProgressBars);
 		ASSERT_EQ(windowLeft.UseSubgroupForBarColour, windowRight.UseSubgroupForBarColour);

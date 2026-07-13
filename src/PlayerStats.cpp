@@ -6,18 +6,19 @@
 #include <assert.h>
 #include <Windows.h>
 
-HealEvent::HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId, bool pIsBarrierGeneration)
+HealEvent::HealEvent(uint64_t pTime, uint64_t pSize, uintptr_t pAgentId, uint32_t pSkillId, bool pIsBarrierGeneration, bool pIsAgainstDowned)
 	: Time{pTime}
 	, Size{pSize}
 	, AgentId{pAgentId}
 	, SkillId{pSkillId}
 	, IsBarrierGeneration{pIsBarrierGeneration}
+	, IsAgainstDowned{pIsAgainstDowned}
 {
 }
 
 bool HealEvent::operator==(const HealEvent& pRight) const
 {
-	return std::tie(Time, Size, AgentId, SkillId, IsBarrierGeneration) == std::tie(pRight.Time, pRight.Size, pRight.AgentId, pRight.SkillId, pRight.IsBarrierGeneration);
+	return std::tie(Time, Size, AgentId, SkillId, IsBarrierGeneration, IsAgainstDowned) == std::tie(pRight.Time, pRight.Size, pRight.AgentId, pRight.SkillId, pRight.IsBarrierGeneration, pRight.IsAgainstDowned);
 }
 
 bool HealEvent::operator!=(const HealEvent& pRight) const
@@ -117,6 +118,8 @@ void PlayerStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
 		assert(healedAmount != 0);
 	}
 
+	bool isAgainstDowned = pEvent->is_offcycle == 1;
+
 	{
 		std::lock_guard<std::mutex> lock(myLock);
 
@@ -126,7 +129,7 @@ void PlayerStats::HealingEvent(cbtevent* pEvent, uintptr_t pDestinationAgentId)
 			return;
 		}
 
-		myStats.Events.emplace_back(pEvent->time, healedAmount, pDestinationAgentId, pEvent->skillid, false);
+		myStats.Events.emplace_back(pEvent->time, healedAmount, pDestinationAgentId, pEvent->skillid, false, isAgainstDowned);
 	}
 }
 
@@ -139,6 +142,8 @@ void PlayerStats::BarrierGenerationEvent(cbtevent* pEvent, uintptr_t pDestinatio
 		assert(barrierGenerationAmount != 0);
 	}
 
+	bool isAgainstDowned = pEvent->is_offcycle == 1;
+
 	{
 		std::lock_guard<std::mutex> lock(myLock);
 
@@ -148,7 +153,7 @@ void PlayerStats::BarrierGenerationEvent(cbtevent* pEvent, uintptr_t pDestinatio
 			return;
 		}
 
-		myStats.Events.emplace_back(pEvent->time, barrierGenerationAmount, pDestinationAgentId, pEvent->skillid, true);
+		myStats.Events.emplace_back(pEvent->time, barrierGenerationAmount, pDestinationAgentId, pEvent->skillid, true, isAgainstDowned);
 	}
 }
 

@@ -59,6 +59,7 @@ struct HealWindowOptions
 	bool ExcludeUnmapped = true;
 	bool ExcludeHealing = false;
 	bool ExcludeBarrierGeneration = true;
+	bool ExcludeAgainstDowned = false;
 
 	bool ShowProgressBars = true;
 	bool UseSubgroupForBarColour = false;
