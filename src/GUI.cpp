@@ -725,6 +725,7 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 
 			ImGuiEx::SmallCheckBox("healing", &pContext.ExcludeHealing);
 			ImGuiEx::SmallCheckBox("barrier generation", &pContext.ExcludeBarrierGeneration);
+			ImGuiEx::SmallCheckBox("against downed", &pContext.ExcludeAgainstDowned);
 
 			ImGui::EndMenu();
 		}

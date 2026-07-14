@@ -132,6 +132,7 @@ HealTableOptions::HealTableOptions()
 	Windows[6].DataSourceChoice = DataSource::PeersOutgoing;
 	Windows[6].ExcludeHealing = true;
 	Windows[6].ExcludeBarrierGeneration = false;
+	Windows[6].ExcludeAgainstDowned = true;
 	snprintf(Windows[6].Name, sizeof(Windows[6].Name), "%s", "Peers barrier generation");
 	snprintf(Windows[6].TitleFormat, sizeof(Windows[6].TitleFormat), "%s", "Barrier generation {1} ({4}/s, {7}s in combat)");
 
@@ -430,9 +431,10 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "ExcludeOffGroup", ExcludeOffGroup);
 	GetJsonValue(pJsonObject, "ExcludeOffSquad", ExcludeOffSquad);
 	GetJsonValue(pJsonObject, "ExcludeMinions", ExcludeMinions);
-	GetJsonValue(pJsonObject,  "ExcludeUnmapped", ExcludeUnmapped);
+	GetJsonValue(pJsonObject, "ExcludeUnmapped", ExcludeUnmapped);
 	GetJsonValue(pJsonObject, "ExcludeHealing", ExcludeHealing);
 	GetJsonValue(pJsonObject, "ExcludeBarrierGeneration", ExcludeBarrierGeneration);
+	GetJsonValue(pJsonObject, "ExcludeAgainstDowned", ExcludeAgainstDowned);
 
 	GetJsonValue(pJsonObject, "ShowProgressBars", ShowProgressBars);
 	GetJsonValue(pJsonObject, "UseSubgroupForBarColour", UseSubgroupForBarColour);
@@ -500,6 +502,7 @@ do {\
 	SET_JSON_VAL(ExcludeUnmapped);
 	SET_JSON_VAL(ExcludeHealing);
 	SET_JSON_VAL(ExcludeBarrierGeneration);
+	SET_JSON_VAL(ExcludeAgainstDowned);
 
 	SET_JSON_VAL(ShowProgressBars);
 	SET_JSON_VAL(UseSubgroupForBarColour);

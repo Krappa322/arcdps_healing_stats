@@ -114,13 +114,26 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 			continue;
 		}
 
-		if (curEvent.IsBarrierGeneration && myOptions.ExcludeBarrierGeneration == true)
+		if (curEvent.IsAgainstDowned)
 		{
-			continue;
+			if (myOptions.ExcludeAgainstDowned == true)
+			{
+				continue;
+			}
 		}
-		else if (!curEvent.IsBarrierGeneration && myOptions.ExcludeHealing == true)
+		else if (curEvent.IsBarrierGeneration)
 		{
-			continue;
+			if (myOptions.ExcludeBarrierGeneration == true)
+			{
+				continue;
+			}
+		}
+		else // Healing
+		{
+			if (myOptions.ExcludeHealing == true)
+			{
+				continue;
+			}
 		}
 
 		auto mapAgent = std::as_const(mySourceData.Agents).find(curEvent.AgentId);
@@ -313,13 +326,26 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 			continue;
 		}
 
-		if (curEvent.IsBarrierGeneration && myOptions.ExcludeBarrierGeneration == true)
+		if (curEvent.IsAgainstDowned)
 		{
-			continue;
+			if (myOptions.ExcludeAgainstDowned == true)
+			{
+				continue;
+			}
 		}
-		else if (!curEvent.IsBarrierGeneration && myOptions.ExcludeHealing == true)
+		else if (curEvent.IsBarrierGeneration)
 		{
-			continue;
+			if (myOptions.ExcludeBarrierGeneration == true)
+			{
+				continue;
+			}
+		}
+		else // Healing
+		{
+			if (myOptions.ExcludeHealing == true)
+			{
+				continue;
+			}
 		}
 
 		if (pSkillId.has_value() == true)
@@ -346,7 +372,7 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 		{
 			// For barrier generation hits, track the total barrier generation separately as a sub-total of healing.
 			agent->second.BarrierGeneration += curEvent.Size;
-		}			
+		}
 	}
 
 	// Caching the result in a display friendly way
@@ -443,13 +469,26 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 			continue;
 		}
 
-		if (curEvent.IsBarrierGeneration && myOptions.ExcludeBarrierGeneration == true)
+		if (curEvent.IsAgainstDowned)
 		{
-			continue;
+			if (myOptions.ExcludeAgainstDowned == true)
+			{
+				continue;
+			}
 		}
-		else if (!curEvent.IsBarrierGeneration && myOptions.ExcludeHealing == true)
+		else if (curEvent.IsBarrierGeneration)
 		{
-			continue;
+			if (myOptions.ExcludeBarrierGeneration == true)
+			{
+				continue;
+			}
+		}
+		else // Healing
+		{
+			if (myOptions.ExcludeHealing == true)
+			{
+				continue;
+			}
 		}
 
 		if (pAgentId.has_value() == true)
