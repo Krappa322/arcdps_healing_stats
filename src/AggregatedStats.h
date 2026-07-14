@@ -78,6 +78,7 @@ private:
 	bool Filter(uintptr_t pAgentId) const; // Returns true if agent should be filtered out
 	bool Filter(std::map<uintptr_t, HealedAgent>::const_iterator& pAgent) const; // Returns true if agent should be filtered out
 	bool FilterInternal(std::map<uintptr_t, HealedAgent>::const_iterator& pAgent, const HealWindowOptions& pFilter) const; // Returns true if agent should be filtered out
+	bool FilterSkill(uint32_t pSkillId) const; // Returns true if skill should be filtered out
 
 	HealingStats mySourceData;
 

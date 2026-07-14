@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <array>
+#include <ranges>
 #include <string>
 #include <optional>
 #include <variant>
@@ -233,4 +234,27 @@ static inline std::string_view utf8_substr(std::string_view pStr, size_t pCharac
 	U8_FWD_N(pStr.data(), bytesToSkip, length, static_cast<int>(pCharacterCount));
 
 	return pStr.substr(0, bytesToSkip);
+}
+
+static inline std::vector<uint32_t> ParseUInt32String(std::string_view pStr)
+{
+	std::vector<uint32_t> result;
+
+	if (pStr.empty() == true)
+	{
+		return result;
+	}
+
+	for (auto&& part : pStr | std::views::split(' '))
+	{
+		uint32_t value{};
+		auto fromCharsResult = std::from_chars(&*part.begin(), &*part.end(), value);
+
+		if (fromCharsResult.ec != std::errc{} || fromCharsResult.ptr != &*part.end())
+			continue;
+
+		result.push_back(value);
+	}
+
+	return result;
 }

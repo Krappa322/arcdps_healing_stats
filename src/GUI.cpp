@@ -726,6 +726,8 @@ static void Display_WindowOptions(HealTableOptions& pHealingOptions, HealWindowC
 			ImGuiEx::SmallCheckBox("healing", &pContext.ExcludeHealing);
 			ImGuiEx::SmallCheckBox("barrier generation", &pContext.ExcludeBarrierGeneration);
 			ImGuiEx::SmallCheckBox("against downed", &pContext.ExcludeAgainstDowned);
+			ImGuiEx::SmallInputText("included skills", pContext.IncludedSkills, sizeof(pContext.IncludedSkills));
+			ImGuiEx::AddTooltipToLastItem("Only these skills will be included. Write skill ids separated by a space in the format 123 456");
 
 			ImGui::EndMenu();
 		}

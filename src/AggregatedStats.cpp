@@ -136,6 +136,11 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 			}
 		}
 
+		if (FilterSkill(curEvent.SkillId))
+		{
+			continue;
+		}
+
 		auto mapAgent = std::as_const(mySourceData.Agents).find(curEvent.AgentId);
 
 		// Loop through the array and pretend index is GroupFilter, if agent does not get filtered by that filter then add
@@ -356,6 +361,11 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 			}
 		}
 
+		if (FilterSkill(curEvent.SkillId))
+		{
+			continue;
+		}
+
 		auto mapAgent = std::as_const(mySourceData.Agents).find(curEvent.AgentId);
 		if (Filter(mapAgent) == true)
 		{
@@ -489,6 +499,11 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 			{
 				continue;
 			}
+		}
+
+		if (FilterSkill(curEvent.SkillId))
+		{
+			continue;
 		}
 
 		if (pAgentId.has_value() == true)
@@ -691,3 +706,14 @@ bool AggregatedStats::FilterInternal(std::map<uintptr_t, HealedAgent>::const_ite
 
 	return false;
 }
+
+bool AggregatedStats::FilterSkill(uint32_t pSkillId) const
+{
+	auto parsedSkills = ParseUInt32String(std::string_view(myOptions.IncludedSkills));
+	if (parsedSkills.empty())
+	{
+		return false;
+	}
+
+	return !std::ranges::contains(parsedSkills, pSkillId);
+}	

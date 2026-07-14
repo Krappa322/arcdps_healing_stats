@@ -38,3 +38,15 @@ TEST(UtilitiesTest, utf8_substr_unicode)
 	ASSERT_EQ(utf8_substr(sourceData, 11), "ホヽのö Wó卂丂ᗪ");
 	ASSERT_EQ(utf8_substr(sourceData, 100000000), "ホヽのö Wó卂丂ᗪ");
 }
+
+TEST(UtilitiesTest, ParseUInt32String)
+{
+	EXPECT_EQ(ParseUInt32String(""), std::vector<uint32_t>{});
+	EXPECT_EQ(ParseUInt32String(" "), std::vector<uint32_t>{});
+	EXPECT_EQ(ParseUInt32String("abc"), std::vector<uint32_t>{});
+	EXPECT_EQ(ParseUInt32String("a;b;c"), std::vector<uint32_t>{});
+	EXPECT_EQ(ParseUInt32String("1"), std::vector<uint32_t>{ 1 });
+	EXPECT_EQ(ParseUInt32String("1;2"), (std::vector<uint32_t>{ 1, 2 }));
+	EXPECT_EQ(ParseUInt32String("1; 2"), (std::vector<uint32_t>{ 1, 2 }));
+	EXPECT_EQ(ParseUInt32String("1; 2 "), (std::vector<uint32_t>{ 1, 2 }));
+}
