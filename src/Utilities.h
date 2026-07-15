@@ -241,11 +241,6 @@ static inline std::vector<uint32_t> ParseUInt32String(std::string_view pStr)
 {
 	std::vector<uint32_t> result;
 
-	if (pStr.empty() == true)
-	{
-		return result;
-	}
-
 	constexpr auto is_delim = [](char c)
 	{
 		return c == ',' || c == ';' || c == ' ';
