@@ -44,9 +44,11 @@ TEST(UtilitiesTest, ParseUInt32String)
 	EXPECT_EQ(ParseUInt32String(""), std::vector<uint32_t>{});
 	EXPECT_EQ(ParseUInt32String(" "), std::vector<uint32_t>{});
 	EXPECT_EQ(ParseUInt32String("abc"), std::vector<uint32_t>{});
+	EXPECT_EQ(ParseUInt32String("1a"), std::vector<uint32_t>{});
 	EXPECT_EQ(ParseUInt32String("a;b;c"), std::vector<uint32_t>{});
 	EXPECT_EQ(ParseUInt32String("1"), std::vector<uint32_t>{ 1 });
 	EXPECT_EQ(ParseUInt32String("1;2"), (std::vector<uint32_t>{ 1, 2 }));
 	EXPECT_EQ(ParseUInt32String("1; 2"), (std::vector<uint32_t>{ 1, 2 }));
 	EXPECT_EQ(ParseUInt32String("1; 2 "), (std::vector<uint32_t>{ 1, 2 }));
+	EXPECT_EQ(ParseUInt32String("1 ; 2,3 , 4; "), (std::vector<uint32_t>{ 1, 2, 3, 4 }));
 }

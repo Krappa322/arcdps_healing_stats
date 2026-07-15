@@ -10,6 +10,7 @@
 #include <array>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <optional>
 #include <variant>
 
@@ -245,12 +246,28 @@ static inline std::vector<uint32_t> ParseUInt32String(std::string_view pStr)
 		return result;
 	}
 
-	for (auto&& part : pStr | std::views::split(' '))
+	constexpr auto is_delim = [](char c)
+	{
+		return c == ',' || c == ';' || c == ' ';
+	};
+
+	constexpr auto same_kind = [](char a, char b) {
+		return is_delim(a) == is_delim(b);
+	};
+
+	auto tokens = pStr
+		| std::views::chunk_by(same_kind)
+		| std::views::filter([](auto chunk) {
+			return !is_delim(*chunk.begin());
+		});
+
+	for (auto chunk : tokens)
 	{
 		uint32_t value{};
-		auto fromCharsResult = std::from_chars(&*part.begin(), &*part.end(), value);
+		std::string_view token(&*chunk.begin(), std::ranges::distance(chunk));
+		auto fromCharsResult = std::from_chars(token.data(), token.data() + token.size(), value);
 
-		if (fromCharsResult.ec != std::errc{} || fromCharsResult.ptr != &*part.end())
+		if (fromCharsResult.ec != std::errc{} || fromCharsResult.ptr != token.data() + token.size())
 			continue;
 
 		result.push_back(value);
