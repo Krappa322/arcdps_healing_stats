@@ -106,6 +106,7 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 	HealWindowOptions fakeOptions;
 
 	uint64_t combatEnd = GetCombatEnd();
+	auto includedSkills = GetIncludedSkills();
 
 	for (const HealEvent& curEvent : mySourceData.Events)
 	{
@@ -136,7 +137,7 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 			}
 		}
 
-		if (FilterSkill(curEvent.SkillId))
+		if (FilterSkill(curEvent.SkillId, includedSkills))
 		{
 			continue;
 		}
@@ -323,6 +324,7 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 	std::map<uintptr_t, TempAgent> tempMap;
 
 	uint64_t combatEnd = GetCombatEnd();
+	auto includedSkills = GetIncludedSkills();
 
 	for (const HealEvent& curEvent : mySourceData.Events)
 	{
@@ -361,7 +363,7 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 			}
 		}
 
-		if (FilterSkill(curEvent.SkillId))
+		if (FilterSkill(curEvent.SkillId, includedSkills))
 		{
 			continue;
 		}
@@ -468,6 +470,7 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 	std::map<uint32_t, TempSkill> tempMap;
 
 	uint64_t combatEnd = GetCombatEnd();
+	auto includedSkills = GetIncludedSkills();
 	uint64_t totalIndirectHealing = 0;
 	uint64_t totalIndirectTicks = 0;
 	uint64_t totalIndirectBarrierGeneration = 0;
@@ -501,7 +504,7 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 			}
 		}
 
-		if (FilterSkill(curEvent.SkillId))
+		if (FilterSkill(curEvent.SkillId, includedSkills))
 		{
 			continue;
 		}
@@ -707,13 +710,17 @@ bool AggregatedStats::FilterInternal(std::map<uintptr_t, HealedAgent>::const_ite
 	return false;
 }
 
-bool AggregatedStats::FilterSkill(uint32_t pSkillId) const
+bool AggregatedStats::FilterSkill(uint32_t pSkillId, std::vector<uint32_t>& pIncludedSkills) const
 {
-	auto parsedSkills = ParseUInt32String(std::string_view(myOptions.IncludedSkills));
-	if (parsedSkills.empty())
+	if (pIncludedSkills.empty())
 	{
 		return false;
 	}
 
-	return !std::ranges::contains(parsedSkills, pSkillId);
-}	
+	return !std::ranges::contains(pIncludedSkills, pSkillId);
+}
+
+std::vector<uint32_t> AggregatedStats::GetIncludedSkills() const
+{
+	return ParseUInt32String(std::string_view(myOptions.IncludedSkills));
+}
