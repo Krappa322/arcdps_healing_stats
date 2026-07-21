@@ -435,6 +435,7 @@ void HealWindowOptions::FromJson(const nlohmann::json& pJsonObject)
 	GetJsonValue(pJsonObject, "ExcludeHealing", ExcludeHealing);
 	GetJsonValue(pJsonObject, "ExcludeBarrierGeneration", ExcludeBarrierGeneration);
 	GetJsonValue(pJsonObject, "ExcludeAgainstDowned", ExcludeAgainstDowned);
+	GetJsonValue(pJsonObject, "IncludedSkills", IncludedSkills);
 
 	GetJsonValue(pJsonObject, "ShowProgressBars", ShowProgressBars);
 	GetJsonValue(pJsonObject, "UseSubgroupForBarColour", UseSubgroupForBarColour);
@@ -503,6 +504,7 @@ do {\
 	SET_JSON_VAL(ExcludeHealing);
 	SET_JSON_VAL(ExcludeBarrierGeneration);
 	SET_JSON_VAL(ExcludeAgainstDowned);
+	SET_JSON_VAL_CSTR_ARRAY(IncludedSkills);
 
 	SET_JSON_VAL(ShowProgressBars);
 	SET_JSON_VAL(UseSubgroupForBarColour);
