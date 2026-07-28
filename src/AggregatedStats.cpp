@@ -122,7 +122,15 @@ const AggregatedVector& AggregatedStats::GetGroupFilterTotals()
 				continue;
 			}
 		}
-		else if (curEvent.IsBarrierGeneration)
+		else // Non-downed
+		{
+			if (myOptions.ExcludeAgainstNonDowned == true)
+			{
+				continue;
+			}
+		}
+			
+		if (curEvent.IsBarrierGeneration)
 		{
 			if (myOptions.ExcludeBarrierGeneration == true)
 			{
@@ -340,7 +348,15 @@ const AggregatedVector& AggregatedStats::GetAgents(std::optional<uint32_t> pSkil
 				continue;
 			}
 		}
-		else if (curEvent.IsBarrierGeneration)
+		else // Non-downed
+		{
+			if (myOptions.ExcludeAgainstNonDowned == true)
+			{
+				continue;
+			}
+		}
+		
+		if (curEvent.IsBarrierGeneration)
 		{
 			if (myOptions.ExcludeBarrierGeneration == true)
 			{
@@ -489,7 +505,15 @@ const AggregatedVector& AggregatedStats::GetSkills(std::optional<uintptr_t> pAge
 				continue;
 			}
 		}
-		else if (curEvent.IsBarrierGeneration)
+		else // Non-downed
+		{
+			if (myOptions.ExcludeAgainstNonDowned == true)
+			{
+				continue;
+			}
+		}
+		
+		if (curEvent.IsBarrierGeneration)
 		{
 			if (myOptions.ExcludeBarrierGeneration == true)
 			{
