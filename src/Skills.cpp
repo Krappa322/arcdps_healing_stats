@@ -138,6 +138,7 @@ SkillTable::SkillTable()
 	mSkillNames.emplace(26558, "Energy Expulsion");
 	mSkillNames.emplace(29863, "Live Vicariously"); // The game maps this name incorrectly to "Vigorous Recovery"
 	mSkillNames.emplace(30313, "Escapist's Fortitude"); // The game maps this to the wrong skill
+	mSkillNames.emplace(64148, "Rescue Protocol"); // The game does not map this one at all, jade bot ressing
 
 	// Clarifying names that exist on more than one skill
 	mSkillNames.emplace(21750, "Signet of the Ether (Active)");
