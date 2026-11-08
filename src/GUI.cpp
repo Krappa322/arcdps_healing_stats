@@ -1150,6 +1150,7 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 		auto& stats = GlobalObjects::EVTC_RPC_CLIENT->GetStatistics();
 		ImGui::Text("Total queued events: %llu", stats.GetTotalEventsQueued());
 		ImGui::Text("Total sent events: %llu", stats.GetTotalEventsSent());
+		ImGui::Text("Total read events: %llu", stats.GetTotalEventsRead());
 		ImGui::Text("Total dropped events: %llu", stats.GetTotalEventsDropped());
 		ImGui::EndMenu();
 	}
