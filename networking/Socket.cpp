@@ -10,6 +10,7 @@
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #define INVALID_SOCKET -1
 #endif
 
