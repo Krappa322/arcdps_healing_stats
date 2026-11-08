@@ -81,7 +81,7 @@ static void monitor_thread_entry()
 int main(int pArgumentCount, char** pArgumentVector)
 {
 	Log_::InitMultiSink(false, "logs/evtc_rpc_server_debug.txt", "logs/evtc_rpc_server_info.txt");
-	Log_::SetLevel(spdlog::level::debug);
+	Log_::SetLevel(spdlog::level::info);
 	LogI("Start. Dependency versions:\n{}", DEPENDENCY_VERSIONS);
 
 	if (pArgumentCount != 3)
