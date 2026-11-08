@@ -1145,6 +1145,14 @@ void Display_AddonOptions(HealTableOptions& pHealingOptions)
 	ImGuiEx::SmallUnindent();
 
 	ImGuiEx::ComboMenu("auto updates", pHealingOptions.AutoUpdateSetting, AUTO_UPDATE_SETTING_ITEMS);
+	if (ImGui::BeginMenu("network statistics"))
+	{
+		auto& stats = GlobalObjects::EVTC_RPC_CLIENT->GetStatistics();
+		ImGui::Text("Total queued events: %llu", stats.GetTotalEventsQueued());
+		ImGui::Text("Total sent events: %llu", stats.GetTotalEventsSent());
+		ImGui::Text("Total dropped events: %llu", stats.GetTotalEventsDropped());
+		ImGui::EndMenu();
+	}
 	ImGuiEx::SmallCheckBox("debug mode", &pHealingOptions.DebugMode);
 	ImGuiEx::AddTooltipToLastItem(
 		"Includes debug data in target and skill names.\n"

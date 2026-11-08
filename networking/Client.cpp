@@ -520,6 +520,7 @@ void evtc_rpc_client::Serve()
 
 			if (queuedData != nullptr)
 			{
+				++mStatistics.mTotalEventsSent;
 				SendEvent(queuedData);
 
 				assert(queuedData->IsWrite() == true);
@@ -560,9 +561,11 @@ bool evtc_rpc_client::QueueEvent(CallDataBase* pCallData, bool pIsImportant)
 
 	if ((pIsImportant == false && mQueuedEvents.size() > 5000) || mQueuedEvents.size() > 10000)
 	{
+		++mStatistics.mTotalEventsDropped;
 		return false;
 	}
 
+	++mStatistics.mTotalEventsQueued;
 	mQueuedEvents.push(pCallData);
 	return true;
 }
