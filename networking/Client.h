@@ -1,4 +1,5 @@
 #pragma once
+#include "ClientStatistics.h"
 #ifdef _WIN32
 
 #include <ArcdpsExtension/arcdps_structs_slim.h>
@@ -196,6 +197,7 @@ public:
 	void SetEnabledStatus(bool pEnabledStatus);
 	void SetBudgetMode(bool pBudgetMode);
 	void SetDisableEncryption(bool pDisableEncryption);
+	const evtc_rpc_client_statistics& GetStatistics() const { return mStatistics; }
 
 	uintptr_t ProcessLocalEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
 	uintptr_t ProcessAreaEvent(cbtevent* pEvent, ag* pSourceAgent, ag* pDestinationAgent, const char* pSkillname, uint64_t pId, uint64_t pRevision);
@@ -242,5 +244,7 @@ private:
 
 	std::mutex mStatusLock;
 	evtc_rpc_client_status mStatus;
+
+	evtc_rpc_client_statistics mStatistics;
 };
 #endif // _WIN32

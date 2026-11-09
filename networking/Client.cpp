@@ -520,6 +520,7 @@ void evtc_rpc_client::Serve()
 
 			if (queuedData != nullptr)
 			{
+				mStatistics.mTotalEventsSent.fetch_add(1, std::memory_order_relaxed);
 				SendEvent(queuedData);
 
 				assert(queuedData->IsWrite() == true);
@@ -560,9 +561,11 @@ bool evtc_rpc_client::QueueEvent(CallDataBase* pCallData, bool pIsImportant)
 
 	if ((pIsImportant == false && mQueuedEvents.size() > 5000) || mQueuedEvents.size() > 10000)
 	{
+		mStatistics.mTotalEventsDropped.fetch_add(1, std::memory_order_relaxed);
 		return false;
 	}
 
+	mStatistics.mTotalEventsQueued.fetch_add(1, std::memory_order_relaxed);
 	mQueuedEvents.push(pCallData);
 	return true;
 }
@@ -645,6 +648,8 @@ void evtc_rpc_client::ForceDisconnect(const std::shared_ptr<ConnectionContext>& 
 
 void evtc_rpc_client::HandleReadMessage(ReadMessageCallData* pCallData)
 {
+	mStatistics.mTotalEventsRead.fetch_add(1, std::memory_order_relaxed);
+
 	using namespace evtc_rpc::messages;
 
 	// Add a new ReadMessageCallData so we can read the next message
